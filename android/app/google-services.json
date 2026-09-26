@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "830096182836",
+    "project_id": "careerwise-ai-e873a",
+    "storage_bucket": "careerwise-ai-e873a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:830096182836:android:a3b964cace6b08c8784461",
+        "android_client_info": {
+          "package_name": "com.example.careerwise_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD56J7mxEJRckD5Ggxx1r518VKsiIO0Z9M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
