@@ -1,14 +1,20 @@
 import 'dart:convert';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
 class AIService {
+  // ==========================================================
+  // ⚠️ API Key — run කරන්න:
+  // flutter run --dart-define=GEMINI_API_KEY=AIzaSy...
+  // ==========================================================
   static const String _apiKey =
   String.fromEnvironment('GEMINI_API_KEY');
 
   static const String _model = 'gemini-2.5-flash';
 
   static const String _baseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
+      '[https://generativelanguage.googleapis.com/v1beta/models](https://generativelanguage.googleapis.com/v1beta/models)';
 
   // ==========================================================
   // Generate Career Recommendation
@@ -79,6 +85,7 @@ RULES:
 - actionPlan must contain realistic next steps.
 ''';
 
+    // ✅ API Key check
     if (_apiKey.isEmpty) {
       throw Exception(
         'Gemini API key is missing. '
@@ -112,6 +119,10 @@ RULES:
         body: body,
       );
 
+      // ========================================================
+      // HTTP error handling
+      // ========================================================
+
       if (response.statusCode == 429) {
         throw Exception(
           'AI quota has been reached. Please try again later.',
@@ -127,6 +138,10 @@ RULES:
         } catch (_) {}
         throw Exception('Gemini API error: $errorMessage');
       }
+
+      // ========================================================
+      // Parse Gemini response
+      // ========================================================
 
       final Map<String, dynamic> data = jsonDecode(response.body);
 
@@ -202,5 +217,30 @@ RULES:
         'Failed to generate career recommendation: $e',
       );
     }
+  }
+
+  // ==========================================================
+  // Save Career Recommendation
+  // ==========================================================
+
+  Future<void> saveCareerRecommendation({
+    required String userId,
+    required String education,
+    required String skills,
+    required String interests,
+    required String careerGoal,
+    required String recommendation,
+  }) async {
+    await FirebaseFirestore.instance
+        .collection('career_recommendations')
+        .add({
+      'userId': userId,
+      'education': education,
+      'skills': skills,
+      'interests': interests,
+      'careerGoal': careerGoal,
+      'recommendation': recommendation,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 }
