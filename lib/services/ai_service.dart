@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 class AIService {
   // ==========================================================
-  // ⚠️ API Key — run කරන්න:
+  // Run API Key:
   // flutter run --dart-define=GEMINI_API_KEY=AIzaSy...
   // ==========================================================
   static const String _apiKey =
@@ -14,7 +14,7 @@ class AIService {
   static const String _model = 'gemini-2.5-flash';
 
   static const String _baseUrl =
-      '[https://generativelanguage.googleapis.com/v1beta/models](https://generativelanguage.googleapis.com/v1beta/models)';
+      'https://generativelanguage.googleapis.com/v1beta/models';
 
   // ==========================================================
   // Generate Career Recommendation
@@ -85,7 +85,7 @@ RULES:
 - actionPlan must contain realistic next steps.
 ''';
 
-    // ✅ API Key check
+    // API Key check
     if (_apiKey.isEmpty) {
       throw Exception(
         'Gemini API key is missing. '
