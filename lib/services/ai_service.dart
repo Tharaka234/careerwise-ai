@@ -105,46 +105,102 @@ RULES:
       },
     });
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
 
-    if (response.statusCode == 429) {
+      if (response.statusCode == 429) {
+        throw Exception(
+          'AI quota has been reached. Please try again later.',
+        );
+      }
+
+      if (response.statusCode != 200) {
+        String errorMessage = 'HTTP ${response.statusCode}';
+        try {
+          final errJson = jsonDecode(response.body);
+          errorMessage =
+              errJson['error']?['message']?.toString() ?? errorMessage;
+        } catch (_) {}
+        throw Exception('Gemini API error: $errorMessage');
+      }
+
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      final candidates = data['candidates'] as List?;
+      if (candidates == null || candidates.isEmpty) {
+        throw Exception('Gemini returned no candidates.');
+      }
+
+      final parts = candidates.first['content']?['parts'] as List?;
+      if (parts == null || parts.isEmpty) {
+        throw Exception('Gemini returned an empty response.');
+      }
+
+      final String? text = parts.first['text'] as String?;
+
+      if (text == null || text.trim().isEmpty) {
+        throw Exception('Gemini returned an empty response.');
+      }
+
+      // ========================================================
+      // Clean markdown fences (safety)
+      // ========================================================
+
+      String cleanText = text.trim();
+
+      if (cleanText.startsWith('```json')) {
+        cleanText = cleanText.substring(7).trim();
+      }
+      if (cleanText.startsWith('```')) {
+        cleanText = cleanText.substring(3).trim();
+      }
+      if (cleanText.endsWith('```')) {
+        cleanText =
+            cleanText.substring(0, cleanText.length - 3).trim();
+      }
+
+      // ========================================================
+      // Decode + validate
+      // ========================================================
+
+      final decoded = jsonDecode(cleanText);
+
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Invalid response format from Gemini.');
+      }
+
+      if (!decoded.containsKey('careers')) {
+        throw Exception(
+          'AI response does not contain career recommendations.',
+        );
+      }
+      if (!decoded.containsKey('strengths')) {
+        throw Exception('AI response does not contain strengths.');
+      }
+      if (!decoded.containsKey('actionPlan')) {
+        throw Exception('AI response does not contain an action plan.');
+      }
+
+      final careers = decoded['careers'];
+      if (careers is! List || careers.length != 3) {
+        throw Exception(
+          'AI response must contain exactly 3 career recommendations.',
+        );
+      }
+
+      return decoded;
+    } on FormatException {
       throw Exception(
-        'AI quota has been reached. Please try again later.',
+        'Gemini returned invalid JSON. Please try again.',
+      );
+    } catch (e) {
+      throw Exception(
+        'Failed to generate career recommendation: $e',
       );
     }
-
-    if (response.statusCode != 200) {
-      String errorMessage = 'HTTP ${response.statusCode}';
-      try {
-        final errJson = jsonDecode(response.body);
-        errorMessage =
-            errJson['error']?['message']?.toString() ?? errorMessage;
-      } catch (_) {}
-      throw Exception('Gemini API error: $errorMessage');
-    }
-
-    final Map<String, dynamic> data = jsonDecode(response.body);
-
-    final candidates = data['candidates'] as List?;
-    if (candidates == null || candidates.isEmpty) {
-      throw Exception('Gemini returned no candidates.');
-    }
-
-    final parts = candidates.first['content']?['parts'] as List?;
-    if (parts == null || parts.isEmpty) {
-      throw Exception('Gemini returned an empty response.');
-    }
-
-    final String? text = parts.first['text'] as String?;
-
-    if (text == null || text.trim().isEmpty) {
-      throw Exception('Gemini returned an empty response.');
-    }
-
-    return {'raw': text};
   }
 }
