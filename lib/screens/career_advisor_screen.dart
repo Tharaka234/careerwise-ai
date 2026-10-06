@@ -21,3 +21,23 @@ static const Color violet = Color(0xFF8664E9);
 static const Color background = Color(0xFFF5F7FC);
 static const Color muted = Color(0xFF78839A);
 static const Color darkText = Color(0xFF202B45);
+
+final _formKey = GlobalKey<FormState>();
+final _education = TextEditingController();
+final _skills = TextEditingController();
+final _interests = TextEditingController();
+final _goals = TextEditingController();
+
+final AIService _aiService = AIService();
+
+bool isLoading = false;
+Map<String, dynamic>? result;
+
+@override
+void dispose() {
+_education.dispose();
+_skills.dispose();
+_interests.dispose();
+_goals.dispose();
+super.dispose();
+}
