@@ -3,13 +3,14 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 
+/// AIService handles communication with Google's Gemini API for generating
+/// personalized career recommendations and saving them to Cloud Firestore.
 class AIService {
   // ==========================================================
-  // Run API Key:
-  // flutter run --dart-define=GEMINI_API_KEY=AIzaSy...
+  // Configuration & API Key
+  // Run command: flutter run --dart-define=GEMINI_API_KEY=AIzaSy...
   // ==========================================================
-  static const String _apiKey =
-  String.fromEnvironment('GEMINI_API_KEY');
+  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
 
   static const String _model = 'gemini-2.5-flash';
 
@@ -17,9 +18,8 @@ class AIService {
       'https://generativelanguage.googleapis.com/v1beta/models';
 
   // ==========================================================
-  // Generate Career Recommendation
+  // Generate Career Recommendation via Gemini AI
   // ==========================================================
-
   Future<Map<String, dynamic>> getCareerRecommendation({
     required String interests,
     required String skills,
@@ -85,11 +85,11 @@ RULES:
 - actionPlan must contain realistic next steps.
 ''';
 
-    // API Key check
+    // 1. API Key validation
     if (_apiKey.isEmpty) {
       throw Exception(
         'Gemini API key is missing. '
-            'Run with --dart-define=GEMINI_API_KEY=AIzaSy...',
+        'Run with --dart-define=GEMINI_API_KEY=AIzaSy...',
       );
     }
 
@@ -119,10 +119,7 @@ RULES:
         body: body,
       );
 
-      // ========================================================
-      // HTTP error handling
-      // ========================================================
-
+      // 2. HTTP error handling
       if (response.statusCode == 429) {
         throw Exception(
           'AI quota has been reached. Please try again later.',
@@ -139,10 +136,7 @@ RULES:
         throw Exception('Gemini API error: $errorMessage');
       }
 
-      // ========================================================
-      // Parse Gemini response
-      // ========================================================
-
+      // 3. Parse Gemini response candidates
       final Map<String, dynamic> data = jsonDecode(response.body);
 
       final candidates = data['candidates'] as List?;
@@ -161,10 +155,7 @@ RULES:
         throw Exception('Gemini returned an empty response.');
       }
 
-      // ========================================================
-      // Clean markdown fences (safety)
-      // ========================================================
-
+      // 4. Clean markdown fences (safety sanitization)
       String cleanText = text.trim();
 
       if (cleanText.startsWith('```json')) {
@@ -178,10 +169,7 @@ RULES:
             cleanText.substring(0, cleanText.length - 3).trim();
       }
 
-      // ========================================================
-      // Decode + validate
-      // ========================================================
-
+      // 5. Decode JSON and validate schema structure
       final decoded = jsonDecode(cleanText);
 
       if (decoded is! Map<String, dynamic>) {
@@ -220,9 +208,8 @@ RULES:
   }
 
   // ==========================================================
-  // Save Career Recommendation
+  // Save Career Recommendation to Cloud Firestore
   // ==========================================================
-
   Future<void> saveCareerRecommendation({
     required String userId,
     required String education,
