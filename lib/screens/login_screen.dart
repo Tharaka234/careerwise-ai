@@ -19,8 +19,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   bool obscurePassword = true;
-
   bool isLoading = false;
+  bool isResettingPassword = false;
+
 
   Future<void> login() async {
     if (isLoading || !_formKey.currentState!.validate()) {
@@ -41,26 +42,81 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       // AuthGate handles navigation after sign-in.
+
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
+      final message = switch (e.code) {
+        'invalid-email' => 'Invalid email address.',
+        'invalid-credential' || 'wrong-password' =>
+        'Incorrect email or password.',
+        'user-not-found' => 'Account not found.',
+        'too-many-requests' =>
+        'Too many attempts. Try again later.',
+        'network-request-failed' =>
+        'Check your internet connection.',
+        _ => 'Unable to sign in. Please try again.',
+      };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message ?? 'Unable to sign in'),
-        ),
-      );
+      _showMessage(message);
+
     } catch (e) {
-      if (!mounted) return;
+      debugPrint('Login error: $e');
+      _showMessage('Unable to complete sign in.');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login failed')),
-      );
     } finally {
       if (mounted) {
         setState(() => isLoading = false);
       }
     }
   }
+
+  Future<void> forgotPassword() async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty ||
+        !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      _showMessage('Please enter a valid email first.');
+      return;
+    }
+
+    if (isResettingPassword) return;
+
+    setState(() => isResettingPassword = true);
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email,
+      );
+
+      _showMessage(
+        'If an account exists, a password reset email will be sent.',
+      );
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Password reset error: ${e.code}');
+      _showMessage('Unable to send password reset email.');
+    } catch (e) {
+      debugPrint('Password reset error: $e');
+      _showMessage('Something went wrong. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => isResettingPassword = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: const Color(0xFF123D2E),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
 
   @override
   void dispose() {
@@ -164,6 +220,29 @@ class _LoginScreenState extends State<LoginScreen> {
                       return null;
                     },
                   ),
+
+                  const SizedBox(height: 8),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: isLoading || isResettingPassword
+                          ? null
+                          : forgotPassword,
+                      child: Text(
+                        isResettingPassword
+                            ? 'Sending...'
+                            : 'Forgot Password?',
+                        style: const TextStyle(
+                          color: mint,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+
+
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
