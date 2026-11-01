@@ -1,4 +1,4 @@
-
+import 'package:video_player/video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 const emerald = Color(0xFF10B981);
@@ -21,6 +21,64 @@ class _LoginScreenState extends State<LoginScreen> {
   bool obscurePassword = true;
   bool isLoading = false;
   bool isResettingPassword = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+
+  VideoPlayerController? _videoController;
+
+  Future<void> _initializeVideo() async {
+    final controller = VideoPlayerController.asset(
+      'assets/videos/career_background.mp4',
+    );
+
+    _videoController = controller;
+
+    try {
+      await controller.initialize();
+      if (!mounted) return;
+
+      await controller.setLooping(true);
+      await controller.setVolume(0);
+      await controller.play();
+
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Background video unavailable: $e');
+    }
+  }
+
+  Widget _background() {
+    final video = _videoController;
+
+    if (video != null && video.value.isInitialized) {
+      return FittedBox(
+        fit: BoxFit.cover,
+        child: SizedBox(
+          width: video.value.size.width,
+          height: video.value.size.height,
+          child: VideoPlayer(video),
+        ),
+      );
+    }
+
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF03170F),
+            Color(0xFF09523A),
+            Color(0xFF03170F),
+          ],
+        ),
+      ),
+    );
+  }
+
 
 
   Future<void> login() async {
