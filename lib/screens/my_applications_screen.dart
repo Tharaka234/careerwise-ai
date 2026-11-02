@@ -25,11 +25,13 @@ class _MyApplicationsScreenState
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
 
-  // PART 4: Search and filter state
   final TextEditingController _searchController =
   TextEditingController();
 
   String _selectedFilter = 'All';
+
+  // PART 5: Track expanded application cards
+  final Set<String> _expandedIds = {};
 
   final List<String> _filters = const [
     'All',
@@ -44,39 +46,13 @@ class _MyApplicationsScreenState
     super.dispose();
   }
 
-  // PART 2: Firebase real-time applications
+  // PART 2: Firestore applications
   Stream<QuerySnapshot<Map<String, dynamic>>>
   getUserApplications(String userId) {
     return _firestore
         .collection('applications')
         .where('userId', isEqualTo: userId)
         .snapshots();
-  }
-
-  String formatDate(dynamic value) {
-    if (value is! Timestamp) {
-      return 'Date unavailable';
-    }
-
-    final date = value.toDate();
-
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  bool isInProgress(String status) {
-    final normalized = status.trim().toLowerCase();
-    return normalized != 'accepted' &&
-        normalized != 'rejected';
-  }
-
-  String getStatus(Map<String, dynamic> data) {
-    final value = data['status']?.toString().trim() ?? '';
-    return value.isEmpty ? 'Applied' : value;
   }
 
   String getStringValue(
@@ -88,7 +64,33 @@ class _MyApplicationsScreenState
     return value.isEmpty ? fallback : value;
   }
 
-  // PART 4: Check selected status filter
+  String getStatus(Map<String, dynamic> data) {
+    return getStringValue(data, 'status', 'Applied');
+  }
+
+  DateTime? getAppliedDate(Map<String, dynamic> data) {
+    final value = data['appliedAt'];
+    return value is Timestamp ? value.toDate() : null;
+  }
+
+  String formatDate(DateTime? date) {
+    if (date == null) return 'Date unavailable';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  bool isInProgress(String status) {
+    final normalized = status.trim().toLowerCase();
+
+    return normalized != 'accepted' &&
+        normalized != 'rejected';
+  }
+
   bool matchesFilter(String status) {
     final normalized = status.trim().toLowerCase();
 
@@ -104,7 +106,43 @@ class _MyApplicationsScreenState
     }
   }
 
-  // PART 3: Premium hero
+  // PART 5: Status-specific colors
+  Color statusColor(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'under review':
+        return const Color(0xFFD97706);
+      case 'shortlisted':
+        return const Color(0xFF7C3AED);
+      case 'interview':
+        return const Color(0xFF4F46E5);
+      case 'accepted':
+        return const Color(0xFF059669);
+      case 'rejected':
+        return const Color(0xFFDC2626);
+      default:
+        return primary;
+    }
+  }
+
+  // PART 5: Status-specific icons
+  IconData statusIcon(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'under review':
+        return Icons.visibility_outlined;
+      case 'shortlisted':
+        return Icons.star_outline_rounded;
+      case 'interview':
+        return Icons.groups_outlined;
+      case 'accepted':
+        return Icons.check_circle_outline_rounded;
+      case 'rejected':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.schedule_rounded;
+    }
+  }
+
+  // PART 3: Premium hero section
   Widget buildHero(int total) {
     return Container(
       width: double.infinity,
@@ -112,7 +150,11 @@ class _MyApplicationsScreenState
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [deepGreen, primary, lightGreen],
+          colors: [
+            deepGreen,
+            primary,
+            lightGreen,
+          ],
         ),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
@@ -410,8 +452,9 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 2: Application item
-  Widget buildApplicationItem(
+  // PART 5: Premium application card
+  Widget buildApplicationCard(
+      String id,
       Map<String, dynamic> data,
       ) {
     final jobTitle = getStringValue(
@@ -427,74 +470,392 @@ class _MyApplicationsScreenState
     );
 
     final status = getStatus(data);
-    final appliedDate = formatDate(data['appliedAt']);
+    final date = getAppliedDate(data);
+    final expanded = _expandedIds.contains(id);
+    final color = statusColor(status);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: border),
+        boxShadow: [
+          BoxShadow(
+            color: dark.withValues(alpha: 0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            jobTitle,
-            style: const TextStyle(
-              color: dark,
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 55,
+                      height: 55,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFD1FAE5),
+                            Color(0xFFA7F3D0),
+                          ],
+                        ),
+                        borderRadius:
+                        BorderRadius.circular(17),
+                      ),
+                      child: Center(
+                        child: Text(
+                          company[0].toUpperCase(),
+                          style: const TextStyle(
+                            color: primary,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            jobTitle,
+                            style: const TextStyle(
+                              color: dark,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            company,
+                            style: const TextStyle(
+                              color: muted,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 17),
+                Wrap(
+                  spacing: 9,
+                  runSpacing: 9,
+                  children: [
+                    buildStatusChip(status),
+                    Container(
+                      padding:
+                      const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: background,
+                        borderRadius:
+                        BorderRadius.circular(11),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            color: muted,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            formatDate(date),
+                            style: const TextStyle(
+                              color: muted,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            company,
-            style: const TextStyle(
-              color: muted,
-              fontSize: 13,
+
+          Divider(height: 1, color: border),
+
+          // PART 5: Expand/collapse button
+          InkWell(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(22),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: primary,
-                size: 17,
+            onTap: () {
+              setState(() {
+                if (expanded) {
+                  _expandedIds.remove(id);
+                } else {
+                  _expandedIds.add(id);
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 14,
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  status,
-                  style: const TextStyle(
-                    color: primary,
-                    fontWeight: FontWeight.w700,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.route_outlined,
+                    color: color,
+                    size: 19,
                   ),
-                ),
+                  const SizedBox(width: 9),
+                  const Expanded(
+                    child: Text(
+                      'Application progress',
+                      style: TextStyle(
+                        color: dark,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    expanded ? 'Hide' : 'View',
+                    style: const TextStyle(
+                      color: primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: primary,
+                  ),
+                ],
               ),
-              const Icon(
-                Icons.calendar_today_outlined,
-                color: muted,
-                size: 15,
+            ),
+          ),
+
+          // PART 5: Animated timeline
+          AnimatedSize(
+            duration:
+            const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: expanded
+                ? Padding(
+              padding: const EdgeInsets.fromLTRB(
+                19, 0, 19, 20,
               ),
-              const SizedBox(width: 6),
-              Text(
-                appliedDate,
-                style: const TextStyle(
-                  color: muted,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+              child: buildTimeline(status),
+            )
+                : const SizedBox(
+              width: double.infinity,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // PART 4: No matching applications
+  // PART 5: Status chip
+  Widget buildStatusChip(String status) {
+    final color = statusColor(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 11,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            statusIcon(status),
+            size: 15,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status,
+            style: TextStyle(
+              color: color,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // PART 5: Application progress timeline
+  Widget buildTimeline(String status) {
+    if (status.trim().toLowerCase() == 'rejected') {
+      return Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Row(
+          children: [
+            Icon(
+              Icons.cancel_outlined,
+              color: Color(0xFFDC2626),
+            ),
+            SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                'This application was not selected.',
+                style: TextStyle(
+                  color: Color(0xFF991B1B),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    const steps = [
+      'Applied',
+      'Under Review',
+      'Shortlisted',
+      'Interview',
+      'Accepted',
+    ];
+
+    final current = steps.indexWhere(
+          (step) =>
+      step.toLowerCase() ==
+          status.trim().toLowerCase(),
+    );
+
+    if (current < 0) {
+      return Text(
+        'Current status: $status',
+        style: const TextStyle(
+          color: muted,
+          fontSize: 12,
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 9),
+
+        ...List.generate(steps.length, (index) {
+          final reached = index <= current;
+          final isCurrent = index == current;
+          final last = index == steps.length - 1;
+
+          return Row(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 25,
+                child: Column(
+                  children: [
+                    Icon(
+                      reached
+                          ? Icons.check_circle_rounded
+                          : Icons
+                          .radio_button_unchecked_rounded,
+                      color: reached
+                          ? primary
+                          : const Color(0xFFCBD5E1),
+                      size: 21,
+                    ),
+                    if (!last)
+                      Container(
+                        width: 2,
+                        height: 29,
+                        color: index < current
+                            ? primary
+                            : border,
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Padding(
+                  padding:
+                  const EdgeInsets.only(top: 2),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          steps[index],
+                          style: TextStyle(
+                            color:
+                            reached ? dark : muted,
+                            fontSize: 12.5,
+                            fontWeight: isCurrent
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (isCurrent)
+                        const Text(
+                          'CURRENT',
+                          style: TextStyle(
+                            color: primary,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+
+        const SizedBox(height: 4),
+
+        const Text(
+          'Progress is based on the current status provided by the administrator.',
+          style: TextStyle(
+            color: muted,
+            fontSize: 10.5,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // PART 4: Empty search results
   Widget buildEmptyResults(bool noApplications) {
     return Container(
       width: double.infinity,
@@ -537,7 +898,6 @@ class _MyApplicationsScreenState
             style: const TextStyle(
               color: muted,
               fontSize: 12.5,
-              height: 1.5,
             ),
           ),
           if (!noApplications) ...[
@@ -654,22 +1014,21 @@ class _MyApplicationsScreenState
             ...?snapshot.data?.docs,
           ];
 
-          // Newest applications first
+          // Sort newest first
           applications.sort((a, b) {
-            final aDate = a.data()['appliedAt'];
-            final bDate = b.data()['appliedAt'];
+            final aDate = getAppliedDate(a.data());
+            final bDate = getAppliedDate(b.data());
 
-            if (aDate is Timestamp &&
-                bDate is Timestamp) {
-              return bDate.compareTo(aDate);
+            if (aDate == null && bDate == null) {
+              return 0;
             }
+            if (aDate == null) return 1;
+            if (bDate == null) return -1;
 
-            if (aDate is Timestamp) return -1;
-            if (bDate is Timestamp) return 1;
-            return 0;
+            return bDate.compareTo(aDate);
           });
 
-          // PART 3: Summary calculations
+          // PART 3: Summary counters
           final total = applications.length;
 
           final inProgress =
@@ -709,11 +1068,8 @@ class _MyApplicationsScreenState
 
             final status = getStatus(data);
 
-            final matchesSearch =
-                title.contains(query) ||
-                    company.contains(query);
-
-            return matchesSearch &&
+            return (title.contains(query) ||
+                company.contains(query)) &&
                 matchesFilter(status);
           }).toList();
 
@@ -762,24 +1118,20 @@ class _MyApplicationsScreenState
 
                   const SizedBox(height: 17),
 
-                  // PART 4: Search bar
                   buildSearch(),
-
                   const SizedBox(height: 14),
 
-                  // PART 4: Filter chips
                   buildFilters(),
-
                   const SizedBox(height: 19),
 
                   if (filtered.isEmpty)
                     buildEmptyResults(total == 0)
                   else
                     ...filtered.map(
-                          (doc) =>
-                          buildApplicationItem(
-                            doc.data(),
-                          ),
+                          (doc) => buildApplicationCard(
+                        doc.id,
+                        doc.data(),
+                      ),
                     ),
                 ],
               ),
