@@ -1,137 +1,143 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-class MyApplicationsScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+
+class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+  State<MyApplicationsScreen> createState() =>
+      _MyApplicationsScreenState();
+}
 
-    if (user == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('My Applications'),
+class _MyApplicationsScreenState
+    extends State<MyApplicationsScreen> {
+
+  static const Color primary = Color(0xFF059669);
+  static const Color background = Color(0xFFF0FDF4);
+  static const Color dark = Color(0xFF0F241B);
+  static const Color muted = Color(0xFF4B6354);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: background,
+
+      appBar: AppBar(
+        backgroundColor: background,
+        elevation: 0,
+        centerTitle: true,
+
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: dark,
+          ),
+          onPressed: () {
+            Navigator.maybePop(context);
+          },
         ),
-        body: const Center(
-          child: Text(
-            'Please login to view your applications.',
+
+        title: const Text(
+          'My Applications',
+          style: TextStyle(
+            color: dark,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
           ),
         ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Applications'),
-        centerTitle: true,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('applications')
-            .where(
-          'userId',
-          isEqualTo: user.uid,
-        )
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-              ),
-            );
-          }
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
 
-          final applications =
-              snapshot.data?.docs ?? [];
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
 
-          if (applications.isEmpty) {
-            return _emptyState(context);
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: applications.length,
-            itemBuilder: (context, index) {
-              final document =
-              applications[index];
-
-              final data =
-              document.data()
-              as Map<String, dynamic>;
-
-              return _applicationCard(data);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _applicationCard(
-      Map<String, dynamic> data) {
-    final jobTitle =
-        data['jobTitle']?.toString() ??
-            'Unknown Job';
-
-    final company =
-        data['company']?.toString() ??
-            'Unknown Company';
-
-    final status =
-        data['status']?.toString() ??
-            'Applied';
-
-    final appliedAt =
-    data['appliedAt'] as Timestamp?;
-
-    return Card(
-      margin:
-      const EdgeInsets.only(bottom: 16),
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
-            Row(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.work_outline,
-                  size: 35,
-                  color: Colors.blue,
+
+                Container(
+                  width: 85,
+                  height: 85,
+
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD1FAE5),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+
+                  child: const Icon(
+                    Icons.work_history_rounded,
+                    size: 42,
+                    color: primary,
+                  ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(height: 24),
 
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                const Text(
+                  'Your Career Journey',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: dark,
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  'Track all your job applications in one place.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: 14,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFD1FAE5),
+                    ),
+                  ),
+
+                  child: const Column(
                     children: [
+                      Icon(
+                        Icons.description_outlined,
+                        color: primary,
+                        size: 45,
+                      ),
+
+                      SizedBox(height: 16),
+
                       Text(
-                        jobTitle,
-                        style: const TextStyle(
+                        'My Job Applications',
+                        style: TextStyle(
+                          color: dark,
                           fontSize: 18,
-                          fontWeight:
-                          FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 5),
+
+                      SizedBox(height: 8),
+
                       Text(
-                        company,
-                        style: const TextStyle(
-                          color: Colors.grey,
+                        'Your submitted applications will appear here.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: muted,
+                          fontSize: 13,
                         ),
                       ),
                     ],
@@ -139,272 +145,7 @@ class MyApplicationsScreen extends StatelessWidget {
                 ),
               ],
             ),
-
-            const SizedBox(height: 15),
-
-            const Divider(),
-
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                const Text(
-                  'Status: ',
-                  style: TextStyle(
-                    fontWeight:
-                    FontWeight.bold,
-                  ),
-                ),
-                _statusChip(status),
-              ],
-            ),
-
-            const SizedBox(height: 15),
-
-            _timeline(status),
-
-            const SizedBox(height: 15),
-
-            Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: Colors.grey,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Applied on ${_formatDate(appliedAt)}',
-                  style: const TextStyle(
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statusChip(String status) {
-    Color color = Colors.blue;
-    IconData icon = Icons.schedule;
-
-    if (status.toLowerCase() ==
-        'under review') {
-      color = Colors.orange;
-      icon = Icons.visibility;
-    } else if (status.toLowerCase() ==
-        'shortlisted') {
-      color = Colors.purple;
-      icon = Icons.star;
-    } else if (status.toLowerCase() ==
-        'interview') {
-      color = Colors.indigo;
-      icon = Icons.groups;
-    } else if (status.toLowerCase() ==
-        'accepted') {
-      color = Colors.green;
-      icon = Icons.check_circle;
-    } else if (status.toLowerCase() ==
-        'rejected') {
-      color = Colors.red;
-      icon = Icons.cancel;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius:
-        BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 16,
-            color: color,
           ),
-          const SizedBox(width: 5),
-          Text(
-            status,
-            style: TextStyle(
-              color: color,
-              fontWeight:
-              FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _timeline(String status) {
-    if (status.toLowerCase() ==
-        'rejected') {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
-          borderRadius:
-          BorderRadius.circular(10),
-        ),
-        child: const Row(
-          children: [
-            Icon(
-              Icons.cancel,
-              color: Colors.red,
-            ),
-            SizedBox(width: 10),
-            Text(
-              'Application Rejected',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final statuses = [
-      'Applied',
-      'Under Review',
-      'Shortlisted',
-      'Interview',
-      'Accepted',
-    ];
-
-    int currentIndex = 0;
-
-    for (int i = 0;
-    i < statuses.length;
-    i++) {
-      if (statuses[i].toLowerCase() ==
-          status.toLowerCase()) {
-        currentIndex = i;
-      }
-    }
-
-    return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Application Progress',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        for (int i = 0;
-        i < statuses.length;
-        i++)
-          Row(
-            children: [
-              Icon(
-                i <= currentIndex
-                    ? Icons.check_circle
-                    : Icons
-                    .radio_button_unchecked,
-                color: i <= currentIndex
-                    ? Colors.blue
-                    : Colors.grey,
-                size: 20,
-              ),
-
-              const SizedBox(width: 10),
-
-              Text(
-                statuses[i],
-                style: TextStyle(
-                  fontWeight:
-                  i <= currentIndex
-                      ? FontWeight.bold
-                      : FontWeight.normal,
-                  color: i <= currentIndex
-                      ? Colors.blue
-                      : Colors.grey,
-                ),
-              ),
-            ],
-          ),
-      ],
-    );
-  }
-
-  String _formatDate(
-      Timestamp? timestamp) {
-    if (timestamp == null) {
-      return 'Date unavailable';
-    }
-
-    final date =
-    timestamp.toDate();
-
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
-  }
-
-  Widget _emptyState(
-      BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment:
-          MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.description_outlined,
-              size: 70,
-              color: Colors.grey,
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              'No Applications Yet',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight:
-                FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            const Text(
-              'When you apply for a job, '
-                  'your application will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Browse Jobs',
-              ),
-            ),
-          ],
         ),
       ),
     );
