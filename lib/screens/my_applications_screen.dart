@@ -22,7 +22,27 @@ class _MyApplicationsScreenState
   static const Color border = Color(0xFFD1FAE5);
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
+
+  // PART 4: Search and filter state
+  final TextEditingController _searchController =
+  TextEditingController();
+
+  String _selectedFilter = 'All';
+
+  final List<String> _filters = const [
+    'All',
+    'In Progress',
+    'Accepted',
+    'Rejected',
+  ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   // PART 2: Firebase real-time applications
   Stream<QuerySnapshot<Map<String, dynamic>>>
@@ -41,27 +61,15 @@ class _MyApplicationsScreenState
     final date = value.toDate();
 
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
 
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  // PART 3: Application status calculations
   bool isInProgress(String status) {
     final normalized = status.trim().toLowerCase();
-
     return normalized != 'accepted' &&
         normalized != 'rejected';
   }
@@ -71,7 +79,32 @@ class _MyApplicationsScreenState
     return value.isEmpty ? 'Applied' : value;
   }
 
-  // PART 3: Premium hero section
+  String getStringValue(
+      Map<String, dynamic> data,
+      String key,
+      String fallback,
+      ) {
+    final value = data[key]?.toString().trim() ?? '';
+    return value.isEmpty ? fallback : value;
+  }
+
+  // PART 4: Check selected status filter
+  bool matchesFilter(String status) {
+    final normalized = status.trim().toLowerCase();
+
+    switch (_selectedFilter) {
+      case 'In Progress':
+        return isInProgress(status);
+      case 'Accepted':
+        return normalized == 'accepted';
+      case 'Rejected':
+        return normalized == 'rejected';
+      default:
+        return true;
+    }
+  }
+
+  // PART 3: Premium hero
   Widget buildHero(int total) {
     return Container(
       width: double.infinity,
@@ -79,11 +112,7 @@ class _MyApplicationsScreenState
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            deepGreen,
-            primary,
-            lightGreen,
-          ],
+          colors: [deepGreen, primary, lightGreen],
         ),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
@@ -106,7 +135,9 @@ class _MyApplicationsScreenState
                 height: 180,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white.withValues(
+                    alpha: 0.08,
+                  ),
                 ),
               ),
             ),
@@ -118,7 +149,9 @@ class _MyApplicationsScreenState
                 height: 140,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.07),
+                  color: Colors.white.withValues(
+                    alpha: 0.07,
+                  ),
                 ),
               ),
             ),
@@ -133,7 +166,8 @@ class _MyApplicationsScreenState
                       color: Colors.white.withValues(
                         alpha: 0.18,
                       ),
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius:
+                      BorderRadius.circular(15),
                     ),
                     child: const Icon(
                       Icons.work_history_rounded,
@@ -169,7 +203,8 @@ class _MyApplicationsScreenState
                       color: Colors.white.withValues(
                         alpha: 0.18,
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                      BorderRadius.circular(12),
                     ),
                     child: Text(
                       '$total Applications',
@@ -189,7 +224,7 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 3: Reusable summary card
+  // PART 3: Summary card
   Widget buildSummaryCard(
       String title,
       int count,
@@ -248,7 +283,6 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 3: Summary statistics layout
   Widget buildSummarySection({
     required int total,
     required int inProgress,
@@ -281,7 +315,7 @@ class _MyApplicationsScreenState
             'Accepted',
             accepted,
             Icons.check_circle_outline_rounded,
-            const Color(0xFF059669),
+            primary,
             const Color(0xFFECFDF5),
           ),
         ),
@@ -289,12 +323,109 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 2: Individual application card
-  Widget buildApplicationItem(Map<String, dynamic> data) {
-    final jobTitle =
-        data['jobTitle']?.toString() ?? 'Unknown Job';
-    final company =
-        data['company']?.toString() ?? 'Unknown Company';
+  // PART 4: Search bar
+  Widget buildSearch() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: border),
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (_) => setState(() {}),
+        style: const TextStyle(
+          color: dark,
+          fontSize: 13.5,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search jobs or companies...',
+          hintStyle: const TextStyle(
+            color: muted,
+            fontSize: 13,
+          ),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: primary,
+          ),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+            onPressed: () {
+              _searchController.clear();
+              setState(() {});
+            },
+            icon: const Icon(
+              Icons.close_rounded,
+              color: muted,
+            ),
+          )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // PART 4: Filter chips
+  Widget buildFilters() {
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _filters.length,
+        separatorBuilder: (_, _) =>
+        const SizedBox(width: 9),
+        itemBuilder: (context, index) {
+          final filter = _filters[index];
+          final selected = filter == _selectedFilter;
+
+          return ChoiceChip(
+            label: Text(filter),
+            selected: selected,
+            showCheckmark: false,
+            onSelected: (_) {
+              setState(() {
+                _selectedFilter = filter;
+              });
+            },
+            backgroundColor: Colors.white,
+            selectedColor: primary,
+            side: BorderSide(
+              color: selected ? primary : border,
+            ),
+            labelStyle: TextStyle(
+              color: selected ? Colors.white : muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // PART 2: Application item
+  Widget buildApplicationItem(
+      Map<String, dynamic> data,
+      ) {
+    final jobTitle = getStringValue(
+      data,
+      'jobTitle',
+      'Unknown Job',
+    );
+
+    final company = getStringValue(
+      data,
+      'company',
+      'Unknown Company',
+    );
+
     final status = getStatus(data);
     final appliedDate = formatDate(data['appliedAt']);
 
@@ -363,7 +494,69 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 2: Loading-independent message state
+  // PART 4: No matching applications
+  Widget buildEmptyResults(bool noApplications) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 25,
+        vertical: 42,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            noApplications
+                ? Icons.work_outline_rounded
+                : Icons.search_off_rounded,
+            color: primary,
+            size: 55,
+          ),
+          const SizedBox(height: 18),
+          Text(
+            noApplications
+                ? 'No applications yet'
+                : 'No matching applications',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: dark,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            noApplications
+                ? 'Your job applications will appear here once you apply.'
+                : 'Try a different search or filter to find your applications.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: muted,
+              fontSize: 12.5,
+              height: 1.5,
+            ),
+          ),
+          if (!noApplications) ...[
+            const SizedBox(height: 18),
+            TextButton(
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _selectedFilter = 'All';
+                });
+              },
+              child: const Text('Clear filters'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget buildMessageState(
       IconData icon,
       String title,
@@ -413,12 +606,12 @@ class _MyApplicationsScreenState
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          onPressed: () => Navigator.maybePop(context),
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: dark,
             size: 19,
           ),
-          onPressed: () => Navigator.maybePop(context),
         ),
         title: const Text(
           'My Applications',
@@ -439,7 +632,6 @@ class _MyApplicationsScreenState
           QuerySnapshot<Map<String, dynamic>>>(
         stream: getUserApplications(user.uid),
         builder: (context, snapshot) {
-          // Loading state
           if (snapshot.connectionState ==
               ConnectionState.waiting &&
               !snapshot.hasData) {
@@ -450,7 +642,6 @@ class _MyApplicationsScreenState
             );
           }
 
-          // Error state
           if (snapshot.hasError) {
             return buildMessageState(
               Icons.cloud_off_outlined,
@@ -463,7 +654,7 @@ class _MyApplicationsScreenState
             ...?snapshot.data?.docs,
           ];
 
-          // Sort newest applications first
+          // Newest applications first
           applications.sort((a, b) {
             final aDate = a.data()['appliedAt'];
             final bDate = b.data()['appliedAt'];
@@ -478,21 +669,54 @@ class _MyApplicationsScreenState
             return 0;
           });
 
-          // PART 3: Dynamic summary calculations
+          // PART 3: Summary calculations
           final total = applications.length;
 
-          final inProgress = applications.where((doc) {
-            final status = getStatus(doc.data());
-            return isInProgress(status);
-          }).length;
+          final inProgress =
+              applications.where((doc) {
+                return isInProgress(
+                  getStatus(doc.data()),
+                );
+              }).length;
 
-          final accepted = applications.where((doc) {
-            final status = getStatus(doc.data());
-            return status.trim().toLowerCase() ==
-                'accepted';
-          }).length;
+          final accepted =
+              applications.where((doc) {
+                return getStatus(doc.data())
+                    .toLowerCase() ==
+                    'accepted';
+              }).length;
 
-          // PART 3: Premium layout
+          // PART 4: Search and filter
+          final query = _searchController.text
+              .trim()
+              .toLowerCase();
+
+          final filtered =
+          applications.where((doc) {
+            final data = doc.data();
+
+            final title = getStringValue(
+              data,
+              'jobTitle',
+              'Unknown Job',
+            ).toLowerCase();
+
+            final company = getStringValue(
+              data,
+              'company',
+              'Unknown Company',
+            ).toLowerCase();
+
+            final status = getStatus(data);
+
+            final matchesSearch =
+                title.contains(query) ||
+                    company.contains(query);
+
+            return matchesSearch &&
+                matchesFilter(status);
+          }).toList();
+
           return Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
@@ -501,19 +725,14 @@ class _MyApplicationsScreenState
               child: ListView(
                 physics:
                 const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  18,
-                  8,
-                  18,
-                  30,
+                padding:
+                const EdgeInsets.fromLTRB(
+                  18, 8, 18, 30,
                 ),
                 children: [
-                  // Premium hero
                   buildHero(total),
-
                   const SizedBox(height: 17),
 
-                  // Dynamic summary cards
                   buildSummarySection(
                     total: total,
                     inProgress: inProgress,
@@ -543,17 +762,24 @@ class _MyApplicationsScreenState
 
                   const SizedBox(height: 17),
 
-                  if (applications.isEmpty)
-                    buildMessageState(
-                      Icons.work_outline_rounded,
-                      'No applications yet',
-                      'Your submitted applications will appear here once you apply.',
-                    )
+                  // PART 4: Search bar
+                  buildSearch(),
+
+                  const SizedBox(height: 14),
+
+                  // PART 4: Filter chips
+                  buildFilters(),
+
+                  const SizedBox(height: 19),
+
+                  if (filtered.isEmpty)
+                    buildEmptyResults(total == 0)
                   else
-                    ...applications.map(
-                          (doc) => buildApplicationItem(
-                        doc.data(),
-                      ),
+                    ...filtered.map(
+                          (doc) =>
+                          buildApplicationItem(
+                            doc.data(),
+                          ),
                     ),
                 ],
               ),
