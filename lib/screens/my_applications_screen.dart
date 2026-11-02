@@ -1,5 +1,7 @@
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
@@ -17,8 +19,164 @@ class _MyApplicationsScreenState
   static const Color dark = Color(0xFF0F241B);
   static const Color muted = Color(0xFF4B6354);
 
+  // Firebase instances
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Get applications belonging to the logged-in user
+  Stream<QuerySnapshot<Map<String, dynamic>>> getUserApplications(
+      String userId,
+      ) {
+    return _firestore
+        .collection('applications')
+        .where('userId', isEqualTo: userId)
+        .snapshots();
+  }
+
+  // Format Firestore application date
+  String formatDate(dynamic value) {
+    if (value is! Timestamp) {
+      return 'Date unavailable';
+    }
+
+    final date = value.toDate();
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  // Build an individual application item
+  Widget buildApplicationItem(Map<String, dynamic> data) {
+    final jobTitle = data['jobTitle']?.toString() ?? 'Unknown Job';
+    final company = data['company']?.toString() ?? 'Unknown Company';
+    final status = data['status']?.toString() ?? 'Applied';
+    final appliedDate = formatDate(data['appliedAt']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: const Color(0xFFD1FAE5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            jobTitle,
+            style: const TextStyle(
+              color: dark,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Text(
+            company,
+            style: const TextStyle(
+              color: muted,
+              fontSize: 13,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: primary,
+                size: 17,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  status,
+                  style: const TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.calendar_today_outlined,
+                size: 15,
+                color: muted,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                appliedDate,
+                style: const TextStyle(
+                  color: muted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Message shown when no data is available
+  Widget buildMessageState(
+      IconData icon,
+      String title,
+      String subtitle,
+      ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: primary,
+              size: 60,
+            ),
+
+            const SizedBox(height: 18),
+
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: dark,
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: muted,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final User? user = _auth.currentUser;
+
     return Scaffold(
       backgroundColor: background,
 
@@ -47,106 +205,106 @@ class _MyApplicationsScreenState
         ),
       ),
 
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+      body: user == null
+          ? buildMessageState(
+        Icons.lock_outline_rounded,
+        'Sign in required',
+        'Please log in to view your applications.',
+      )
+          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: getUserApplications(user.uid),
 
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
+        builder: (context, snapshot) {
 
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+          // Loading state
+          if (snapshot.connectionState ==
+              ConnectionState.waiting &&
+              !snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: primary,
+              ),
+            );
+          }
 
-                Container(
-                  width: 85,
-                  height: 85,
+          // Error state
+          if (snapshot.hasError) {
+            return buildMessageState(
+              Icons.cloud_off_outlined,
+              'Unable to load applications',
+              'Please check your connection and try again.',
+            );
+          }
 
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD1FAE5),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
+          // Firestore documents
+          final applications = [
+            ...?snapshot.data?.docs,
+          ];
 
-                  child: const Icon(
-                    Icons.work_history_rounded,
-                    size: 42,
-                    color: primary,
-                  ),
-                ),
+          // Sort newest applications first
+          applications.sort((a, b) {
+            final aDate = a.data()['appliedAt'];
+            final bDate = b.data()['appliedAt'];
 
-                const SizedBox(height: 24),
+            if (aDate is Timestamp &&
+                bDate is Timestamp) {
+              return bDate.compareTo(aDate);
+            }
 
-                const Text(
-                  'Your Career Journey',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: dark,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            if (aDate is Timestamp) return -1;
+            if (bDate is Timestamp) return 1;
+            return 0;
+          });
 
-                const SizedBox(height: 12),
+          // Empty state
+          if (applications.isEmpty) {
+            return buildMessageState(
+              Icons.work_outline_rounded,
+              'No applications yet',
+              'Your submitted job applications will appear here.',
+            );
+          }
 
-                const Text(
-                  'Track all your job applications in one place.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 14,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFD1FAE5),
+          // Applications list
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 800,
+              ),
+              child: ListView(
+                padding: const EdgeInsets.all(18),
+                children: [
+                  const Text(
+                    'Your Career Journey',
+                    style: TextStyle(
+                      color: dark,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
 
-                  child: const Column(
-                    children: [
-                      Icon(
-                        Icons.description_outlined,
-                        color: primary,
-                        size: 45,
-                      ),
+                  const SizedBox(height: 8),
 
-                      SizedBox(height: 16),
-
-                      Text(
-                        'My Job Applications',
-                        style: TextStyle(
-                          color: dark,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      SizedBox(height: 8),
-
-                      Text(
-                        'Your submitted applications will appear here.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: muted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '${applications.length} submitted applications',
+                    style: const TextStyle(
+                      color: muted,
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 24),
+
+                  ...applications.map(
+                        (doc) => buildApplicationItem(
+                      doc.data(),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
