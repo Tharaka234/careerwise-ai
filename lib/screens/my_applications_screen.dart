@@ -452,7 +452,7 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 5: Premium application card
+  // PART 6: Premium application card with AI Interview
   Widget buildApplicationCard(
       String id,
       Map<String, dynamic> data,
@@ -593,7 +593,6 @@ class _MyApplicationsScreenState
               ],
             ),
           ),
-
           Divider(height: 1, color: border),
 
           // PART 5: Expand/collapse button
