@@ -6,10 +6,8 @@ import 'package:http/http.dart' as http;
 /// AIService handles communication with Google's Gemini API for generating
 /// personalized career recommendations and saving them to Cloud Firestore.
 class AIService {
-  // ==========================================================
   // Configuration & API Key
   // Run command: flutter run --dart-define=GEMINI_API_KEY=AIzaSy...
-  // ==========================================================
   static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
 
   static const String _model = 'gemini-2.5-flash';
@@ -17,9 +15,7 @@ class AIService {
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
-  // ==========================================================
   // Generate Career Recommendation via Gemini AI
-  // ==========================================================
   Future<Map<String, dynamic>> getCareerRecommendation({
     required String interests,
     required String skills,
@@ -207,9 +203,7 @@ RULES:
     }
   }
 
-  // ==========================================================
   // Save Career Recommendation to Cloud Firestore
-  // ==========================================================
   Future<void> saveCareerRecommendation({
     required String userId,
     required String education,
