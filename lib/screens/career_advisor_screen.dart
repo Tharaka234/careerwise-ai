@@ -355,4 +355,70 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ),
     );
   }
- 
+
+  // Step 7: Step-by-Step Progress Indicator
+  Widget _buildProgress(_AdvisorColors colors) {
+    return Row(
+      children: [
+        _progressItem('01', 'Your profile', true, colors),
+        Expanded(
+          child: Container(
+            height: 2,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: colors.cardBorder,
+          ),
+        ),
+        _progressItem('02', 'AI analysis', false, colors),
+        Expanded(
+          child: Container(
+            height: 2,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: colors.cardBorder,
+          ),
+        ),
+        _progressItem('03', 'Your results', false, colors),
+      ],
+    );
+  }
+
+  Widget _progressItem(
+    String number,
+    String label,
+    bool active,
+    _AdvisorColors colors,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: active ? colors.primary : colors.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: active ? colors.primary : colors.cardBorder,
+            ),
+          ),
+          child: Text(
+            number,
+            style: TextStyle(
+              color: active ? Colors.white : colors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: TextStyle(
+            color: active ? colors.textPrimary : colors.textSecondary,
+            fontSize: 11,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
