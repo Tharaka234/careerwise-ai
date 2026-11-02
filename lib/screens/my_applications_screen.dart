@@ -1,7 +1,60 @@
-
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'ai_mock_interview_screen.dart';
+
+import 'admin_profile_screen.dart';
+
+class _ApplicationsColors {
+  final bool isDark;
+  final Color background;
+  final Color cardBg;
+  final Color dark;
+  final Color muted;
+  final Color border;
+  final Color primary;
+  final Color deepGreen;
+  final Color lightGreen;
+
+  const _ApplicationsColors({
+    required this.isDark,
+    required this.background,
+    required this.cardBg,
+    required this.dark,
+    required this.muted,
+    required this.border,
+    required this.primary,
+    required this.deepGreen,
+    required this.lightGreen,
+  });
+
+  factory _ApplicationsColors.of(bool isDark) {
+    if (isDark) {
+      return const _ApplicationsColors(
+        isDark: true,
+        background: Color(0xFF0A140F),
+        cardBg: Color(0xFF13231B),
+        dark: Color(0xFFF1F5F9),
+        muted: Color(0xFF94A3B8),
+        border: Color(0xFF1E3A2B),
+        primary: Color(0xFF10B981),
+        deepGreen: Color(0xFF064E3B),
+        lightGreen: Color(0xFF34D399),
+      );
+    }
+    return const _ApplicationsColors(
+      isDark: false,
+      background: Color(0xFFF0FDF4),
+      cardBg: Colors.white,
+      dark: Color(0xFF0F241B),
+      muted: Color(0xFF4B6354),
+      border: Color(0xFFD1FAE5),
+      primary: Color(0xFF059669),
+      deepGreen: Color(0xFF065F46),
+      lightGreen: Color(0xFF10B981),
+    );
+  }
+}
 
 class MyApplicationsScreen extends StatefulWidget {
   const MyApplicationsScreen({super.key});
@@ -11,26 +64,22 @@ class MyApplicationsScreen extends StatefulWidget {
       _MyApplicationsScreenState();
 }
 
-class _MyApplicationsScreenState
-    extends State<MyApplicationsScreen> {
-  static const Color primary = Color(0xFF059669);
-  static const Color deepGreen = Color(0xFF065F46);
-  static const Color lightGreen = Color(0xFF10B981);
-  static const Color background = Color(0xFFF0FDF4);
-  static const Color dark = Color(0xFF0F241B);
-  static const Color muted = Color(0xFF4B6354);
-  static const Color border = Color(0xFFD1FAE5);
+class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
+  _ApplicationsColors _colors = _ApplicationsColors.of(false);
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance;
+  Color get primary => _colors.primary;
+  Color get deepGreen => _colors.deepGreen;
+  Color get lightGreen => _colors.lightGreen;
+  Color get background => _colors.background;
+  Color get dark => _colors.dark;
+  Color get muted => _colors.muted;
+  Color get border => _colors.border;
+  Color get cardBg => _colors.cardBg;
 
   final TextEditingController _searchController =
   TextEditingController();
 
   String _selectedFilter = 'All';
-
-  // PART 5: Track expanded application cards
   final Set<String> _expandedIds = {};
 
   final List<String> _filters = const [
@@ -46,16 +95,27 @@ class _MyApplicationsScreenState
     super.dispose();
   }
 
-  // PART 2: Firestore applications
-  Stream<QuerySnapshot<Map<String, dynamic>>>
-  getUserApplications(String userId) {
-    return _firestore
-        .collection('applications')
-        .where('userId', isEqualTo: userId)
-        .snapshots();
+  bool _isInProgress(String status) {
+    final normalized = status.trim().toLowerCase();
+    return normalized != 'accepted' && normalized != 'rejected';
   }
 
-  String getStringValue(
+  bool _matchesFilter(String status) {
+    final normalized = status.trim().toLowerCase();
+
+    switch (_selectedFilter) {
+      case 'In Progress':
+        return _isInProgress(status);
+      case 'Accepted':
+        return normalized == 'accepted';
+      case 'Rejected':
+        return normalized == 'rejected';
+      default:
+        return true;
+    }
+  }
+
+  String _stringValue(
       Map<String, dynamic> data,
       String key,
       String fallback,
@@ -64,16 +124,12 @@ class _MyApplicationsScreenState
     return value.isEmpty ? fallback : value;
   }
 
-  String getStatus(Map<String, dynamic> data) {
-    return getStringValue(data, 'status', 'Applied');
-  }
-
-  DateTime? getAppliedDate(Map<String, dynamic> data) {
+  DateTime? _dateValue(Map<String, dynamic> data) {
     final value = data['appliedAt'];
     return value is Timestamp ? value.toDate() : null;
   }
 
-  String formatDate(DateTime? date) {
+  String _formatDate(DateTime? date) {
     if (date == null) return 'Date unavailable';
 
     const months = [
@@ -84,30 +140,7 @@ class _MyApplicationsScreenState
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
-  bool isInProgress(String status) {
-    final normalized = status.trim().toLowerCase();
-
-    return normalized != 'accepted' &&
-        normalized != 'rejected';
-  }
-
-  bool matchesFilter(String status) {
-    final normalized = status.trim().toLowerCase();
-
-    switch (_selectedFilter) {
-      case 'In Progress':
-        return isInProgress(status);
-      case 'Accepted':
-        return normalized == 'accepted';
-      case 'Rejected':
-        return normalized == 'rejected';
-      default:
-        return true;
-    }
-  }
-
-  // PART 5: Status-specific colors
-  Color statusColor(String status) {
+  Color _statusColor(String status) {
     switch (status.trim().toLowerCase()) {
       case 'under review':
         return const Color(0xFFD97706);
@@ -124,8 +157,7 @@ class _MyApplicationsScreenState
     }
   }
 
-  // PART 5: Status-specific icons
-  IconData statusIcon(String status) {
+  IconData _statusIcon(String status) {
     switch (status.trim().toLowerCase()) {
       case 'under review':
         return Icons.visibility_outlined;
@@ -142,58 +174,253 @@ class _MyApplicationsScreenState
     }
   }
 
-  // PART 3: Premium hero section
-  Widget buildHero(int total) {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) {
+        _colors = _ApplicationsColors.of(isDark);
+        final user = FirebaseAuth.instance.currentUser;
+
+        return Scaffold(
+          backgroundColor: background,
+          appBar: AppBar(
+            backgroundColor: background,
+            surfaceTintColor: background,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              onPressed: () => Navigator.maybePop(context),
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: dark,
+                size: 19,
+              ),
+            ),
+            title: Text(
+              'My Applications',
+              style: TextStyle(
+                color: dark,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          body: user == null
+              ? _messageState(
+            Icons.lock_outline_rounded,
+            'Sign in required',
+            'Please log in to view your job applications.',
+          )
+              : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('applications')
+                .where('userId', isEqualTo: user.uid)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState ==
+                  ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: primary,
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return _messageState(
+                  Icons.cloud_off_outlined,
+                  'Unable to load applications',
+                  'Please check your connection and try again.',
+                );
+              }
+
+              final docs = [
+                ...?snapshot.data?.docs,
+              ];
+
+              docs.sort((a, b) {
+                final aDate = _dateValue(a.data());
+                final bDate = _dateValue(b.data());
+
+                if (aDate == null && bDate == null) return 0;
+                if (aDate == null) return 1;
+                if (bDate == null) return -1;
+
+                return bDate.compareTo(aDate);
+              });
+
+              final total = docs.length;
+
+              final inProgress = docs.where((doc) {
+                final status = _stringValue(
+                  doc.data(),
+                  'status',
+                  'Applied',
+                );
+                return _isInProgress(status);
+              }).length;
+
+              final accepted = docs.where((doc) {
+                return _stringValue(
+                  doc.data(),
+                  'status',
+                  'Applied',
+                ).toLowerCase() ==
+                    'accepted';
+              }).length;
+
+              final query =
+              _searchController.text.trim().toLowerCase();
+
+              final filtered = docs.where((doc) {
+                final data = doc.data();
+
+                final title = _stringValue(
+                  data,
+                  'jobTitle',
+                  'Unknown Job',
+                ).toLowerCase();
+
+                final company = _stringValue(
+                  data,
+                  'company',
+                  'Unknown Company',
+                ).toLowerCase();
+
+                final status = _stringValue(
+                  data,
+                  'status',
+                  'Applied',
+                );
+
+                final matchesSearch =
+                    title.contains(query) ||
+                        company.contains(query);
+
+                return matchesSearch && _matchesFilter(status);
+              }).toList();
+
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 800,
+                  ),
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      18, 8, 18, 30,
+                    ),
+                    children: [
+                      _buildHero(total),
+                      const SizedBox(height: 17),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _summaryCard(
+                              'Total',
+                              total,
+                              Icons.description_outlined,
+                              primary,
+                              const Color(0xFFECFDF5),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _summaryCard(
+                              'In Progress',
+                              inProgress,
+                              Icons.timelapse_rounded,
+                              const Color(0xFFD97706),
+                              const Color(0xFFFFFBEB),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _summaryCard(
+                              'Accepted',
+                              accepted,
+                              Icons.check_circle_outline_rounded,
+                              const Color(0xFF059669),
+                              const Color(0xFFECFDF5),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
+                      _sectionHeading(
+                        'Your applications',
+                        '$total submitted applications',
+                      ),
+                      const SizedBox(height: 15),
+                      _buildSearch(),
+                      const SizedBox(height: 14),
+                      _buildFilters(),
+                      const SizedBox(height: 19),
+                      if (filtered.isEmpty)
+                        _emptyResults(total == 0)
+                      else
+                        ...filtered.map(
+                              (doc) => _applicationCard(
+                            doc.id,
+                            doc.data(),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHero(int total) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            deepGreen,
-            primary,
-            lightGreen,
-          ],
+          colors: [deepGreen, primary, lightGreen],
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(27),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.20),
+            color: primary.withValues(alpha: 0.22),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(27),
         child: Stack(
           children: [
             Positioned(
-              right: -45,
-              top: -55,
+              right: -48,
+              top: -60,
               child: Container(
-                width: 180,
-                height: 180,
+                height: 190,
+                width: 190,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(
-                    alpha: 0.08,
-                  ),
+                  color: Colors.white.withValues(alpha: 0.08),
                 ),
               ),
             ),
             Positioned(
-              right: 35,
-              bottom: -75,
+              right: 40,
+              bottom: -85,
               child: Container(
-                width: 140,
-                height: 140,
+                height: 145,
+                width: 145,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(
-                    alpha: 0.07,
-                  ),
+                  color: Colors.white.withValues(alpha: 0.06),
                 ),
               ),
             ),
@@ -205,16 +432,16 @@ class _MyApplicationsScreenState
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(
-                        alpha: 0.18,
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
                       ),
-                      borderRadius:
-                      BorderRadius.circular(15),
                     ),
                     child: const Icon(
                       Icons.work_history_rounded,
                       color: Colors.white,
-                      size: 26,
+                      size: 25,
                     ),
                   ),
                   const SizedBox(height: 22),
@@ -224,6 +451,7 @@ class _MyApplicationsScreenState
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 9),
@@ -232,7 +460,7 @@ class _MyApplicationsScreenState
                     style: TextStyle(
                       color: Color(0xFFD1FAE5),
                       fontSize: 12.5,
-                      height: 1.5,
+                      height: 1.55,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -242,11 +470,11 @@ class _MyApplicationsScreenState
                       vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(
-                        alpha: 0.18,
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
                       ),
-                      borderRadius:
-                      BorderRadius.circular(12),
                     ),
                     child: Text(
                       '$total Applications',
@@ -266,13 +494,12 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 3: Summary card
-  Widget buildSummaryCard(
+  Widget _summaryCard(
       String title,
       int count,
       IconData icon,
       Color color,
-      Color iconBackground,
+      Color iconBg,
       ) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -280,7 +507,7 @@ class _MyApplicationsScreenState
         vertical: 15,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: border),
       ),
@@ -291,19 +518,15 @@ class _MyApplicationsScreenState
             width: 37,
             height: 37,
             decoration: BoxDecoration(
-              color: iconBackground,
+              color: _colors.isDark ? color.withValues(alpha: 0.18) : iconBg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 19,
-            ),
+            child: Icon(icon, color: color, size: 19),
           ),
           const SizedBox(height: 12),
           Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               color: dark,
               fontSize: 23,
               fontWeight: FontWeight.w900,
@@ -314,7 +537,7 @@ class _MyApplicationsScreenState
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 10.5,
               fontWeight: FontWeight.w600,
@@ -325,68 +548,51 @@ class _MyApplicationsScreenState
     );
   }
 
-  Widget buildSummarySection({
-    required int total,
-    required int inProgress,
-    required int accepted,
-  }) {
-    return Row(
+  Widget _sectionHeading(String title, String subtitle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: buildSummaryCard(
-            'Total',
-            total,
-            Icons.description_outlined,
-            primary,
-            const Color(0xFFECFDF5),
+        Text(
+          title,
+          style: TextStyle(
+            color: dark,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: buildSummaryCard(
-            'In Progress',
-            inProgress,
-            Icons.timelapse_rounded,
-            const Color(0xFFD97706),
-            const Color(0xFFFFFBEB),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: buildSummaryCard(
-            'Accepted',
-            accepted,
-            Icons.check_circle_outline_rounded,
-            primary,
-            const Color(0xFFECFDF5),
+        const SizedBox(height: 5),
+        Text(
+          subtitle,
+          style: TextStyle(
+            color: muted,
+            fontSize: 12,
           ),
         ),
       ],
     );
   }
 
-  // PART 4: Search bar
-  Widget buildSearch() {
+  Widget _buildSearch() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(17),
         border: Border.all(color: border),
       ),
       child: TextField(
         controller: _searchController,
-        onChanged: (_) => setState(() {}),
-        style: const TextStyle(
+        style: TextStyle(
           color: dark,
           fontSize: 13.5,
         ),
+        onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           hintText: 'Search jobs or companies...',
-          hintStyle: const TextStyle(
+          hintStyle: TextStyle(
             color: muted,
             fontSize: 13,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
             color: primary,
           ),
@@ -396,10 +602,7 @@ class _MyApplicationsScreenState
               _searchController.clear();
               setState(() {});
             },
-            icon: const Icon(
-              Icons.close_rounded,
-              color: muted,
-            ),
+            icon: Icon(Icons.close_rounded, color: muted),
           )
               : null,
           border: InputBorder.none,
@@ -411,8 +614,7 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 4: Filter chips
-  Widget buildFilters() {
+  Widget _buildFilters() {
     return SizedBox(
       height: 42,
       child: ListView.separated(
@@ -427,13 +629,11 @@ class _MyApplicationsScreenState
           return ChoiceChip(
             label: Text(filter),
             selected: selected,
-            showCheckmark: false,
             onSelected: (_) {
-              setState(() {
-                _selectedFilter = filter;
-              });
+              setState(() => _selectedFilter = filter);
             },
-            backgroundColor: Colors.white,
+            showCheckmark: false,
+            backgroundColor: cardBg,
             selectedColor: primary,
             side: BorderSide(
               color: selected ? primary : border,
@@ -452,37 +652,41 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 6: Premium application card with AI Interview
-  Widget buildApplicationCard(
+  Widget _applicationCard(
       String id,
       Map<String, dynamic> data,
       ) {
-    final jobTitle = getStringValue(
+    final jobTitle = _stringValue(
       data,
       'jobTitle',
       'Unknown Job',
     );
 
-    final company = getStringValue(
+    final company = _stringValue(
       data,
       'company',
       'Unknown Company',
     );
 
-    final status = getStatus(data);
-    final date = getAppliedDate(data);
+    final status = _stringValue(
+      data,
+      'status',
+      'Applied',
+    );
+
+    final date = _dateValue(data);
     final expanded = _expandedIds.contains(id);
-    final color = statusColor(status);
+    final color = _statusColor(status);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: dark.withValues(alpha: 0.03),
+            color: dark.withValues(alpha: _colors.isDark ? 0.2 : 0.03),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -493,31 +697,42 @@ class _MyApplicationsScreenState
           Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       width: 55,
                       height: 55,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: _colors.isDark
+                              ? const [
+                            Color(0xFF064E3B),
+                            Color(0xFF065F46),
+                          ]
+                              : const [
                             Color(0xFFD1FAE5),
                             Color(0xFFA7F3D0),
                           ],
                         ),
-                        borderRadius:
-                        BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(
+                          color: _colors.isDark
+                              ? const Color(0xFF059669).withValues(alpha: 0.4)
+                              : const Color(0xFF6EE7B7).withValues(alpha: 0.5),
+                        ),
                       ),
                       child: Center(
                         child: Text(
-                          company[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: primary,
+                          company.isEmpty
+                              ? 'C'
+                              : company[0].toUpperCase(),
+                          style: TextStyle(
+                            color: _colors.isDark ? const Color(0xFF6EE7B7) : primary,
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                           ),
@@ -532,7 +747,7 @@ class _MyApplicationsScreenState
                         children: [
                           Text(
                             jobTitle,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: dark,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -542,9 +757,10 @@ class _MyApplicationsScreenState
                           const SizedBox(height: 6),
                           Text(
                             company,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: muted,
                               fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -556,33 +772,33 @@ class _MyApplicationsScreenState
                 Wrap(
                   spacing: 9,
                   runSpacing: 9,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    buildStatusChip(status),
+                    _statusChip(status),
                     Container(
-                      padding:
-                      const EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
                         color: background,
-                        borderRadius:
-                        BorderRadius.circular(11),
+                        borderRadius: BorderRadius.circular(11),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_today_outlined,
                             color: muted,
                             size: 14,
                           ),
                           const SizedBox(width: 7),
                           Text(
-                            formatDate(date),
-                            style: const TextStyle(
+                            _formatDate(date),
+                            style: TextStyle(
                               color: muted,
                               fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -594,12 +810,7 @@ class _MyApplicationsScreenState
             ),
           ),
           Divider(height: 1, color: border),
-
-          // PART 5: Expand/collapse button
           InkWell(
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(22),
-            ),
             onTap: () {
               setState(() {
                 if (expanded) {
@@ -609,6 +820,9 @@ class _MyApplicationsScreenState
                 }
               });
             },
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(22),
+            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 18,
@@ -622,7 +836,7 @@ class _MyApplicationsScreenState
                     size: 19,
                   ),
                   const SizedBox(width: 9),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Application progress',
                       style: TextStyle(
@@ -634,7 +848,7 @@ class _MyApplicationsScreenState
                   ),
                   Text(
                     expanded ? 'Hide' : 'View',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -651,11 +865,8 @@ class _MyApplicationsScreenState
               ),
             ),
           ),
-
-          // PART 5: Animated timeline
           AnimatedSize(
-            duration:
-            const Duration(milliseconds: 250),
+            duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             alignment: Alignment.topCenter,
             child: expanded
@@ -663,10 +874,40 @@ class _MyApplicationsScreenState
               padding: const EdgeInsets.fromLTRB(
                 19, 0, 19, 20,
               ),
-              child: buildTimeline(status),
+              child: _timeline(status),
             )
                 : const SizedBox(
               width: double.infinity,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AIMockInterviewScreen(
+                        applicationId: id,
+                        jobTitle: jobTitle,
+                        company: company,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.psychology_outlined),
+                label: const Text('Prepare for Interview'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -674,9 +915,8 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 5: Status chip
-  Widget buildStatusChip(String status) {
-    final color = statusColor(status);
+  Widget _statusChip(String status) {
+    final color = _statusColor(status);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -691,7 +931,7 @@ class _MyApplicationsScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            statusIcon(status),
+            _statusIcon(status),
             size: 15,
             color: color,
           ),
@@ -709,27 +949,26 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 5: Application progress timeline
-  Widget buildTimeline(String status) {
-    if (status.trim().toLowerCase() == 'rejected') {
+  Widget _timeline(String status) {
+    if (status.toLowerCase() == 'rejected') {
       return Container(
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
+          color: _colors.isDark ? const Color(0x33DC2626) : const Color(0xFFFEF2F2),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(
+            const Icon(
               Icons.cancel_outlined,
               color: Color(0xFFDC2626),
             ),
-            SizedBox(width: 11),
+            const SizedBox(width: 11),
             Expanded(
               child: Text(
                 'This application was not selected.',
                 style: TextStyle(
-                  color: Color(0xFF991B1B),
+                  color: _colors.isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -749,15 +988,13 @@ class _MyApplicationsScreenState
     ];
 
     final current = steps.indexWhere(
-          (step) =>
-      step.toLowerCase() ==
-          status.trim().toLowerCase(),
+          (step) => step.toLowerCase() == status.toLowerCase(),
     );
 
     if (current < 0) {
       return Text(
         'Current status: $status',
-        style: const TextStyle(
+        style: TextStyle(
           color: muted,
           fontSize: 12,
         ),
@@ -768,15 +1005,13 @@ class _MyApplicationsScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 9),
-
         ...List.generate(steps.length, (index) {
           final reached = index <= current;
           final isCurrent = index == current;
           final last = index == steps.length - 1;
 
           return Row(
-            crossAxisAlignment:
-            CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
                 width: 25,
@@ -785,11 +1020,10 @@ class _MyApplicationsScreenState
                     Icon(
                       reached
                           ? Icons.check_circle_rounded
-                          : Icons
-                          .radio_button_unchecked_rounded,
+                          : Icons.radio_button_unchecked_rounded,
                       color: reached
-                          ? primary
-                          : const Color(0xFFCBD5E1),
+                          ? const Color(0xFF059669)
+                          : (_colors.isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
                       size: 21,
                     ),
                     if (!last)
@@ -797,7 +1031,7 @@ class _MyApplicationsScreenState
                         width: 2,
                         height: 29,
                         color: index < current
-                            ? primary
+                            ? const Color(0xFF059669)
                             : border,
                       ),
                   ],
@@ -806,16 +1040,14 @@ class _MyApplicationsScreenState
               const SizedBox(width: 11),
               Expanded(
                 child: Padding(
-                  padding:
-                  const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: 2),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           steps[index],
                           style: TextStyle(
-                            color:
-                            reached ? dark : muted,
+                            color: reached ? dark : muted,
                             fontSize: 12.5,
                             fontWeight: isCurrent
                                 ? FontWeight.w800
@@ -824,12 +1056,13 @@ class _MyApplicationsScreenState
                         ),
                       ),
                       if (isCurrent)
-                        const Text(
+                        Text(
                           'CURRENT',
                           style: TextStyle(
                             color: primary,
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
                           ),
                         ),
                     ],
@@ -839,10 +1072,8 @@ class _MyApplicationsScreenState
             ],
           );
         }),
-
         const SizedBox(height: 4),
-
-        const Text(
+        Text(
           'Progress is based on the current status provided by the administrator.',
           style: TextStyle(
             color: muted,
@@ -854,35 +1085,42 @@ class _MyApplicationsScreenState
     );
   }
 
-  // PART 4: Empty search results
-  Widget buildEmptyResults(bool noApplications) {
+  Widget _emptyResults(bool noApplications) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: 25,
-        vertical: 42,
+        vertical: 45,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(23),
         border: Border.all(color: border),
       ),
       child: Column(
         children: [
-          Icon(
-            noApplications
-                ? Icons.work_outline_rounded
-                : Icons.search_off_rounded,
-            color: primary,
-            size: 55,
+          Container(
+            width: 78,
+            height: 78,
+            decoration: BoxDecoration(
+              color: _colors.isDark ? const Color(0x3310B981) : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Icon(
+              noApplications
+                  ? Icons.work_outline_rounded
+                  : Icons.search_off_rounded,
+              size: 36,
+              color: primary,
+            ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 19),
           Text(
             noApplications
                 ? 'No applications yet'
                 : 'No matching applications',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: dark,
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -894,249 +1132,77 @@ class _MyApplicationsScreenState
                 ? 'Your job applications will appear here once you apply.'
                 : 'Try a different search or filter to find your applications.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: muted,
               fontSize: 12.5,
+              height: 1.5,
             ),
           ),
-          if (!noApplications) ...[
-            const SizedBox(height: 18),
+          const SizedBox(height: 22),
+          if (noApplications)
+            ElevatedButton.icon(
+              onPressed: () => Navigator.maybePop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 19,
+                  vertical: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13),
+                ),
+              ),
+              icon: const Icon(Icons.explore_outlined),
+              label: const Text('Explore Jobs'),
+            )
+          else
             TextButton(
               onPressed: () {
                 _searchController.clear();
-                setState(() {
-                  _selectedFilter = 'All';
-                });
+                setState(() => _selectedFilter = 'All');
               },
               child: const Text('Clear filters'),
             ),
-          ],
         ],
       ),
     );
   }
 
-  Widget buildMessageState(
+  Widget _messageState(
       IconData icon,
       String title,
       String subtitle,
       ) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: primary, size: 60),
+            Icon(icon, color: primary, size: 65),
             const SizedBox(height: 18),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: dark,
                 fontSize: 19,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 9),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: muted,
                 fontSize: 13,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final User? user = _auth.currentUser;
-
-    return Scaffold(
-      backgroundColor: background,
-      appBar: AppBar(
-        backgroundColor: background,
-        surfaceTintColor: background,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: dark,
-            size: 19,
-          ),
-        ),
-        title: const Text(
-          'My Applications',
-          style: TextStyle(
-            color: dark,
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-      body: user == null
-          ? buildMessageState(
-        Icons.lock_outline_rounded,
-        'Sign in required',
-        'Please log in to view your job applications.',
-      )
-          : StreamBuilder<
-          QuerySnapshot<Map<String, dynamic>>>(
-        stream: getUserApplications(user.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting &&
-              !snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: primary,
-              ),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return buildMessageState(
-              Icons.cloud_off_outlined,
-              'Unable to load applications',
-              'Please check your connection and try again.',
-            );
-          }
-
-          final applications = [
-            ...?snapshot.data?.docs,
-          ];
-
-          // Sort newest first
-          applications.sort((a, b) {
-            final aDate = getAppliedDate(a.data());
-            final bDate = getAppliedDate(b.data());
-
-            if (aDate == null && bDate == null) {
-              return 0;
-            }
-            if (aDate == null) return 1;
-            if (bDate == null) return -1;
-
-            return bDate.compareTo(aDate);
-          });
-
-          // PART 3: Summary counters
-          final total = applications.length;
-
-          final inProgress =
-              applications.where((doc) {
-                return isInProgress(
-                  getStatus(doc.data()),
-                );
-              }).length;
-
-          final accepted =
-              applications.where((doc) {
-                return getStatus(doc.data())
-                    .toLowerCase() ==
-                    'accepted';
-              }).length;
-
-          // PART 4: Search and filter
-          final query = _searchController.text
-              .trim()
-              .toLowerCase();
-
-          final filtered =
-          applications.where((doc) {
-            final data = doc.data();
-
-            final title = getStringValue(
-              data,
-              'jobTitle',
-              'Unknown Job',
-            ).toLowerCase();
-
-            final company = getStringValue(
-              data,
-              'company',
-              'Unknown Company',
-            ).toLowerCase();
-
-            final status = getStatus(data);
-
-            return (title.contains(query) ||
-                company.contains(query)) &&
-                matchesFilter(status);
-          }).toList();
-
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 800,
-              ),
-              child: ListView(
-                physics:
-                const BouncingScrollPhysics(),
-                padding:
-                const EdgeInsets.fromLTRB(
-                  18, 8, 18, 30,
-                ),
-                children: [
-                  buildHero(total),
-                  const SizedBox(height: 17),
-
-                  buildSummarySection(
-                    total: total,
-                    inProgress: inProgress,
-                    accepted: accepted,
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  const Text(
-                    'Your applications',
-                    style: TextStyle(
-                      color: dark,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  Text(
-                    '$total submitted applications',
-                    style: const TextStyle(
-                      color: muted,
-                      fontSize: 12,
-                    ),
-                  ),
-
-                  const SizedBox(height: 17),
-
-                  buildSearch(),
-                  const SizedBox(height: 14),
-
-                  buildFilters(),
-                  const SizedBox(height: 19),
-
-                  if (filtered.isEmpty)
-                    buildEmptyResults(total == 0)
-                  else
-                    ...filtered.map(
-                          (doc) => buildApplicationCard(
-                        doc.id,
-                        doc.data(),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }
