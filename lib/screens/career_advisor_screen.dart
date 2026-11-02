@@ -595,3 +595,119 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ),
     );
   }
+
+  // Step 9: Reusable Styled Text Form Field Builder
+  Widget _buildField({
+    required String label,
+    required String hint,
+    required String helper,
+    required IconData icon,
+    required TextEditingController controller,
+    required int maxLines,
+    required _AdvisorColors colors,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          helper,
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          minLines: maxLines,
+          textCapitalization: TextCapitalization.sentences,
+          keyboardType: maxLines == 1
+              ? TextInputType.text
+              : TextInputType.multiline,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your ${label.toLowerCase()}.';
+            }
+            if (value.trim().length < 2) {
+              return 'Please provide a little more information.';
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: colors.isDark
+                  ? Colors.white.withValues(alpha: 0.35)
+                  : const Color(0xFFA1A9BB),
+              fontSize: 13,
+            ),
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(
+                bottom: maxLines == 1 ? 0 : 0,
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: colors.primary,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 48,
+            ),
+            filled: true,
+            fillColor: colors.inputFill,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide(
+                color: colors.inputBorder,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide(
+                color: colors.inputBorder,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide(
+                color: colors.accent,
+                width: 1.8,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(
+                color: Color(0xFFDA5262),
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(
+                color: Color(0xFFDA5262),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
