@@ -355,7 +355,6 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ),
     );
   }
-
   // Step 7: Step-by-Step Progress Indicator
   Widget _buildProgress(_AdvisorColors colors) {
     return Row(
@@ -420,5 +419,179 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // Step 8: User Career Profile Input Form
+  Widget _buildForm(bool wide, _AdvisorColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: colors.isDark
+                ? Colors.black26
+                : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Build your career profile',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'A few details will help us personalize your recommendations.',
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Responsive multi-column layout for wide screens vs mobile
+            if (wide) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildField(
+                      label: 'Education',
+                      hint: 'e.g. BSc Computer Science',
+                      helper: 'Your current qualification',
+                      icon: Icons.school_outlined,
+                      controller: _education,
+                      maxLines: 1,
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: _buildField(
+                      label: 'Skills',
+                      hint: 'e.g. Java, Flutter, SQL',
+                      helper: 'Your existing skills',
+                      icon: Icons.code_rounded,
+                      controller: _skills,
+                      maxLines: 3,
+                      colors: colors,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildField(
+                      label: 'Interests',
+                      hint: 'e.g. AI, Mobile Development',
+                      helper: 'Topics you enjoy',
+                      icon: Icons.favorite_border_rounded,
+                      controller: _interests,
+                      maxLines: 3,
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: _buildField(
+                      label: 'Career goals',
+                      hint: 'e.g. Become a Full Stack Developer',
+                      helper: 'What you want to achieve',
+                      icon: Icons.flag_outlined,
+                      controller: _goals,
+                      maxLines: 3,
+                      colors: colors,
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              _buildField(
+                label: 'Education',
+                hint: 'e.g. BSc Computer Science',
+                helper: 'Your current qualification',
+                icon: Icons.school_outlined,
+                controller: _education,
+                maxLines: 1,
+                colors: colors,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                label: 'Skills',
+                hint: 'e.g. Java, Flutter, SQL',
+                helper: 'Your existing skills',
+                icon: Icons.code_rounded,
+                controller: _skills,
+                maxLines: 3,
+                colors: colors,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                label: 'Interests',
+                hint: 'e.g. AI, Mobile Development',
+                helper: 'Topics you enjoy',
+                icon: Icons.favorite_border_rounded,
+                controller: _interests,
+                maxLines: 3,
+                colors: colors,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                label: 'Career goals',
+                hint: 'e.g. Become a Full Stack Developer',
+                helper: 'What you want to achieve',
+                icon: Icons.flag_outlined,
+                controller: _goals,
+                maxLines: 3,
+                colors: colors,
+              ),
+            ],
+            const SizedBox(height: 26),
+            _buildGenerateButton(colors),
+            const SizedBox(height: 13),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    size: 13,
+                    color: colors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Your information is used to personalize your advice.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
