@@ -785,5 +785,158 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ),
     );
   }
+  // Step 11: Implement AI career insights banner and section heading builder
+  Widget _buildResults(_AdvisorColors colors) {
+    final careers = result?['careers'] as List<dynamic>? ?? [];
+    final strengths = result?['strengths'] as List<dynamic>? ?? [];
+    final actions = result?['actionPlan'] as List<dynamic>? ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(21),
+          decoration: BoxDecoration(
+            color: colors.isDark
+                ? const Color(0xFF064E3B).withValues(alpha: 0.35)
+                : const Color(0xFFD1FAE5),
+            borderRadius: BorderRadius.circular(19),
+            border: Border.all(
+              color: colors.cardBorder,
+              width: 1.2,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.auto_awesome,
+                color: colors.primary,
+                size: 29,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your career insights',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Your personalized AI recommendations are ready.',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        _resultHeading(
+          'Career recommendations',
+          'Explore these career paths based on your profile.',
+          Icons.work_outline,
+          colors,
+        ),
+        const SizedBox(height: 14),
+        ...careers.asMap().entries.map((entry) {
+          final raw = entry.value;
+          if (raw is! Map) return const SizedBox.shrink();
+
+          final career = Map<String, dynamic>.from(raw);
+          return _careerCard(
+            number: entry.key + 1,
+            title: career['title']?.toString() ?? 'Career',
+            why: career['whySuitable']?.toString() ?? '',
+            skills: career['skillsToDevelop'] as List<dynamic>? ?? [],
+            learning: career['learningAreas'] as List<dynamic>? ?? [],
+            technologies: career['technologies'] as List<dynamic>? ?? [],
+            colors: colors,
+          );
+        }),
+        if (strengths.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          _resultHeading(
+            'Your strengths',
+            'What you already bring to your career journey.',
+            Icons.workspace_premium_outlined,
+            colors,
+          ),
+          const SizedBox(height: 14),
+          _listCard(strengths, Icons.check_circle_outline,
+              const Color(0xFF10B981), colors),
+        ],
+        if (actions.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          _resultHeading(
+            'Your action plan',
+            'Steps to help you move towards your goals.',
+            Icons.route_outlined,
+            colors,
+          ),
+          const SizedBox(height: 14),
+          _actionCard(actions, colors),
+        ],
+      ],
+    );
+  }
+
+  Widget _resultHeading(
+    String title,
+    String subtitle,
+    IconData icon,
+    _AdvisorColors colors,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: 43,
+          height: 43,
+          decoration: BoxDecoration(
+            color: colors.tagBg,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: colors.cardBorder),
+          ),
+          child: Icon(icon, color: colors.primary, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
+
 
