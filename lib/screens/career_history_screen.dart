@@ -288,6 +288,106 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
     }
   }
 
+  // Step 4: implement assessment deletion dialog with Firestore sync and snackbar notifications
+  Future<void> _deleteRecommendation(
+    String id,
+    CareerHistoryColors colors,
+  ) async {
+    if (_deleting) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(23),
+          side: BorderSide(color: colors.cardBorder),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.delete_outline_rounded,
+              color: Color(0xFFDC2626),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Delete assessment?',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'This saved career recommendation will be permanently deleted.',
+          style: TextStyle(
+            height: 1.5,
+            color: colors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: colors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _deleting = true);
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('career_recommendations')
+          .doc(id)
+          .delete();
+
+      if (!mounted) return;
+
+      _snack('Assessment deleted successfully.');
+    } catch (e) {
+      debugPrint('Delete recommendation error: $e');
+      if (!mounted) return;
+      _snack('Unable to delete assessment.', error: true);
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
+
+  void _snack(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: error
+              ? const Color(0xFFDC2626)
+              : const Color(0xFF059669),
+          content: Text(message),
+        ),
+      );
+  }
+
   @override
   void dispose() {
     _search.dispose();
