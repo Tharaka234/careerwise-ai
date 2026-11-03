@@ -711,3 +711,79 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ],
     );
   }
+  // Step 10: Implement dynamic generate button with loading state and gradient styling
+  Widget _buildGenerateButton(_AdvisorColors colors) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: isLoading
+              ? LinearGradient(
+                  colors: [
+                    colors.primary.withValues(alpha: 0.6),
+                    colors.accent.withValues(alpha: 0.6),
+                  ],
+                )
+              : LinearGradient(
+                  colors: [
+                    colors.primary,
+                    colors.accent,
+                  ],
+                ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: isLoading
+              ? []
+              : [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.32),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+        ),
+        child: ElevatedButton(
+          onPressed: isLoading ? null : getCareerAdvice,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            disabledForegroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (isLoading)
+                const SizedBox(
+                  width: 19,
+                  height: 19,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                const Icon(Icons.auto_awesome, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                isLoading
+                    ? 'Analyzing your profile...'
+                    : 'Generate my career path',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
