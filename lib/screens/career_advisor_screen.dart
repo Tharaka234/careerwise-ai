@@ -355,3 +355,359 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ),
     );
   }
+  // Step 7: Step-by-Step Progress Indicator
+  Widget _buildProgress(_AdvisorColors colors) {
+    return Row(
+      children: [
+        _progressItem('01', 'Your profile', true, colors),
+        Expanded(
+          child: Container(
+            height: 2,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: colors.cardBorder,
+          ),
+        ),
+        _progressItem('02', 'AI analysis', false, colors),
+        Expanded(
+          child: Container(
+            height: 2,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: colors.cardBorder,
+          ),
+        ),
+        _progressItem('03', 'Your results', false, colors),
+      ],
+    );
+  }
+
+  Widget _progressItem(
+    String number,
+    String label,
+    bool active,
+    _AdvisorColors colors,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: active ? colors.primary : colors.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: active ? colors.primary : colors.cardBorder,
+            ),
+          ),
+          child: Text(
+            number,
+            style: TextStyle(
+              color: active ? Colors.white : colors.textSecondary,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Text(
+          label,
+          style: TextStyle(
+            color: active ? colors.textPrimary : colors.textSecondary,
+            fontSize: 11,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Step 8: User Career Profile Input Form
+  Widget _buildForm(bool wide, _AdvisorColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: colors.isDark
+                ? Colors.black26
+                : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Build your career profile',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'A few details will help us personalize your recommendations.',
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Responsive multi-column layout for wide screens vs mobile
+            if (wide) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildField(
+                      label: 'Education',
+                      hint: 'e.g. BSc Computer Science',
+                      helper: 'Your current qualification',
+                      icon: Icons.school_outlined,
+                      controller: _education,
+                      maxLines: 1,
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: _buildField(
+                      label: 'Skills',
+                      hint: 'e.g. Java, Flutter, SQL',
+                      helper: 'Your existing skills',
+                      icon: Icons.code_rounded,
+                      controller: _skills,
+                      maxLines: 3,
+                      colors: colors,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _buildField(
+                      label: 'Interests',
+                      hint: 'e.g. AI, Mobile Development',
+                      helper: 'Topics you enjoy',
+                      icon: Icons.favorite_border_rounded,
+                      controller: _interests,
+                      maxLines: 3,
+                      colors: colors,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: _buildField(
+                      label: 'Career goals',
+                      hint: 'e.g. Become a Full Stack Developer',
+                      helper: 'What you want to achieve',
+                      icon: Icons.flag_outlined,
+                      controller: _goals,
+                      maxLines: 3,
+                      colors: colors,
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              _buildField(
+                label: 'Education',
+                hint: 'e.g. BSc Computer Science',
+                helper: 'Your current qualification',
+                icon: Icons.school_outlined,
+                controller: _education,
+                maxLines: 1,
+                colors: colors,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                label: 'Skills',
+                hint: 'e.g. Java, Flutter, SQL',
+                helper: 'Your existing skills',
+                icon: Icons.code_rounded,
+                controller: _skills,
+                maxLines: 3,
+                colors: colors,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                label: 'Interests',
+                hint: 'e.g. AI, Mobile Development',
+                helper: 'Topics you enjoy',
+                icon: Icons.favorite_border_rounded,
+                controller: _interests,
+                maxLines: 3,
+                colors: colors,
+              ),
+              const SizedBox(height: 20),
+              _buildField(
+                label: 'Career goals',
+                hint: 'e.g. Become a Full Stack Developer',
+                helper: 'What you want to achieve',
+                icon: Icons.flag_outlined,
+                controller: _goals,
+                maxLines: 3,
+                colors: colors,
+              ),
+            ],
+            const SizedBox(height: 26),
+            _buildGenerateButton(colors),
+            const SizedBox(height: 13),
+            Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    size: 13,
+                    color: colors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Your information is used to personalize your advice.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Step 9: Reusable Styled Text Form Field Builder
+  Widget _buildField({
+    required String label,
+    required String hint,
+    required String helper,
+    required IconData icon,
+    required TextEditingController controller,
+    required int maxLines,
+    required _AdvisorColors colors,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          helper,
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          minLines: maxLines,
+          textCapitalization: TextCapitalization.sentences,
+          keyboardType: maxLines == 1
+              ? TextInputType.text
+              : TextInputType.multiline,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter your ${label.toLowerCase()}.';
+            }
+            if (value.trim().length < 2) {
+              return 'Please provide a little more information.';
+            }
+            return null;
+          },
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: colors.isDark
+                  ? Colors.white.withValues(alpha: 0.35)
+                  : const Color(0xFFA1A9BB),
+              fontSize: 13,
+            ),
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(
+                bottom: maxLines == 1 ? 0 : 0,
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: colors.primary,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 48,
+            ),
+            filled: true,
+            fillColor: colors.inputFill,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 16,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide(
+                color: colors.inputBorder,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide(
+                color: colors.inputBorder,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: BorderSide(
+                color: colors.accent,
+                width: 1.8,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(
+                color: Color(0xFFDA5262),
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(
+                color: Color(0xFFDA5262),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
