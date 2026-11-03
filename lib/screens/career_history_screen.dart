@@ -249,3 +249,48 @@ class CareerStyle {
         .toList();
   }
 }
+
+// Step 3: setup CareerHistoryScreen with Firestore real-time stream and lifecycle handlers
+
+
+class CareerHistoryScreen extends StatefulWidget {
+  const CareerHistoryScreen({super.key});
+
+  @override
+  State<CareerHistoryScreen> createState() => _CareerHistoryScreenState();
+}
+
+class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
+  final TextEditingController _search = TextEditingController();
+
+  String _sort = 'Newest first';
+  bool _deleting = false;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _historyStream;
+  String? _streamUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupStream();
+  }
+
+  void _setupStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    _streamUserId = user?.uid;
+
+    if (user != null) {
+      _historyStream = FirebaseFirestore.instance
+          .collection('career_recommendations')
+          .where('userId', isEqualTo: user.uid)
+          .snapshots();
+    } else {
+      _historyStream = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+}
