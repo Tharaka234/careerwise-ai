@@ -937,7 +937,6 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ],
     );
   }
-
   // Step 12: Implement career recommendation card with tags and job navigation
   Widget _careerCard({
     required int number,
@@ -1113,7 +1112,106 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       }).toList(),
     );
   }
+  // Step 13: Implement user strengths overview and action plan cards
+  Widget _listCard(
+    List<dynamic> values,
+    IconData icon,
+    Color color,
+    _AdvisorColors colors,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+      ),
+      child: Column(
+        children: values.map((value) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    value.toString(),
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _actionCard(List<dynamic> actions, _AdvisorColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(17),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+      ),
+      child: Column(
+        children: actions.asMap().entries.map((entry) {
+          final isLast = entry.key == actions.length - 1;
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.tagBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: colors.tagBorder),
+                  ),
+                  child: Text(
+                    '${entry.key + 1}',
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      entry.value.toString(),
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 13,
+                        height: 1.55,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
+
 
 
 
