@@ -1211,6 +1211,74 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
     );
   }
 }
+// Step 14: Implement AdvisorColors theme palette and hero feature widgets
+class _AdvisorColors {
+  final bool isDark;
+  final Color pageBg;
+  final Color cardBg;
+  final Color cardBorder;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color primary;
+  final Color accent;
+  final Color inputFill;
+  final Color inputBorder;
+  final Color tagBg;
+  final Color tagBorder;
+  final Color tagText;
+
+  _AdvisorColors({required this.isDark})
+      : pageBg = isDark ? const Color(0xFF0A140F) : const Color(0xFFF0FDF4),
+        cardBg = isDark ? const Color(0xFF132A1F) : Colors.white,
+        cardBorder = isDark
+            ? const Color(0xFF065F46).withValues(alpha: 0.35)
+            : const Color(0xFFD1FAE5),
+        textPrimary = isDark ? Colors.white : const Color(0xFF0F172A),
+        textSecondary =
+            isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+        primary = const Color(0xFF059669),
+        accent = const Color(0xFF10B981),
+        inputFill =
+            isDark ? const Color(0xFF0A1F16) : const Color(0xFFF7FDF9),
+        inputBorder = isDark
+            ? const Color(0xFF065F46).withValues(alpha: 0.40)
+            : const Color(0xFFD1FAE5),
+        tagBg = isDark ? const Color(0xFF0E2319) : const Color(0xFFECFDF5),
+        tagBorder = isDark
+            ? const Color(0xFF065F46).withValues(alpha: 0.35)
+            : const Color(0xFFA7F3D0),
+        tagText = isDark ? const Color(0xFF34D399) : const Color(0xFF047857);
+}
+
+class _HeroFeature extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _HeroFeature({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFFD1FAE5)),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 
 
