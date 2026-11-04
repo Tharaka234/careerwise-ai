@@ -1,14 +1,15 @@
-//Step 1: implement CareerHistoryColors design system with dark and light themes
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import 'admin_profile_screen.dart';
+// Fallback Theme Manager if admin_profile_screen is unavailable
+class AdminThemeManager {
+  static final ValueNotifier<bool> isDarkMode = ValueNotifier<bool>(false);
+}
 
-// EMERALD GREEN THEME DESIGN SYSTEM & STYLES
-
+// Step 1: implement CareerHistoryColors design system with dark and light themes
 class CareerHistoryColors {
   final bool isDark;
   final Color pageBg;
@@ -32,7 +33,7 @@ class CareerHistoryColors {
             : const Color(0xFFD1FAE5),
         textPrimary = isDark ? Colors.white : const Color(0xFF0F172A),
         textSecondary =
-        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+            isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
         primary = const Color(0xFF059669),
         primaryDark = const Color(0xFF044E36),
         accent = const Color(0xFF10B981),
@@ -43,6 +44,7 @@ class CareerHistoryColors {
         searchFill = isDark ? const Color(0xFF0A1F16) : Colors.white,
         iconBg = isDark ? const Color(0xFF0E2319) : const Color(0xFFECFDF5);
 }
+
 // Step 2: implement CareerStyle utility class with card, gradient, button, and JSON helpers
 class CareerStyle {
   // Emerald Brand Colors
@@ -80,6 +82,7 @@ class CareerStyle {
       ],
     );
   }
+
   static BoxDecoration gradient({double radius = 25}) {
     return BoxDecoration(
       gradient: const LinearGradient(
@@ -248,8 +251,9 @@ class CareerStyle {
   }
 }
 
-// Step 3: setup CareerHistoryScreen with Firestore real-time stream and lifecycle handlers
 
+
+// Step 3: setup CareerHistoryScreen with Firestore real-time stream and lifecycle handlers
 class CareerHistoryScreen extends StatefulWidget {
   const CareerHistoryScreen({super.key});
 
@@ -291,68 +295,68 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
     super.dispose();
   }
 
-
   // Step 4: implement assessment deletion dialog with Firestore sync and snackbar notifications
-  Future<void> _deleteRecommendation(String id,
-      CareerHistoryColors colors,) async {
+  Future<void> _deleteRecommendation(
+    String id,
+    CareerHistoryColors colors,
+  ) async {
     if (_deleting) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) =>
-          AlertDialog(
-            backgroundColor: colors.cardBg,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(23),
-              side: BorderSide(color: colors.cardBorder),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(23),
+          side: BorderSide(color: colors.cardBorder),
+        ),
+        title: Row(
+          children: [
+            const Icon(
+              Icons.delete_outline_rounded,
+              color: Color(0xFFDC2626),
             ),
-            title: Row(
-              children: [
-                const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Color(0xFFDC2626),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Delete assessment?',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Delete assessment?',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'This saved career recommendation will be permanently deleted.',
-              style: TextStyle(
-                height: 1.5,
-                color: colors.textSecondary,
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(color: colors.textSecondary),
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text('Delete'),
-              ),
-            ],
+          ],
+        ),
+        content: Text(
+          'This saved career recommendation will be permanently deleted.',
+          style: TextStyle(
+            height: 1.5,
+            color: colors.textSecondary,
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: colors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -391,7 +395,6 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
       );
   }
 
-  // Step 5: implement responsive scaffold and AdminThemeManager reactive stream builder
   Widget _buildBackButton(
     BuildContext context,
     CareerHistoryColors colors,
@@ -430,6 +433,238 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
     );
   }
 
+  Widget _empty(
+    IconData icon,
+    String title,
+    String subtitle,
+    CareerHistoryColors colors,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CareerStyle.iconBox(
+              icon,
+              colors: colors,
+              size: 64,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyCard(bool isHistoryEmpty, CareerHistoryColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: CareerStyle.card(colors: colors),
+      child: Column(
+        children: [
+          Icon(
+            isHistoryEmpty
+                ? Icons.folder_open_rounded
+                : Icons.search_off_rounded,
+            color: colors.textSecondary,
+            size: 40,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isHistoryEmpty
+                ? 'No saved assessments yet'
+                : 'No matching assessments found',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isHistoryEmpty
+                ? 'Take a career assessment to generate and save recommendations.'
+                : 'Try adjusting your search terms or filters.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 12.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _historyCard(
+    String id,
+    Map<String, dynamic> data,
+    CareerHistoryColors colors,
+  ) {
+    final rawTimestamp = data['createdAt'];
+    final Timestamp? createdAt = rawTimestamp is Timestamp ? rawTimestamp : null;
+    final dateStr = CareerStyle.date(createdAt);
+    final goal = CareerStyle.field(data, 'careerGoal');
+    final education = CareerStyle.field(data, 'education');
+    final skills = CareerStyle.field(data, 'skills');
+    final interests = CareerStyle.field(data, 'interests');
+    final rawRecommendation = CareerStyle.field(data, 'recommendation', '');
+    final careers = CareerStyle.careers(rawRecommendation);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: CareerStyle.card(colors: colors),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CareerStyle.iconBox(
+                  Icons.work_history_rounded,
+                  colors: colors,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        goal,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _deleteRecommendation(id, colors),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Color(0xFFDC2626),
+                    size: 22,
+                  ),
+                  tooltip: 'Delete assessment',
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1),
+            const SizedBox(height: 14),
+            _infoRow(Icons.school_outlined, 'Education', education, colors),
+            const SizedBox(height: 8),
+            _infoRow(Icons.psychology_outlined, 'Skills', skills, colors),
+            const SizedBox(height: 8),
+            _infoRow(Icons.interests_outlined, 'Interests', interests, colors),
+            if (careers.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                'Top Recommendations',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: careers.map((c) {
+                  final title = c['title']?.toString() ?? 'Career';
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.tagBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: colors.tagBorder),
+                    ),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(
+    IconData icon,
+    String label,
+    String value,
+    CareerHistoryColors colors,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: colors.textSecondary),
+        const SizedBox(width: 6),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 12,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Step 5: implement responsive scaffold and AdminThemeManager reactive stream builder
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -487,9 +722,10 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
                       );
                     }
 
-                    final docs = [...?snapshot.data?.docs];
+                    final docs = snapshot.data?.docs ?? [];
 
-                    docs.sort((a, b) {
+                    final sortedDocs = [...docs];
+                    sortedDocs.sort((a, b) {
                       final aTime = a.data()['createdAt'];
                       final bTime = b.data()['createdAt'];
 
@@ -507,7 +743,7 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
 
                     final query = _search.text.trim().toLowerCase();
 
-                    final filtered = docs.where((doc) {
+                    final filtered = sortedDocs.where((doc) {
                       final data = doc.data();
 
                       final careers = CareerStyle.careers(
@@ -536,7 +772,7 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
                           padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
                           physics: const BouncingScrollPhysics(),
                           children: [
-                            _hero(docs.length),
+                            _hero(sortedDocs.length),
                             const SizedBox(height: 25),
                             CareerStyle.heading(
                               'Saved Assessments',
@@ -548,7 +784,7 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
                             _searchAndSort(colors),
                             const SizedBox(height: 17),
                             if (filtered.isEmpty)
-                              _emptyCard(docs.isEmpty, colors)
+                              _emptyCard(sortedDocs.isEmpty, colors)
                             else
                               ...filtered.map(
                                 (doc) => _historyCard(
@@ -672,6 +908,137 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
       ),
     );
   }
+
+  // Step 7: implement interactive search bar and sorting dropdown menu
+  Widget _searchAndSort(CareerHistoryColors colors) {
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: colors.searchFill,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: colors.isDark
+                    ? Colors.black26
+                    : colors.primaryDark.withValues(alpha: 0.04),
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _search,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 13,
+            ),
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Search career goals, skills, careers...',
+              hintStyle: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 12.5,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: colors.primary,
+              ),
+              suffixIcon: _search.text.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: () {
+                        _search.clear();
+                        setState(() {});
+                      },
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 15,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Icon(
+              Icons.filter_list_rounded,
+              color: colors.primary,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Sort assessments',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            PopupMenuButton<String>(
+              initialValue: _sort,
+              color: colors.cardBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: colors.cardBorder),
+              ),
+              onSelected: (value) => setState(() => _sort = value),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'Newest first',
+                  child: Text(
+                    'Newest first',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: _sort == 'Newest first'
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'Oldest first',
+                  child: Text(
+                    'Oldest first',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: _sort == 'Oldest first'
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+              child: Row(
+                children: [
+                  Text(
+                    _sort,
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: colors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
-
-
