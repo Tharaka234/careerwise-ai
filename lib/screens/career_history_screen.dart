@@ -80,7 +80,6 @@ class CareerStyle {
       ],
     );
   }
-
   static BoxDecoration gradient({double radius = 25}) {
     return BoxDecoration(
       gradient: const LinearGradient(
@@ -568,5 +567,111 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
       },
     );
   }
+
+  // Step 6: implement assessment sorting, multi-field search filter, and gradient hero banner
+  Widget _hero(int count) {
+    return Container(
+      decoration: CareerStyle.gradient(radius: 27),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(27),
+        child: Stack(
+          children: [
+            Positioned(
+              top: -70,
+              right: -55,
+              child: Container(
+                width: 210,
+                height: 210,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.07),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -80,
+              right: 45,
+              child: Container(
+                width: 145,
+                height: 145,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(23),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 57,
+                    height: 57,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.28),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.psychology_alt_rounded,
+                      color: Colors.white,
+                      size: 29,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  const Text(
+                    'Your Career Journey',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 25,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  const Text(
+                    'Every career insight brings you closer to your future.',
+                    style: TextStyle(
+                      color: Color(0xFFD1FAE5),
+                      fontSize: 13,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.20),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.30),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '$count Saved Assessments',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
 
