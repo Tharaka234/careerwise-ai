@@ -43,7 +43,6 @@ class CareerHistoryColors {
         searchFill = isDark ? const Color(0xFF0A1F16) : Colors.white,
         iconBg = isDark ? const Color(0xFF0E2319) : const Color(0xFFECFDF5);
 }
-
 // Step 2: implement CareerStyle utility class with card, gradient, button, and JSON helpers
 class CareerStyle {
   // Emerald Brand Colors
@@ -391,6 +390,183 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
           content: Text(message),
         ),
       );
+  }
+
+  // Step 5: implement responsive scaffold and AdminThemeManager reactive stream builder
+  Widget _buildBackButton(
+    BuildContext context,
+    CareerHistoryColors colors,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 14),
+      child: Center(
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: colors.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: colors.isDark
+                    ? Colors.black26
+                    : Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: colors.textPrimary,
+              size: 20,
+            ),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user?.uid != _streamUserId) {
+      _setupStream();
+    }
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) {
+        final colors = CareerHistoryColors(isDark: isDark);
+
+        return Scaffold(
+          backgroundColor: colors.pageBg,
+          appBar: AppBar(
+            backgroundColor: colors.pageBg,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            leading: _buildBackButton(context, colors),
+            title: Text(
+              'Career History',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          body: user == null
+              ? _empty(
+                  Icons.lock_outline_rounded,
+                  'Sign in required',
+                  'Please log in to view your career history.',
+                  colors,
+                )
+              : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _historyStream,
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData && !snapshot.hasError) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: colors.primary,
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return _empty(
+                        Icons.cloud_off_outlined,
+                        'Unable to load history',
+                        'Please check your connection and try again.',
+                        colors,
+                      );
+                    }
+
+                    final docs = [...?snapshot.data?.docs];
+
+                    docs.sort((a, b) {
+                      final aTime = a.data()['createdAt'];
+                      final bTime = b.data()['createdAt'];
+
+                      final aDate = aTime is Timestamp
+                          ? aTime.toDate()
+                          : DateTime(1970);
+                      final bDate = bTime is Timestamp
+                          ? bTime.toDate()
+                          : DateTime(1970);
+
+                      return _sort == 'Newest first'
+                          ? bDate.compareTo(aDate)
+                          : aDate.compareTo(bDate);
+                    });
+
+                    final query = _search.text.trim().toLowerCase();
+
+                    final filtered = docs.where((doc) {
+                      final data = doc.data();
+
+                      final careers = CareerStyle.careers(
+                        CareerStyle.field(data, 'recommendation', ''),
+                      );
+
+                      final careerNames = careers
+                          .map((c) => c['title']?.toString() ?? '')
+                          .join(' ');
+
+                      final searchText = [
+                        CareerStyle.field(data, 'careerGoal'),
+                        CareerStyle.field(data, 'education'),
+                        CareerStyle.field(data, 'skills'),
+                        CareerStyle.field(data, 'interests'),
+                        careerNames,
+                      ].join(' ').toLowerCase();
+
+                      return searchText.contains(query);
+                    }).toList();
+
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 780),
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+                          physics: const BouncingScrollPhysics(),
+                          children: [
+                            _hero(docs.length),
+                            const SizedBox(height: 25),
+                            CareerStyle.heading(
+                              'Saved Assessments',
+                              subtitle:
+                                  'Revisit your AI-powered career insights',
+                              colors: colors,
+                            ),
+                            const SizedBox(height: 16),
+                            _searchAndSort(colors),
+                            const SizedBox(height: 17),
+                            if (filtered.isEmpty)
+                              _emptyCard(docs.isEmpty, colors)
+                            else
+                              ...filtered.map(
+                                (doc) => _historyCard(
+                                  doc.id,
+                                  doc.data(),
+                                  colors,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        );
+      },
+    );
   }
 }
 
