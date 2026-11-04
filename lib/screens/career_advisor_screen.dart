@@ -937,6 +937,183 @@ class _CareerAdvisorScreenState extends State<CareerAdvisorScreen> {
       ],
     );
   }
+
+  // Step 12: Implement career recommendation card with tags and job navigation
+  Widget _careerCard({
+    required int number,
+    required String title,
+    required String why,
+    required List<dynamic> skills,
+    required List<dynamic> learning,
+    required List<dynamic> technologies,
+    required _AdvisorColors colors,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(19),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: colors.isDark
+                ? Colors.black26
+                : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 43,
+                height: 43,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colors.primary, colors.accent],
+                  ),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Text(
+                  '$number',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 19),
+          _detailTitle(
+              'Why this career suits you', Icons.lightbulb_outline, colors),
+          const SizedBox(height: 7),
+          Text(
+            why,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 13,
+              height: 1.65,
+            ),
+          ),
+          if (skills.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            _detailTitle(
+                'Skills to develop', Icons.psychology_outlined, colors),
+            const SizedBox(height: 10),
+            _tagList(skills, colors),
+          ],
+          if (learning.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            _detailTitle('Learning areas', Icons.menu_book_outlined, colors),
+            const SizedBox(height: 10),
+            _tagList(learning, colors),
+          ],
+          if (technologies.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            _detailTitle('Technologies', Icons.devices_outlined, colors),
+            const SizedBox(height: 10),
+            _tagList(technologies, colors),
+          ],
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => JobsScreen(career: title),
+                  ),
+                );
+              },
+              icon: Icon(Icons.search_rounded, size: 19, color: colors.primary),
+              label: Text(
+                'Explore related jobs',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: colors.primary,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.primary,
+                side: BorderSide(color: colors.accent.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailTitle(String title, IconData icon, _AdvisorColors colors) {
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: colors.primary),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tagList(List<dynamic> values, _AdvisorColors colors) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: values.map((value) {
+        return Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 11,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            color: colors.tagBg,
+            border: Border.all(color: colors.tagBorder),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Text(
+            value.toString(),
+            style: TextStyle(
+              color: colors.tagText,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
 }
+
 
 
