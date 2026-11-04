@@ -252,7 +252,6 @@ class CareerStyle {
 
 // Step 3: setup CareerHistoryScreen with Firestore real-time stream and lifecycle handlers
 
-
 class CareerHistoryScreen extends StatefulWidget {
   const CareerHistoryScreen({super.key});
 
@@ -288,68 +287,74 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+
   // Step 4: implement assessment deletion dialog with Firestore sync and snackbar notifications
-  Future<void> _deleteRecommendation(
-    String id,
-    CareerHistoryColors colors,
-  ) async {
+  Future<void> _deleteRecommendation(String id,
+      CareerHistoryColors colors,) async {
     if (_deleting) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: colors.cardBg,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(23),
-          side: BorderSide(color: colors.cardBorder),
-        ),
-        title: Row(
-          children: [
-            const Icon(
-              Icons.delete_outline_rounded,
-              color: Color(0xFFDC2626),
+      builder: (dialogContext) =>
+          AlertDialog(
+            backgroundColor: colors.cardBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(23),
+              side: BorderSide(color: colors.cardBorder),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Delete assessment?',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFDC2626),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Delete assessment?',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              'This saved career recommendation will be permanently deleted.',
+              style: TextStyle(
+                height: 1.5,
+                color: colors.textSecondary,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(color: colors.textSecondary),
                 ),
               ),
-            ),
-          ],
-        ),
-        content: Text(
-          'This saved career recommendation will be permanently deleted.',
-          style: TextStyle(
-            height: 1.5,
-            color: colors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: colors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text('Delete'),
               ),
-            ),
-            child: const Text('Delete'),
+            ],
           ),
-        ],
-      ),
     );
 
     if (confirmed != true || !mounted) return;
@@ -387,10 +392,5 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
         ),
       );
   }
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
 }
+
