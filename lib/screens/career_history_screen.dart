@@ -1376,3 +1376,273 @@ Widget _empty(
 }
 }
 
+//Add Step 10: implement CareerHistoryDetailScreen layout and user profile overview
+
+class CareerHistoryDetailScreen extends StatelessWidget {
+  final String education;
+  final String skills;
+  final String interests;
+  final String careerGoal;
+  final String recommendation;
+  final String date;
+
+  const CareerHistoryDetailScreen({
+    super.key,
+    required this.education,
+    required this.skills,
+    required this.interests,
+    required this.careerGoal,
+    required this.recommendation,
+    required this.date,
+  });
+
+  Widget _buildBackButton(BuildContext context, CareerHistoryColors colors) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 14),
+      child: Center(
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: colors.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: colors.isDark
+                    ? Colors.black26
+                    : Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: colors.textPrimary,
+              size: 20,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final result = CareerStyle.parse(recommendation);
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) {
+        final colors = CareerHistoryColors(isDark: isDark);
+
+        return Scaffold(
+          backgroundColor: colors.pageBg,
+          appBar: AppBar(
+            backgroundColor: colors.pageBg,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            leading: _buildBackButton(context, colors),
+            title: Text(
+              'Career Recommendation',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 780),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _detailHero(),
+                  const SizedBox(height: 25),
+                  CareerStyle.heading(
+                    'Your Profile',
+                    subtitle: 'Information used for your assessment',
+                    colors: colors,
+                  ),
+                  const SizedBox(height: 14),
+                  _profileCard(colors),
+                  const SizedBox(height: 25),
+                  CareerStyle.heading(
+                    'AI Career Insights',
+                    subtitle: 'Your personalized career recommendations',
+                    colors: colors,
+                  ),
+                  const SizedBox(height: 14),
+                  if (result != null)
+                    _structuredResult(result, colors)
+                  else
+                    _panel(
+                      colors: colors,
+                      child: SelectableText(
+                        recommendation.isEmpty
+                            ? 'Recommendation unavailable.'
+                            : recommendation,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 13.5,
+                          height: 1.7,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _detailHero() {
+    return Container(
+      padding: const EdgeInsets.all(23),
+      decoration: CareerStyle.gradient(radius: 27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.28),
+                width: 1.2,
+              ),
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 29,
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Your Career Blueprint',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 25,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 9),
+          const Text(
+            'Explore your strengths, discover career paths and plan your next steps.',
+            style: TextStyle(
+              color: Color(0xFFD1FAE5),
+              fontSize: 12.5,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              const Icon(
+                Icons.calendar_today_outlined,
+                color: Colors.white,
+                size: 15,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  date,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _panel({required Widget child, required CareerHistoryColors colors}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(19),
+      decoration: CareerStyle.card(radius: 21, colors: colors),
+      child: child,
+    );
+  }
+
+  Widget _profileCard(CareerHistoryColors colors) {
+    return _panel(
+      colors: colors,
+      child: Column(
+        children: [
+          _profileRow(Icons.school_outlined, 'Education', education, colors),
+          Divider(height: 27, color: colors.cardBorder),
+          _profileRow(Icons.code_rounded, 'Skills', skills, colors),
+          Divider(height: 27, color: colors.cardBorder),
+          _profileRow(
+            Icons.favorite_border_rounded,
+            'Interests',
+            interests,
+            colors,
+          ),
+          Divider(height: 27, color: colors.cardBorder),
+          _profileRow(Icons.flag_outlined, 'Career Goal', careerGoal, colors),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileRow(
+    IconData icon,
+    String label,
+    String value,
+    CareerHistoryColors colors,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CareerStyle.iconBox(icon, colors: colors, size: 42),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                value,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+
