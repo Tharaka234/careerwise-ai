@@ -1276,3 +1276,103 @@ Widget _previewField(
     ],
   );
 }
+
+//Add Step 9: implement responsive empty state widgets and error feedback
+Widget _emptyCard(bool noHistory, CareerHistoryColors colors) {
+  return Container(
+    padding: const EdgeInsets.symmetric(
+      horizontal: 22,
+      vertical: 43,
+    ),
+    decoration: CareerStyle.card(radius: 22, colors: colors),
+    child: Column(
+      children: [
+        CareerStyle.iconBox(
+          noHistory
+              ? Icons.history_edu_rounded
+              : Icons.search_off_rounded,
+          colors: colors,
+          size: 78,
+        ),
+        const SizedBox(height: 20),
+        Text(
+          noHistory
+              ? 'No Career History Yet'
+              : 'No Matching Assessments',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 19,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          noHistory
+              ? 'Generate your first AI career recommendation to start building your career journey.'
+              : 'Try another search to find your saved recommendations.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 12.5,
+            height: 1.6,
+          ),
+        ),
+        const SizedBox(height: 22),
+        CareerStyle.button(
+          label: noHistory ? 'Get Career Advice' : 'Clear Search',
+          icon: noHistory
+              ? Icons.auto_awesome_rounded
+              : Icons.refresh_rounded,
+          onPressed: () {
+            if (noHistory) {
+              Navigator.maybePop(context);
+            } else {
+              _search.clear();
+              setState(() {});
+            }
+          },
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _empty(
+    IconData icon,
+    String title,
+    String message,
+    CareerHistoryColors colors,
+    ) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(30),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CareerStyle.iconBox(icon, colors: colors, size: 76),
+          const SizedBox(height: 18),
+          Text(
+            title,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 9),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+}
+
