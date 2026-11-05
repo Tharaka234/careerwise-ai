@@ -1042,3 +1042,237 @@ class _CareerHistoryScreenState extends State<CareerHistoryScreen> {
     );
   }
 }
+//Add Step 8: implement assessment history card with career preview and navigation
+Widget _historyCard(
+    String id,
+    Map<String, dynamic> data,
+    CareerHistoryColors colors,
+    ) {
+  final education = CareerStyle.field(data, 'education');
+  final skills = CareerStyle.field(data, 'skills');
+  final interests = CareerStyle.field(data, 'interests');
+  final goal = CareerStyle.field(data, 'careerGoal');
+  final recommendation = CareerStyle.field(data, 'recommendation', '');
+
+  final timestamp = data['createdAt'] is Timestamp
+      ? data['createdAt'] as Timestamp
+      : null;
+
+  final careers = CareerStyle.careers(recommendation);
+
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: CareerStyle.card(radius: 23, colors: colors),
+    child: Padding(
+      padding: const EdgeInsets.all(19),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CareerStyle.iconBox(
+                Icons.auto_awesome_rounded,
+                colors: colors,
+                size: 52,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Career Analysis',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'Personalized career assessment',
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Delete assessment',
+                onPressed: _deleting
+                    ? null
+                    : () => _deleteRecommendation(id, colors),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today_outlined,
+                color: colors.textSecondary,
+                size: 15,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  CareerStyle.date(timestamp),
+                  style: TextStyle(
+                    color: colors.textSecondary,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(height: 1, color: colors.cardBorder),
+          const SizedBox(height: 16),
+          _previewField(
+            Icons.flag_outlined,
+            'Career Goal',
+            goal,
+            colors,
+          ),
+          const SizedBox(height: 13),
+          _previewField(
+            Icons.school_outlined,
+            'Education',
+            education,
+            colors,
+          ),
+          if (careers.isNotEmpty) ...[
+            const SizedBox(height: 19),
+            Text(
+              'Recommended Career Paths',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...careers.take(3).toList().asMap().entries.map(
+                  (entry) {
+                final title = CareerStyle.field(
+                  entry.value,
+                  'title',
+                  'Career',
+                );
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.tagBg,
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(color: colors.tagBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 15,
+                        backgroundColor: colors.primary,
+                        child: Text(
+                          '${entry.key + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 11),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.north_east_rounded,
+                        color: colors.primary,
+                        size: 17,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+          const SizedBox(height: 15),
+          CareerStyle.button(
+            label: 'View Full Recommendation',
+            icon: Icons.arrow_forward_rounded,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CareerHistoryDetailScreen(
+                    education: education,
+                    skills: skills,
+                    interests: interests,
+                    careerGoal: goal,
+                    recommendation: recommendation,
+                    date: CareerStyle.date(timestamp),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _previewField(
+    IconData icon,
+    String label,
+    String value,
+    CareerHistoryColors colors,
+    ) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, color: colors.primary, size: 19),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
