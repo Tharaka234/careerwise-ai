@@ -1645,4 +1645,344 @@ class CareerHistoryDetailScreen extends StatelessWidget {
     );
   }
 
+//Add Step 11: implement structured AI career insights, career path cards, and action plan viewer
 
+  Widget _structuredResult(
+      Map<String, dynamic> result,
+      CareerHistoryColors colors,
+      ) {
+    final careers = CareerStyle.list(result['careers']);
+    final strengths = CareerStyle.list(result['strengths']);
+    final actionPlan = CareerStyle.list(result['actionPlan']);
+    final tools = CareerStyle.list(result['tools']);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (careers.isNotEmpty) ...[
+          ...careers.asMap().entries.map((entry) {
+            if (entry.value is! Map) {
+              return const SizedBox.shrink();
+            }
+
+            final career = Map<String, dynamic>.from(
+              entry.value as Map,
+            );
+
+            return _careerCard(entry.key + 1, career, colors);
+          }),
+        ],
+        if (strengths.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          CareerStyle.heading('Your Strengths', colors: colors),
+          const SizedBox(height: 13),
+          _panel(
+            colors: colors,
+            child: Column(
+              children: strengths
+                  .map(
+                    (item) => _bullet(
+                  item.toString(),
+                  Icons.check_circle_outline_rounded,
+                  colors.primary,
+                  colors,
+                ),
+              )
+                  .toList(),
+            ),
+          ),
+        ],
+        if (actionPlan.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          CareerStyle.heading(
+            'Your Action Plan',
+            subtitle: 'Practical steps toward your career goals',
+            colors: colors,
+          ),
+          const SizedBox(height: 13),
+          _panel(
+            colors: colors,
+            child: Column(
+              children: actionPlan.asMap().entries.map((entry) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 13),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 15,
+                        backgroundColor: colors.tagBg,
+                        child: Text(
+                          '${entry.key + 1}',
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          entry.value.toString(),
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 13,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+        if (tools.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          CareerStyle.heading('Recommended Tools', colors: colors),
+          const SizedBox(height: 13),
+          _panel(
+            colors: colors,
+            child: Column(
+              children: tools
+                  .map(
+                    (tool) => _bullet(
+                  tool.toString(),
+                  Icons.build_outlined,
+                  colors.primary,
+                  colors,
+                ),
+              )
+                  .toList(),
+            ),
+          ),
+        ],
+        if (careers.isEmpty &&
+            strengths.isEmpty &&
+            actionPlan.isEmpty &&
+            tools.isEmpty)
+          _panel(
+            colors: colors,
+            child: SelectableText(
+              const JsonEncoder.withIndent('  ').convert(result),
+              style: TextStyle(
+                color: colors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _careerCard(
+      int number,
+      Map<String, dynamic> career,
+      CareerHistoryColors colors,
+      ) {
+    final title = CareerStyle.field(
+      career,
+      'title',
+      'Career Path',
+    );
+
+    final whySuitable = CareerStyle.field(
+      career,
+      'whySuitable',
+      '',
+    );
+
+    final skills = CareerStyle.list(
+      career['skillsToDevelop'],
+    );
+
+    final learningAreas = CareerStyle.list(
+      career['learningAreas'],
+    );
+
+    final technologies = CareerStyle.list(
+      career['technologies'],
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: CareerStyle.card(radius: 22, colors: colors),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: colors.tagBg,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(22),
+              ),
+              border: Border(
+                bottom: BorderSide(color: colors.cardBorder),
+              ),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: colors.primary,
+                  child: Text(
+                    '$number',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.auto_awesome_rounded,
+                  color: colors.primary,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(19),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (whySuitable.isNotEmpty) ...[
+                  _miniHeading(
+                    Icons.lightbulb_outline_rounded,
+                    'Why This Career Fits You',
+                    colors,
+                  ),
+                  const SizedBox(height: 9),
+                  Text(
+                    whySuitable,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 13,
+                      height: 1.7,
+                    ),
+                  ),
+                ],
+                if (skills.isNotEmpty)
+                  _careerList(
+                    'Skills to Develop',
+                    Icons.code_rounded,
+                    skills,
+                    colors,
+                  ),
+                if (learningAreas.isNotEmpty)
+                  _careerList(
+                    'Learning Areas',
+                    Icons.menu_book_outlined,
+                    learningAreas,
+                    colors,
+                  ),
+                if (technologies.isNotEmpty)
+                  _careerList(
+                    'Technologies',
+                    Icons.computer_rounded,
+                    technologies,
+                    colors,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _careerList(
+      String title,
+      IconData icon,
+      List<dynamic> items,
+      CareerHistoryColors colors,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _miniHeading(icon, title, colors),
+          const SizedBox(height: 10),
+          ...items.map(
+                (item) => _bullet(
+              item.toString(),
+              Icons.check_circle_outline_rounded,
+              colors.primary,
+              colors,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniHeading(
+      IconData icon,
+      String title,
+      CareerHistoryColors colors,
+      ) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          color: colors.primary,
+          size: 19,
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _bullet(
+      String text,
+      IconData icon,
+      Color color,
+      CareerHistoryColors colors,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 12.5,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
