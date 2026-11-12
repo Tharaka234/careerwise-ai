@@ -500,4 +500,122 @@ class _JobsScreenState extends State<JobsScreen> {
       ),
     );
   }
+//Add Step 7: implement interactive search bar and horizontal job type filter chips
+
+  Widget _buildSearchBar(_JobsColors colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: colors.cardBorder,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                .withValues(alpha: colors.isDark ? 0.3 : 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 14,
+        ),
+        onChanged: (value) {
+          setState(() => _searchQuery = value);
+        },
+        decoration: InputDecoration(
+          hintText: 'Search jobs, companies, locations...',
+          hintStyle: TextStyle(
+            color: colors.textMuted,
+            fontSize: 13,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: colors.primary,
+            size: 24,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.close_rounded, color: colors.textMuted),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 16,
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildFilterHeader(_JobsColors colors) {
+    return Row(
+      children: [
+        Icon(
+          Icons.tune_rounded,
+          color: colors.primary,
+          size: 19,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Filter by job type',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14.5,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilters(_JobsColors colors) {
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _jobTypes.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final type = _jobTypes[index];
+          final selected = _selectedType == type;
+
+          return ChoiceChip(
+            label: Text(type),
+            selected: selected,
+            showCheckmark: false,
+            selectedColor: colors.primary,
+            backgroundColor: colors.cardBg,
+            side: BorderSide(
+              color: selected ? colors.primary : colors.cardBorder,
+              width: 1.2,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(13),
+            ),
+            labelStyle: TextStyle(
+              color: selected ? Colors.white : colors.textSecondary,
+              fontWeight: FontWeight.w700,
+              fontSize: 11.5,
+            ),
+            onSelected: (_) {
+              setState(() => _selectedType = type);
+            },
+          );
+        },
+      ),
+    );
+  }
 }
