@@ -280,3 +280,224 @@ class _JobsScreenState extends State<JobsScreen> {
       },
     );
   }
+//Add Step 6: implement custom top navigation bar and emerald gradient hero banner
+
+
+  Widget _buildTopBar(_JobsColors colors) {
+    return Container(
+      color: colors.pageBg,
+      padding: const EdgeInsets.fromLTRB(14, 8, 16, 8),
+      child: Row(
+        children: [
+          // Back button
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colors.cardBg,
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: colors.cardBorder, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                      .withValues(alpha: colors.isDark ? 0.3 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.maybePop(context),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Text(
+              _isCareerFiltered ? 'Related Opportunities' : 'Available Jobs',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+
+          // Briefcase Icon Box
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: colors.cardBg,
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: colors.cardBorder, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                      .withValues(alpha: colors.isDark ? 0.3 : 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.work_outline_rounded,
+              color: colors.primary,
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  Widget _buildHero(int count, _JobsColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors.isDark
+              ? const [
+                  Color(0xFF03442C),
+                  Color(0xFF065F46),
+                  Color(0xFF047857),
+                ]
+              : const [
+                  Color(0xFF047857),
+                  Color(0xFF059669),
+                  Color(0xFF10B981),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: colors.isDark ? 0.35 : 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -35,
+            top: -48,
+            child: Container(
+              width: 145,
+              height: 145,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Color(0xFFFDE68A),
+                      size: 14,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'YOUR CAREER STARTS HERE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        letterSpacing: 0.6,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                _isCareerFiltered
+                    ? 'Explore jobs for\n${widget.career}'
+                    : 'Find your next\nbig opportunity.',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                  height: 1.17,
+                  letterSpacing: -0.6,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Discover opportunities and take the next step in your career journey.',
+                style: TextStyle(
+                  color: Color(0xFFE2FBEA),
+                  fontSize: 12.5,
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(13),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.work_outline_rounded,
+                      color: Colors.white,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$count available ${count == 1 ? 'job' : 'jobs'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
