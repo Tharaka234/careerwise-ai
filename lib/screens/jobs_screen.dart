@@ -879,4 +879,135 @@ class _JobsScreenState extends State<JobsScreen> {
       ),
     );
   }
+//Add Step 9: implement responsive empty, loading, and error state widgets
+
+  Widget _buildEmpty(bool noJobsAtAll, _JobsColors colors) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 45),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: colors.iconBoxBg,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Icon(
+              Icons.search_off_rounded,
+              color: colors.primary,
+              size: 36,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            noJobsAtAll ? 'No jobs available yet' : 'No matching jobs found',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            noJobsAtAll
+                ? 'New opportunities will appear here when they are posted.'
+                : 'Try another keyword or change your job type filter.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 12.5,
+              height: 1.5,
+            ),
+          ),
+          if (!noJobsAtAll) ...[
+            const SizedBox(height: 18),
+            TextButton.icon(
+              onPressed: () {
+                _searchController.clear();
+                setState(() {
+                  _searchQuery = '';
+                  _selectedType = 'All';
+                });
+              },
+              icon: Icon(Icons.refresh_rounded, color: colors.primary),
+              label: Text(
+                'Clear filters',
+                style: TextStyle(
+                  color: colors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+          if (noJobsAtAll && _isCareerFiltered) ...[
+            const SizedBox(height: 18),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const JobsScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Explore all jobs'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoading(_JobsColors colors) {
+    return Center(
+      child: CircularProgressIndicator(color: colors.primary),
+    );
+  }
+
+  Widget _buildError(String error, _JobsColors colors) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 58,
+              color: Color(0xFFEF4444),
+            ),
+            const SizedBox(height: 15),
+            Text(
+              'Unable to load jobs',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 12.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
