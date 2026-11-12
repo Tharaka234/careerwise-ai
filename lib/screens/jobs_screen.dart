@@ -78,3 +78,56 @@ void dispose() {
 _searchController.dispose();
 super.dispose();
 }
+
+//Add Step 3: implement multi-criteria job filtering, sorting logic, and details navigation
+List<Job> _filterJobs(List<Job> jobs) {
+final query = _searchQuery.trim().toLowerCase();
+
+final filtered = jobs.where((job) {
+final searchableText = [
+job.title,
+job.company,
+job.location,
+job.description,
+job.jobType,
+].join(' ').toLowerCase();
+
+final matchesSearch =
+query.isEmpty || searchableText.contains(query);
+
+final type = job.jobType.trim().toLowerCase();
+
+final matchesType = _selectedType == 'All' ||
+type == _selectedType.toLowerCase() ||
+(_selectedType == 'Full Time' &&
+(type == 'full-time' || type == 'fulltime')) ||
+(_selectedType == 'Part Time' &&
+(type == 'part-time' || type == 'parttime')) ||
+(_selectedType == 'Remote' &&
+(type.contains('remote') ||
+job.location.toLowerCase().contains('remote')));
+
+return matchesSearch && matchesType;
+}).toList();
+
+if (_sortBy == 'Title A-Z') {
+filtered.sort(
+(a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+);
+} else if (_sortBy == 'Company A-Z') {
+filtered.sort(
+(a, b) => a.company.toLowerCase().compareTo(b.company.toLowerCase()),
+);
+}
+
+return filtered;
+}
+
+void _openJob(Job job) {
+Navigator.push(
+context,
+MaterialPageRoute(
+builder: (_) => JobDetailsScreen(job: job),
+),
+);
+}
