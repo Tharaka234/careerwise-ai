@@ -39,3 +39,42 @@ class _JobsColors {
   // Icon Boxes & Badges
   Color get iconBoxBg => isDark ? const Color(0x3310B981) : const Color(0x1F059669);
 }
+
+//Add Step 2: setup JobsScreen state variables, controllers, and lifecycle handlers
+class JobsScreen extends StatefulWidget {
+  final String? career;
+
+  const JobsScreen({
+    super.key,
+    this.career,
+  });
+
+  @override
+  State<JobsScreen> createState() => _JobsScreenState();
+}
+
+class _JobsScreenState extends State<JobsScreen> {
+final JobService _jobService = JobService();
+final TextEditingController _searchController = TextEditingController();
+
+String _searchQuery = '';
+String _selectedType = 'All';
+String _sortBy = 'Default';
+
+final List<String> _jobTypes = [
+'All',
+'Full Time',
+'Part Time',
+'Internship',
+'Contract',
+'Remote',
+];
+
+bool get _isCareerFiltered =>
+widget.career != null && widget.career!.trim().isNotEmpty;
+
+@override
+void dispose() {
+_searchController.dispose();
+super.dispose();
+}
