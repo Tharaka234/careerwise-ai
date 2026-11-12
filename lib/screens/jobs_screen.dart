@@ -618,4 +618,265 @@ class _JobsScreenState extends State<JobsScreen> {
       ),
     );
   }
+//Add Step 8: implement results header and detailed interactive job card component
+
+
+  Widget _buildResultsHeader(int count, _JobsColors colors) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'Explore opportunities',
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
+        Text(
+          '$count results',
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(width: 6),
+        IconButton(
+          onPressed: () => _showSortOptions(colors),
+          tooltip: 'Sort jobs',
+          icon: Icon(
+            Icons.sort_rounded,
+            color: colors.primary,
+            size: 22,
+          ),
+        ),
+      ],
+    );
+  }
+
+
+
+  Widget _buildJobCard(Job job, _JobsColors colors) {
+    final jobType = job.jobType.trim();
+    final salary = job.salary.trim();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colors.cardBorder,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                .withValues(alpha: colors.isDark ? 0.3 : 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: () => _openJob(job),
+          borderRadius: BorderRadius.circular(20),
+          mouseCursor: SystemMouseCursors.click,
+          splashColor: colors.primary.withValues(alpha: 0.1),
+          child: Padding(
+            padding: const EdgeInsets.all(17),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon Box
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: colors.iconBoxBg,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.business_center_rounded,
+                        color: colors.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.title,
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              height: 1.25,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            job.company,
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Top-right action arrow
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(
+                          alpha: colors.isDark ? 0.16 : 0.08,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: colors.primary.withValues(
+                            alpha: colors.isDark ? 0.25 : 0.2,
+                          ),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.arrow_outward_rounded,
+                        color: colors.primary,
+                        size: 16,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      color: colors.textMuted,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        job.location,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                if (jobType.isNotEmpty || salary.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (jobType.isNotEmpty)
+                        _infoChip(
+                          Icons.schedule_outlined,
+                          jobType,
+                          colors.primary,
+                          colors,
+                        ),
+                      if (salary.isNotEmpty)
+                        _infoChip(
+                          Icons.payments_outlined,
+                          salary,
+                          colors.isDark
+                              ? const Color(0xFF34D399)
+                              : const Color(0xFF047857),
+                          colors,
+                        ),
+                    ],
+                  ),
+                ],
+
+                const SizedBox(height: 14),
+
+                Divider(
+                  height: 1,
+                  color: colors.cardBorder,
+                ),
+
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Text(
+                      'View job details',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: colors.primary,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoChip(
+    IconData icon,
+    String label,
+    Color color,
+    _JobsColors colors,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: colors.isDark ? 0.2 : 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
