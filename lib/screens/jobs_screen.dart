@@ -131,3 +131,80 @@ builder: (_) => JobDetailsScreen(job: job),
 ),
 );
 }
+
+//Add Step 4: implement interactive sort options modal bottom sheet
+
+void _showSortOptions(_JobsColors colors) {
+showModalBottomSheet(
+context: context,
+backgroundColor: Colors.transparent,
+builder: (sheetContext) {
+return SafeArea(
+child: Container(
+padding: const EdgeInsets.all(22),
+decoration: BoxDecoration(
+color: colors.cardBg,
+borderRadius: const BorderRadius.vertical(
+top: Radius.circular(28),
+),
+border: Border.all(color: colors.cardBorder),
+),
+child: Column(
+mainAxisSize: MainAxisSize.min,
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Center(
+child: Container(
+width: 42,
+height: 4,
+decoration: BoxDecoration(
+color: colors.cardBorder,
+borderRadius: BorderRadius.circular(20),
+),
+),
+),
+const SizedBox(height: 22),
+Text(
+'Sort Opportunities',
+style: TextStyle(
+fontSize: 20,
+fontWeight: FontWeight.w800,
+color: colors.textPrimary,
+),
+),
+const SizedBox(height: 14),
+...[
+'Default',
+'Title A-Z',
+'Company A-Z',
+].map((option) {
+final selected = _sortBy == option;
+
+return ListTile(
+contentPadding: EdgeInsets.zero,
+title: Text(
+option,
+style: TextStyle(
+fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+color: selected ? colors.primary : colors.textPrimary,
+),
+),
+trailing: selected
+? Icon(
+Icons.check_circle_rounded,
+color: colors.primary,
+)
+: null,
+onTap: () {
+setState(() => _sortBy = option);
+Navigator.pop(sheetContext);
+},
+);
+}),
+],
+),
+),
+);
+},
+);
+}
