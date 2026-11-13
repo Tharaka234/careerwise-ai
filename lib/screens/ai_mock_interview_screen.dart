@@ -460,4 +460,156 @@ Return ONLY a JSON object with exactly this structure:
 
     _answerController.text = _answers[_currentIndex];
   }
+  // Step 5: Implement interview evaluation engine and Firestore persistence
+  Future<void> _finishInterview() async {
+    if (_submitting || _saving) return;
+
+    if (_answers.length != _questions.length) {
+      setState(() {
+        _error = 'Please answer all interview questions.';
+      });
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _error = null;
+    });
+
+    try {
+      final responses = List.generate(
+        _questions.length,
+        (index) => {
+          'question': _questions[index],
+          'answer': _answers[index],
+        },
+      );
+
+      final result = await _askGemini('''
+You are a professional AI interview practice evaluator.
+
+Job title: ${widget.jobTitle}
+
+Evaluate these mock interview responses:
+
+${jsonEncode(responses)}
+
+Give fair, practical, constructive feedback.
+
+Evaluate:
+- Relevance of each answer
+- Technical understanding where applicable
+- Problem-solving ability shown in the answers
+- Clarity and completeness
+
+The score is a practice estimate, not a hiring prediction.
+Do not infer protected or sensitive personal traits.
+
+Return ONLY valid JSON:
+
+{
+  "score": 75,
+  "summary": "Overall assessment of the interview",
+  "strengths": [
+    "Strength 1",
+    "Strength 2"
+  ],
+  "improvements": [
+    "Improvement 1",
+    "Improvement 2"
+  ],
+  "tips": [
+    "Preparation tip 1",
+    "Preparation tip 2"
+  ]
+}
+
+Score must be an integer from 0 to 100.
+''');
+
+      final rawScore = result['score'];
+
+      final parsedScore = rawScore is num
+          ? rawScore.toInt()
+          : int.tryParse(rawScore.toString()) ?? 0;
+
+      result['score'] = parsedScore.clamp(0, 100).toInt();
+
+      if (!mounted) return;
+
+      setState(() {
+        _feedback = result;
+        _submitting = false;
+        _error = null;
+      });
+
+      await _saveInterview();
+    } catch (e) {
+      debugPrint('Interview evaluation error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _submitting = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _saveInterview() async {
+    if (_saving || _feedback == null) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      setState(() {
+        _saveError = 'Please sign in again to save results.';
+      });
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
+
+    try {
+      final responses = List.generate(
+        _questions.length,
+        (index) => {
+          'question': _questions[index],
+          'answer': _answers[index],
+        },
+      );
+
+      await FirebaseFirestore.instance
+          .collection('mock_interviews')
+          .add({
+        'userId': user.uid,
+        'applicationId': widget.applicationId,
+        'jobTitle': widget.jobTitle,
+        'company': widget.company,
+        'questions': responses,
+        'feedback': _feedback,
+        'score': _feedback!['score'],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+
+      setState(() {
+        _saving = false;
+        _saveError = null;
+      });
+    } catch (e) {
+      debugPrint('Firestore interview save error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _saving = false;
+        _saveError = 'Could not save interview: $e';
+      });
+    }
+  }
 }
