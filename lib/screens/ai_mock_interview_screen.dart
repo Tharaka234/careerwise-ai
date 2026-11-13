@@ -319,4 +319,145 @@ class _AIMockInterviewScreenState extends State<AIMockInterviewScreen> {
     return '${minutes.toString().padLeft(2, '0')}:'
         '${remaining.toString().padLeft(2, '0')}';
   }
+
+  // Step 4: Implement question generation via Gemini and answer navigation handlers
+  Future<void> _generateQuestions() async {
+    if (_loading && _questions.isNotEmpty) return;
+    _stopQuestionTimer();
+    setState(() {
+      _loading = true;
+      _error = null;
+      _feedback = null;
+      _questions = [];
+      _answers.clear();
+      _currentIndex = 0;
+      _answerController.clear();
+
+      _remainingSeconds = _questionDuration;
+      _timeExpired = false;
+    });
+
+    try {
+      final result = await _askGemini('''
+You are an experienced professional interview coach.
+
+Job title: ${widget.jobTitle}
+Company: ${widget.company}
+
+Generate exactly five realistic mock interview questions
+for a university student or early-career job applicant.
+
+Requirements:
+- Include technical or role-specific questions.
+- Include a problem-solving question.
+- Include a behavioral question.
+- Make questions clear and concise.
+- Do not claim knowledge of the company's actual interview process.
+
+Return ONLY a JSON object with exactly this structure:
+
+{
+  "questions": [
+    "Question 1",
+    "Question 2",
+    "Question 3",
+    "Question 4",
+    "Question 5"
+  ]
+}
+''');
+
+      final rawQuestions = result['questions'];
+
+      if (rawQuestions is! List) {
+        throw Exception('Invalid interview questions format.');
+      }
+
+      final questions = rawQuestions
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty)
+          .toList();
+
+      if (questions.length != 5) {
+        throw Exception(
+          'AI did not generate exactly 5 questions. Retry.',
+        );
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _questions = questions;
+        _loading = false;
+        _error = null;
+      });
+      _startQuestionTimer();
+    } catch (e) {
+      debugPrint('Interview question error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _nextQuestion() async {
+    if (_loading || _submitting || _saving) return;
+    if (_questions.isEmpty) return;
+
+    final answer = _answerController.text.trim();
+
+    if (answer.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your answer.'),
+        ),
+      );
+      return;
+    }
+
+    if (_answers.length > _currentIndex) {
+      _answers[_currentIndex] = answer;
+    } else {
+      _answers.add(answer);
+    }
+
+    if (_currentIndex < _questions.length - 1) {
+      setState(() {
+        _currentIndex++;
+        _error = null;
+      });
+
+      // Restore previous answer when navigating forward
+      _answerController.text =
+          _currentIndex < _answers.length
+              ? _answers[_currentIndex]
+              : '';
+    } else {
+      await _finishInterview();
+    }
+  }
+
+  void _previousQuestion() {
+    if (_currentIndex == 0 || _loading || _submitting) return;
+
+    final currentAnswer = _answerController.text.trim();
+
+    // Save current draft before going back
+    if (_answers.length > _currentIndex) {
+      _answers[_currentIndex] = currentAnswer;
+    } else {
+      _answers.add(currentAnswer);
+    }
+
+    setState(() {
+      _currentIndex--;
+      _error = null;
+    });
+
+    _answerController.text = _answers[_currentIndex];
+  }
 }
