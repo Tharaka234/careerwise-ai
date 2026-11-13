@@ -612,4 +612,97 @@ Score must be an integer from 0 to 100.
       });
     }
   }
+  // Step 6: Implement responsive scaffold, loading state, and error handling views
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: background,
+      appBar: AppBar(
+        title: const Text('AI Interview Coach'),
+        backgroundColor: background,
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: _loading || _submitting
+                ? _loadingView()
+                : _feedback != null
+                ? _resultView()
+                : _error != null && _questions.isEmpty
+                ? _errorView()
+                : _questionView(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _loadingView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const CircularProgressIndicator(color: primary),
+        const SizedBox(height: 24),
+        Text(
+          _submitting
+              ? 'Evaluating your interview...'
+              : 'Preparing your interview questions...',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: dark,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _submitting
+              ? 'Generating your score and feedback'
+              : 'Creating questions for ${widget.jobTitle}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Widget _errorView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(
+          Icons.error_outline,
+          size: 56,
+          color: Colors.redAccent,
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'Unable to prepare interview',
+          style: TextStyle(
+            fontSize: 21,
+            fontWeight: FontWeight.bold,
+            color: dark,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _error ?? 'Something went wrong.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.black87),
+        ),
+        const SizedBox(height: 22),
+        ElevatedButton.icon(
+          onPressed: _generateQuestions,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Try Again'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
 }
