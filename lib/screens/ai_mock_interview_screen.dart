@@ -230,4 +230,93 @@ class _AIMockInterviewScreenState extends State<AIMockInterviewScreen> {
       );
     }
   }
+
+  // Step 3: Implement countdown question timer with auto-tick and formatting
+  void _startQuestionTimer() {
+    _questionTimer?.cancel();
+    _questionTimer = null;
+    _timerDeadline = null;
+
+    if (!_timerEnabled || _feedback != null) {
+      return;
+    }
+
+    _timerDeadline = DateTime.now().add(
+      const Duration(seconds: _questionDuration),
+    );
+
+    _questionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        final deadline = _timerDeadline;
+
+        if (deadline == null) {
+          timer.cancel();
+          return;
+        }
+
+        final milliseconds = deadline
+            .difference(DateTime.now())
+            .inMilliseconds;
+
+        final remaining = milliseconds <= 0
+            ? 0
+            : (milliseconds / 1000).ceil();
+
+        setState(() {
+          _remainingSeconds = remaining;
+          _timeExpired = remaining == 0;
+        });
+
+        if (remaining == 0) {
+          timer.cancel();
+        }
+      },
+    );
+  }
+
+  void _resetQuestionTimer() {
+    _questionTimer?.cancel();
+    _timerDeadline = null;
+
+    setState(() {
+      _remainingSeconds = _questionDuration;
+      _timeExpired = false;
+    });
+
+    _startQuestionTimer();
+  }
+
+  void _stopQuestionTimer() {
+    _questionTimer?.cancel();
+    _questionTimer = null;
+    _timerDeadline = null;
+  }
+
+  void _toggleQuestionTimer(bool enabled) {
+    _stopQuestionTimer();
+
+    setState(() {
+      _timerEnabled = enabled;
+      _remainingSeconds = _questionDuration;
+      _timeExpired = false;
+    });
+
+    if (enabled && !_loading && !_submitting) {
+      _startQuestionTimer();
+    }
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remaining = seconds % 60;
+
+    return '${minutes.toString().padLeft(2, '0')}:'
+        '${remaining.toString().padLeft(2, '0')}';
+  }
 }
