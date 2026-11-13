@@ -81,4 +81,153 @@ class _AIMockInterviewScreenState extends State<AIMockInterviewScreen> {
     _answerController.dispose();
     super.dispose();
   }
+
+  // Step 2: Implement Gemini API client with JSON generation and robust error handling
+  Future<Map<String, dynamic>> _askGemini(String prompt) async {
+    if (_apiKey.trim().isEmpty) {
+      throw Exception(
+        'Gemini API key is missing. '
+            'Check Android Studio Run Configuration.',
+      );
+    }
+
+    final uri = Uri.https(
+      'generativelanguage.googleapis.com',
+      '/v1beta/models/$_model:generateContent',
+    );
+
+    http.Response response;
+
+    try {
+      response = await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': _apiKey.trim(),
+        },
+        body: jsonEncode({
+          'contents': [
+            {
+              'role': 'user',
+              'parts': [
+                {'text': prompt},
+              ],
+            },
+          ],
+          'generationConfig': {
+            'temperature': 0.3,
+            'maxOutputTokens': 2048,
+            'responseMimeType': 'application/json',
+          },
+        }),
+      ).timeout(const Duration(seconds: 120));
+    } on TimeoutException {
+      throw Exception(
+        'Gemini request timed out. '
+            'Please check your internet connection and retry.',
+      );
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: ${e.message}');
+    }
+
+    if (response.statusCode != 200) {
+      String apiMessage = 'Unknown API error';
+
+      try {
+        final errorJson = jsonDecode(response.body);
+        apiMessage =
+            errorJson['error']?['message']?.toString() ??
+                apiMessage;
+      } catch (_) {
+        // Keep fallback message.
+      }
+
+      switch (response.statusCode) {
+        case 400:
+          throw Exception(
+            'Invalid Gemini request: $apiMessage',
+          );
+        case 401:
+        case 403:
+          throw Exception(
+            'Gemini API access denied: $apiMessage',
+          );
+        case 404:
+          throw Exception(
+            'Gemini model "$_model" was not found '
+                'or is unavailable: $apiMessage',
+          );
+        case 429:
+          throw Exception(
+            'Gemini API quota exceeded. '
+                'Please try again later. $apiMessage',
+          );
+        default:
+          throw Exception(
+            'Gemini API error (${response.statusCode}): '
+                '$apiMessage',
+          );
+      }
+    }
+
+    dynamic responseJson;
+
+    try {
+      responseJson = jsonDecode(response.body);
+    } on FormatException {
+      throw Exception('Gemini returned invalid response data.');
+    }
+
+    if (responseJson is! Map<String, dynamic>) {
+      throw Exception('Unexpected Gemini response.');
+    }
+
+    final candidates = responseJson['candidates'];
+
+    if (candidates is! List || candidates.isEmpty) {
+      throw Exception('Gemini returned no candidates.');
+    }
+
+    final candidate = candidates.first;
+
+    if (candidate is! Map) {
+      throw Exception('Invalid Gemini candidate.');
+    }
+
+    final content = candidate['content'];
+
+    if (content is! Map || content['parts'] is! List) {
+      throw Exception(
+        'Gemini did not return text. '
+            'Please try again.',
+      );
+    }
+
+    final parts = content['parts'] as List;
+
+    final text = parts
+        .whereType<Map>()
+        .map((part) => part['text']?.toString() ?? '')
+        .join()
+        .trim();
+
+    if (text.isEmpty) {
+      throw Exception('Gemini returned empty text.');
+    }
+
+    try {
+      final decoded = jsonDecode(text);
+
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Expected JSON object');
+      }
+
+      return decoded;
+    } on FormatException {
+      throw Exception(
+        'Gemini returned an unexpected JSON format. '
+            'Please retry.',
+      );
+    }
+  }
 }
