@@ -705,4 +705,141 @@ Score must be an integer from 0 to 100.
       ],
     );
   }
+
+  // Step 7: Implement interactive countdown timer card with visual progress bar
+  Widget _buildInterviewTimer() {
+    final progress =
+        _remainingSeconds / _questionDuration;
+
+    final isWarning =
+        _timerEnabled && _remainingSeconds <= 30;
+
+    final timerColor = isWarning
+        ? const Color(0xFFDC2626)
+        : primary;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: isWarning
+              ? const Color(0xFFFECACA)
+              : const Color(0xFFE1EBE5),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: timerColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.timer_outlined,
+                  color: timerColor,
+                  size: 23,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              const Expanded(
+                child: Text(
+                  'Interview Timer',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: dark,
+                  ),
+                ),
+              ),
+
+              Switch(
+                value: _timerEnabled,
+                activeTrackColor: primary,
+                onChanged: _toggleQuestionTimer,
+              ),
+            ],
+          ),
+
+          if (_timerEnabled) ...[
+            const SizedBox(height: 18),
+
+            Center(
+              child: Text(
+                _formatTime(_remainingSeconds),
+                style: TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.w800,
+                  color: timerColor,
+                  letterSpacing: 1.5,
+                  fontFeatures: const [
+                    FontFeature.tabularFigures(),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 8,
+                backgroundColor:
+                    const Color(0xFFE6EFEB),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  timerColor,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Center(
+              child: Text(
+                _timeExpired
+                    ? 'Time is up! You can still finish your answer.'
+                    : isWarning
+                    ? 'Hurry up! Less than 30 seconds remaining.'
+                    : 'Take your time and answer confidently.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isWarning
+                      ? timerColor
+                      : const Color(0xFF64766E),
+                ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Timer disabled. Practice at your own pace.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64766E),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
