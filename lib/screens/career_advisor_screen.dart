@@ -7,9 +7,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/ai_service.dart';
- 
+import 'jobs_screen.dart';
+import 'admin_profile_screen.dart';
 
- // Step 2: Main Screen Widget Skeleton (StatefulWidget)
+
+
+// Step 2: Main Screen Widget Skeleton (StatefulWidget)
 
 class CareerAdvisorScreen extends StatefulWidget {
   const CareerAdvisorScreen({super.key});
