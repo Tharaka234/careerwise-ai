@@ -1341,4 +1341,213 @@ Score must be an integer from 0 to 100.
       ),
     );
   }
+
+  // Step 9: Implement interview score card, detailed AI feedback view, and section builders
+  Widget _resultView() {
+    final feedback = _feedback!;
+    final score = feedback['score'] ?? 0;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+
+          const Text(
+            'Interview Completed!',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: dark,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            'Here is your personalized AI interview feedback.',
+            style: TextStyle(color: Colors.black54),
+          ),
+
+          const SizedBox(height: 24),
+
+          Card(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(25),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.emoji_events_outlined,
+                    color: primary,
+                    size: 55,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Text(
+                    '$score / 100',
+                    style: const TextStyle(
+                      fontSize: 38,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Text(
+                    'AI Practice Score',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Text(
+                    feedback['summary']?.toString() ?? '',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          _feedbackSection(
+            'Your Strengths',
+            feedback['strengths'],
+            Icons.check_circle_outline,
+          ),
+
+          _feedbackSection(
+            'Areas to Improve',
+            feedback['improvements'],
+            Icons.trending_up,
+          ),
+
+          _feedbackSection(
+            'Preparation Tips',
+            feedback['tips'],
+            Icons.lightbulb_outline,
+          ),
+
+          const SizedBox(height: 16),
+
+          if (_saving)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: primary,
+                ),
+              ),
+            ),
+
+          if (_saveError != null) ...[
+            Text(
+              _saveError!,
+              style: const TextStyle(
+                color: Colors.redAccent,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : _saveInterview,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry Saving'),
+            ),
+          ],
+
+          const SizedBox(height: 12),
+
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: _saving
+                  ? null
+                  : () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Back to Applications'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _feedbackSection(
+    String title,
+    dynamic items,
+    IconData icon,
+  ) {
+    final values = items is List
+        ? items.map((e) => e.toString()).toList()
+        : <String>[];
+
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: dark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            if (values.isEmpty)
+              const Text('No feedback available.'),
+
+            ...values.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  '• $item',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
