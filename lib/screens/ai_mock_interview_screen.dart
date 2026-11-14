@@ -842,4 +842,503 @@ Score must be an integer from 0 to 100.
       ),
     );
   }
+
+  // Step 8: Implement question presentation card, segmented progress, and answer editor
+  Widget _questionView() {
+    if (_questions.isEmpty) {
+      return const Center(
+        child: Text('No interview questions available.'),
+      );
+    }
+
+    final isLastQuestion = _currentIndex == _questions.length - 1;
+    final progress = (_currentIndex + 1) / _questions.length;
+
+    const deepGreen = Color(0xFF123F35);
+    const mutedText = Color(0xFF64766E);
+    const borderColor = Color(0xFFE1EBE5);
+
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // PREMIUM INTERVIEW HEADER
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF066B50),
+                  Color(0xFF059669),
+                  Color(0xFF10B981),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF059669).withValues(alpha: 0.18),
+                  blurRadius: 24,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFFA7F3D0),
+                            size: 16,
+                          ),
+                          SizedBox(width: 7),
+                          Text(
+                            'AI PRACTICE SESSION',
+                            style: TextStyle(
+                              color: Color(0xFFD1FAE5),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.7,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(
+                      Icons.psychology_outlined,
+                      color: Color(0xFFA7F3D0),
+                      size: 32,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 23),
+                Text(
+                  widget.jobTitle,
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.business_outlined,
+                      color: Color(0xFFD1FAE5),
+                      size: 17,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.company,
+                        style: const TextStyle(
+                          color: Color(0xFFD1FAE5),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Build confidence, one question at a time.',
+                  style: TextStyle(
+                    color: Color(0xFFB7D5C9),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          // Interview Timer
+          _buildInterviewTimer(),
+          // PROGRESS CARD
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Your Progress',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: dark,
+                      ),
+                    ),
+                    Text(
+                      '${_currentIndex + 1} of ${_questions.length}',
+                      style: const TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // SEGMENTED PROGRESS INDICATOR
+                Row(
+                  children: List.generate(_questions.length, (index) {
+                    final completed = index <= _currentIndex;
+
+                    return Expanded(
+                      child: Container(
+                        height: 8,
+                        margin: EdgeInsets.only(
+                          right: index == _questions.length - 1 ? 0 : 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: completed
+                              ? primary
+                              : const Color(0xFFE6EFEB),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+
+                const SizedBox(height: 12),
+                Text(
+                  isLastQuestion
+                      ? 'Final question! You are almost done.'
+                      : '${(progress * 100).round()}% of your interview reached',
+                  style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // QUESTION AND ANSWER CARD
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: borderColor),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.025),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE9F8F0),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.forum_outlined,
+                        color: primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'QUESTION ${(_currentIndex + 1).toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          color: primary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: primary,
+                      size: 19,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 22),
+
+                Text(
+                  _questions[_currentIndex],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    height: 1.45,
+                    fontWeight: FontWeight.w700,
+                    color: dark,
+                  ),
+                ),
+
+                const SizedBox(height: 26),
+                const Divider(color: borderColor),
+                const SizedBox(height: 18),
+
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.edit_note_rounded,
+                      color: primary,
+                      size: 23,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Your Answer',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: dark,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Text(
+                      'Written response',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: mutedText,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                TextField(
+                  controller: _answerController,
+                  minLines: 6,
+                  maxLines: 10,
+                  maxLength: 3000,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.multiline,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.6,
+                    color: dark,
+                  ),
+                  decoration: InputDecoration(
+                    hintText:
+                        'Write your answer here...\n\n'
+                        'Explain your approach and give a real example '
+                        'when possible.',
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF9AABA2),
+                      fontSize: 14,
+                      height: 1.6,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF6FAF8),
+                    contentPadding: const EdgeInsets.all(18),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: borderColor,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: borderColor,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(
+                        color: primary,
+                        width: 1.6,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // HELPFUL TIP
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F9F4),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        color: primary,
+                        size: 19,
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Interview tip: Be specific, explain your '
+                          'reasoning, and use examples from your '
+                          'own experience.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF426557),
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _error!,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
+
+                // PREVIOUS / NEXT BUTTONS
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 330;
+
+                    final previousButton = OutlinedButton.icon(
+                      onPressed: _previousQuestion,
+                      icon: const Icon(Icons.arrow_back, size: 18),
+                      label: const Text('Previous'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: primary,
+                        side: const BorderSide(color: primary),
+                        minimumSize: const Size(0, 54),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    );
+
+                    final nextButton = ElevatedButton.icon(
+                      onPressed: _nextQuestion,
+                      icon: Icon(
+                        isLastQuestion
+                            ? Icons.check_circle_outline
+                            : Icons.arrow_forward,
+                        size: 19,
+                      ),
+                      label: Text(
+                        isLastQuestion
+                            ? 'Finish Interview'
+                            : 'Next Question',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(0, 54),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    );
+
+                    if (_currentIndex == 0) {
+                      return SizedBox(
+                        width: double.infinity,
+                        child: nextButton,
+                      );
+                    }
+
+                    if (compact) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          nextButton,
+                          const SizedBox(height: 10),
+                          previousButton,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: previousButton),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: nextButton,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock_outline,
+                size: 15,
+                color: mutedText,
+              ),
+              SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  'Your completed interview can be saved to your history',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: mutedText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
 }
