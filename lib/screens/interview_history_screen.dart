@@ -18,3 +18,18 @@ class InterviewHistoryScreen extends StatefulWidget {
   State<InterviewHistoryScreen> createState() =>
       _InterviewHistoryScreenState();
 }
+// Step 3: State Management, Search Controller & Filters
+class _InterviewHistoryScreenState
+    extends State<InterviewHistoryScreen> {
+  // Search text editing controller
+  final _search = TextEditingController();
+
+  // Active score filter category ('All', '80+', '60–79', 'Below 60')
+  String _filter = 'All';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+}
