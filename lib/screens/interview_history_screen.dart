@@ -9,3 +9,12 @@ const _dark = Color(0xFF123F35);
 const _bg = Color(0xFFF3F8F5);
 const _muted = Color(0xFF6B8177);
 const _border = Color(0xFFE1EBE5);
+
+// Step 2: create InterviewHistoryScreen StatefulWidget skeleton
+class InterviewHistoryScreen extends StatefulWidget {
+  const InterviewHistoryScreen({super.key});
+
+  @override
+  State<InterviewHistoryScreen> createState() =>
+      _InterviewHistoryScreenState();
+}
