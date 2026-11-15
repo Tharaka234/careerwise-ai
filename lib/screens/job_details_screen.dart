@@ -483,3 +483,192 @@ bottomNavigationBar: _buildApplyBar(),
 },
 );
 }
+
+//Add Step 5: implement emerald gradient job hero banner with company details
+
+Widget _buildHeroCard() {
+final job = widget.job;
+
+return Container(
+width: double.infinity,
+decoration: BoxDecoration(
+gradient: LinearGradient(
+begin: Alignment.topLeft,
+end: Alignment.bottomRight,
+colors: [
+deepGreen,
+primary,
+lightGreen,
+],
+),
+borderRadius: BorderRadius.circular(28),
+boxShadow: [
+BoxShadow(
+color: primary.withValues(alpha: 0.22),
+blurRadius: 24,
+offset: const Offset(0, 12),
+),
+],
+),
+child: ClipRRect(
+borderRadius: BorderRadius.circular(28),
+child: Stack(
+children: [
+Positioned(
+top: -75,
+right: -50,
+child: Container(
+width: 210,
+height: 210,
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.08),
+shape: BoxShape.circle,
+),
+),
+),
+Positioned(
+bottom: -85,
+right: 65,
+child: Container(
+width: 150,
+height: 150,
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.05),
+shape: BoxShape.circle,
+),
+),
+),
+Padding(
+padding: const EdgeInsets.all(23),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+children: [
+Container(
+width: 66,
+height: 66,
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.18),
+borderRadius: BorderRadius.circular(20),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.25),
+),
+),
+child: const Icon(
+Icons.business_center_rounded,
+color: Colors.white,
+size: 31,
+),
+),
+const Spacer(),
+Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 12,
+vertical: 8,
+),
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.18),
+borderRadius: BorderRadius.circular(30),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.25),
+),
+),
+child: const Text(
+'JOB OPPORTUNITY',
+style: TextStyle(
+color: Colors.white,
+fontSize: 9.5,
+fontWeight: FontWeight.w800,
+letterSpacing: 0.7,
+),
+),
+),
+],
+),
+const SizedBox(height: 24),
+Text(
+job.title,
+style: const TextStyle(
+color: Colors.white,
+fontSize: 26,
+fontWeight: FontWeight.w900,
+height: 1.2,
+letterSpacing: -0.5,
+),
+),
+const SizedBox(height: 12),
+Row(
+children: [
+const Icon(
+Icons.business_outlined,
+color: Color(0xFFD1FAE5),
+size: 18,
+),
+const SizedBox(width: 9),
+Expanded(
+child: Text(
+job.company,
+style: const TextStyle(
+color: Color(0xFFD1FAE5),
+fontSize: 14,
+fontWeight: FontWeight.w600,
+),
+),
+),
+],
+),
+const SizedBox(height: 10),
+Row(
+children: [
+const Icon(
+Icons.location_on_outlined,
+color: Color(0xFFD1FAE5),
+size: 18,
+),
+const SizedBox(width: 9),
+Expanded(
+child: Text(
+job.location.trim().isEmpty
+? 'Location not specified'
+: job.location,
+style: const TextStyle(
+color: Color(0xFFD1FAE5),
+fontSize: 13,
+),
+),
+),
+],
+),
+const SizedBox(height: 22),
+Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 14,
+vertical: 9,
+),
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.18),
+borderRadius: BorderRadius.circular(12),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.25),
+),
+),
+child: Text(
+job.jobType.trim().isEmpty
+? 'Employment opportunity'
+: job.jobType,
+style: const TextStyle(
+color: Colors.white,
+fontSize: 12,
+fontWeight: FontWeight.w700,
+),
+),
+),
+],
+),
+),
+],
+),
+),
+);
+}
