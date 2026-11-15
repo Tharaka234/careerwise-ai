@@ -374,3 +374,112 @@ await _applyForJob();
 }
 }
 
+//Add Step 4: implement responsive scaffold layout with theme reactive builder
+
+@override
+Widget build(BuildContext context) {
+return ValueListenableBuilder<bool>(
+valueListenable: AdminThemeManager.isDarkMode,
+builder: (context, isDark, _) {
+_colors = _JobDetailsColors.of(isDark);
+
+return Scaffold(
+backgroundColor: background,
+appBar: AppBar(
+backgroundColor: background,
+surfaceTintColor: background,
+elevation: 0,
+leading: IconButton(
+onPressed: () => Navigator.maybePop(context),
+icon: Icon(
+Icons.arrow_back_ios_new_rounded,
+color: dark,
+size: 19,
+),
+),
+title: Text(
+'Job Details',
+style: TextStyle(
+color: dark,
+fontSize: 19,
+fontWeight: FontWeight.w800,
+),
+),
+centerTitle: true,
+actions: [
+Padding(
+padding: const EdgeInsets.only(right: 17),
+child: Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 12,
+vertical: 8,
+),
+decoration: BoxDecoration(
+color: _colors.isDark
+? const Color(0x3310B981)
+: const Color(0xFFDCFCE7),
+borderRadius: BorderRadius.circular(12),
+border: Border.all(
+color: _colors.isDark
+? const Color(0x5510B981)
+: const Color(0xFFD1FAE5),
+),
+),
+child: Row(
+children: [
+Icon(
+Icons.auto_awesome_rounded,
+color: primary,
+size: 15,
+),
+const SizedBox(width: 5),
+Text(
+'CareerWise',
+style: TextStyle(
+color: primary,
+fontSize: 11,
+fontWeight: FontWeight.w800,
+),
+),
+],
+),
+),
+),
+],
+),
+body: Center(
+child: ConstrainedBox(
+constraints: const BoxConstraints(maxWidth: 760),
+child: SingleChildScrollView(
+physics: const BouncingScrollPhysics(),
+padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+_buildHeroCard(),
+const SizedBox(height: 25),
+_sectionHeader(
+'Job Overview',
+'Everything you need to know at a glance',
+),
+const SizedBox(height: 14),
+_buildOverview(),
+const SizedBox(height: 25),
+_sectionHeader(
+'About This Position',
+'Discover more about this opportunity',
+),
+const SizedBox(height: 14),
+_buildDescription(),
+const SizedBox(height: 20),
+_buildStatusCard(),
+],
+),
+),
+),
+),
+bottomNavigationBar: _buildApplyBar(),
+);
+},
+);
+}
