@@ -815,3 +815,191 @@ textContent,
 ),
 );
 }
+
+//Add Step 7: implement role description panel and application status notice card
+
+Widget _buildDescription() {
+final description = widget.job.description.trim();
+
+return Container(
+width: double.infinity,
+padding: const EdgeInsets.all(21),
+decoration: BoxDecoration(
+color: cardBg,
+borderRadius: BorderRadius.circular(22),
+border: Border.all(color: border),
+boxShadow: [
+BoxShadow(
+color: dark.withValues(alpha: _colors.isDark ? 0.2 : 0.03),
+blurRadius: 15,
+offset: const Offset(0, 5),
+),
+],
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+children: [
+Icon(
+Icons.description_outlined,
+color: primary,
+size: 22,
+),
+const SizedBox(width: 10),
+Text(
+'Role Description',
+style: TextStyle(
+color: dark,
+fontSize: 15,
+fontWeight: FontWeight.w800,
+),
+),
+],
+),
+const SizedBox(height: 16),
+Divider(height: 1, color: border),
+const SizedBox(height: 17),
+SelectableText(
+description.isEmpty
+? 'No description has been provided for this position.'
+: description,
+style: TextStyle(
+color: _colors.isDark
+? const Color(0xFFCBD5E1)
+: const Color(0xFF475569),
+fontSize: 13.5,
+height: 1.8,
+),
+),
+],
+),
+);
+}
+
+Widget _buildStatusCard() {
+if (isChecking) {
+return _noticeCard(
+Icons.hourglass_top_rounded,
+'Checking application status',
+'Please wait while we check your application.',
+const Color(0xFFECFDF5),
+primary,
+);
+}
+
+if (statusError != null) {
+return Container(
+padding: const EdgeInsets.all(17),
+decoration: BoxDecoration(
+color: _colors.isDark
+? const Color(0x33B45309)
+: const Color(0xFFFFF7ED),
+borderRadius: BorderRadius.circular(17),
+border: Border.all(
+color: _colors.isDark
+? const Color(0x55B45309)
+: const Color(0xFFFFEDD5),
+),
+),
+child: Row(
+children: [
+const Icon(
+Icons.error_outline_rounded,
+color: Color(0xFFB45309),
+),
+const SizedBox(width: 10),
+Expanded(
+child: Text(
+statusError!,
+style: TextStyle(
+color: _colors.isDark
+? const Color(0xFFFDE68A)
+: const Color(0xFF92400E),
+fontSize: 12,
+),
+),
+),
+TextButton(
+onPressed: () {
+setState(() {
+isChecking = true;
+statusError = null;
+});
+_checkApplicationStatus();
+},
+child: const Text('Retry'),
+),
+],
+),
+);
+}
+
+if (hasApplied) {
+return _noticeCard(
+Icons.check_circle_rounded,
+'Application Submitted',
+'You have already applied for this opportunity. Track your progress in My Applications.',
+const Color(0xFFECFDF5),
+const Color(0xFF059669),
+);
+}
+
+return _noticeCard(
+Icons.auto_awesome_rounded,
+'Your next opportunity starts here',
+'Review the job details and submit your application when you are ready.',
+const Color(0xFFECFDF5),
+primary,
+);
+}
+
+Widget _noticeCard(
+IconData icon,
+String label,
+String subtitle,
+Color cardColor,
+Color iconColor,
+) {
+return Container(
+padding: const EdgeInsets.all(18),
+decoration: BoxDecoration(
+color: _colors.isDark
+? iconColor.withValues(alpha: 0.14)
+: cardColor,
+borderRadius: BorderRadius.circular(18),
+border: Border.all(color: border),
+),
+child: Row(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Icon(icon, color: iconColor, size: 26),
+const SizedBox(width: 13),
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+label,
+style: TextStyle(
+color: dark,
+fontSize: 13,
+fontWeight: FontWeight.w800,
+),
+),
+const SizedBox(height: 6),
+Text(
+subtitle,
+style: TextStyle(
+color: muted,
+fontSize: 11.5,
+height: 1.5,
+),
+),
+],
+),
+),
+],
+),
+);
+}
