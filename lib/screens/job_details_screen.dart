@@ -672,3 +672,146 @@ fontWeight: FontWeight.w700,
 ),
 );
 }
+//Add Step 6: implement job overview metric cards and reusable info card component
+
+Widget _sectionHeader(String title, String subtitle) {
+return Padding(
+padding: const EdgeInsets.symmetric(horizontal: 3),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+title,
+style: TextStyle(
+color: dark,
+fontSize: 19,
+fontWeight: FontWeight.w800,
+),
+),
+const SizedBox(height: 5),
+Text(
+subtitle,
+style: TextStyle(
+color: muted,
+fontSize: 12,
+),
+),
+],
+),
+);
+}
+
+Widget _buildOverview() {
+return Column(
+children: [
+Row(
+children: [
+Expanded(
+child: _infoCard(
+Icons.schedule_rounded,
+'Employment',
+widget.job.jobType,
+const Color(0xFFECFDF5),
+primary,
+),
+),
+const SizedBox(width: 12),
+Expanded(
+child: _infoCard(
+Icons.payments_outlined,
+'Salary',
+widget.job.salary,
+const Color(0xFFECFDF5),
+const Color(0xFF059669),
+),
+),
+],
+),
+const SizedBox(height: 12),
+_infoCard(
+Icons.location_on_outlined,
+'Work Location',
+widget.job.location,
+const Color(0xFFF0FDF4),
+const Color(0xFF047857),
+horizontal: true,
+),
+],
+);
+}
+
+Widget _infoCard(
+IconData icon,
+String label,
+String value,
+Color iconBg,
+Color iconColor, {
+bool horizontal = false,
+}) {
+final iconBox = Container(
+width: 45,
+height: 45,
+decoration: BoxDecoration(
+color: _colors.isDark ? iconColor.withValues(alpha: 0.18) : iconBg,
+borderRadius: BorderRadius.circular(14),
+),
+child: Icon(icon, color: iconColor, size: 22),
+);
+
+final textContent = Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+label,
+style: TextStyle(
+color: muted,
+fontSize: 11,
+fontWeight: FontWeight.w600,
+),
+),
+const SizedBox(height: 6),
+Text(
+value.trim().isEmpty ? 'Not specified' : value,
+style: TextStyle(
+color: dark,
+fontSize: 13,
+fontWeight: FontWeight.w800,
+height: 1.35,
+),
+),
+],
+);
+
+return Container(
+width: double.infinity,
+padding: const EdgeInsets.all(17),
+decoration: BoxDecoration(
+color: cardBg,
+borderRadius: BorderRadius.circular(20),
+border: Border.all(color: border),
+boxShadow: [
+BoxShadow(
+color: dark.withValues(alpha: _colors.isDark ? 0.2 : 0.03),
+blurRadius: 14,
+offset: const Offset(0, 5),
+),
+],
+),
+child: horizontal
+? Row(
+children: [
+iconBox,
+const SizedBox(width: 14),
+Expanded(child: textContent),
+],
+)
+: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+iconBox,
+const SizedBox(height: 14),
+textContent,
+],
+),
+);
+}
