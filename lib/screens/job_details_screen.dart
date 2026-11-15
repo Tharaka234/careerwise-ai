@@ -220,3 +220,157 @@ Expanded(child: Text(message)),
 ),
 );
 }
+
+//Add Step 3: implement application confirmation modal bottom sheet
+
+Future<void> _confirmApplication() async {
+if (isApplying || hasApplied || isChecking || statusError != null) {
+return;
+}
+
+if (FirebaseAuth.instance.currentUser == null) {
+_showSnackBar('Please log in before applying.', error: true);
+return;
+}
+
+final confirmed = await showModalBottomSheet<bool>(
+context: context,
+backgroundColor: Colors.transparent,
+isScrollControlled: true,
+builder: (sheetContext) {
+return SafeArea(
+child: Container(
+margin: const EdgeInsets.all(10),
+padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+decoration: BoxDecoration(
+color: cardBg,
+borderRadius: BorderRadius.circular(28),
+border: Border.all(color: border),
+),
+child: Column(
+mainAxisSize: MainAxisSize.min,
+children: [
+Container(
+width: 42,
+height: 5,
+decoration: BoxDecoration(
+color: border,
+borderRadius: BorderRadius.circular(20),
+),
+),
+const SizedBox(height: 24),
+Container(
+width: 72,
+height: 72,
+decoration: BoxDecoration(
+color: _colors.isDark
+? const Color(0x3310B981)
+: const Color(0xFFECFDF5),
+borderRadius: BorderRadius.circular(23),
+),
+child: Icon(
+Icons.send_rounded,
+color: primary,
+size: 31,
+),
+),
+const SizedBox(height: 18),
+Text(
+'Ready to apply?',
+style: TextStyle(
+color: dark,
+fontSize: 22,
+fontWeight: FontWeight.w800,
+),
+),
+const SizedBox(height: 9),
+Text(
+'You are about to submit your application for this opportunity.',
+textAlign: TextAlign.center,
+style: TextStyle(
+color: muted,
+fontSize: 13,
+height: 1.5,
+),
+),
+const SizedBox(height: 18),
+Container(
+width: double.infinity,
+padding: const EdgeInsets.all(16),
+decoration: BoxDecoration(
+color: background,
+borderRadius: BorderRadius.circular(16),
+border: Border.all(color: border),
+),
+child: Column(
+children: [
+Text(
+widget.job.title,
+textAlign: TextAlign.center,
+style: TextStyle(
+color: dark,
+fontWeight: FontWeight.w800,
+fontSize: 15,
+),
+),
+const SizedBox(height: 6),
+Text(
+widget.job.company,
+textAlign: TextAlign.center,
+style: TextStyle(
+color: muted,
+fontSize: 12,
+),
+),
+],
+),
+),
+const SizedBox(height: 21),
+Row(
+children: [
+Expanded(
+child: OutlinedButton(
+onPressed: () =>
+Navigator.pop(sheetContext, false),
+style: OutlinedButton.styleFrom(
+minimumSize: const Size(0, 52),
+foregroundColor: dark,
+side: BorderSide(color: border),
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(15),
+),
+),
+child: const Text('Cancel'),
+),
+),
+const SizedBox(width: 12),
+Expanded(
+child: ElevatedButton(
+onPressed: () =>
+Navigator.pop(sheetContext, true),
+style: ElevatedButton.styleFrom(
+minimumSize: const Size(0, 52),
+backgroundColor: primary,
+foregroundColor: Colors.white,
+elevation: 0,
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(15),
+),
+),
+child: const Text('Confirm Apply'),
+),
+),
+],
+),
+],
+),
+),
+);
+},
+);
+
+if (confirmed == true && mounted) {
+await _applyForJob();
+}
+}
+
