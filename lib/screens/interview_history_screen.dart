@@ -483,6 +483,74 @@ class _InterviewHistoryScreenState
       ),
     );
   }
+
+  // Step 7: Implement interactive search input and score category filter chips
+  Widget _buildSearchInput() {
+    return TextField(
+      controller: _search,
+      onChanged: (_) => setState(() {}),
+      decoration: InputDecoration(
+        hintText: 'Search job title or company...',
+        prefixIcon: const Icon(
+          Icons.search,
+          color: _green,
+        ),
+        suffixIcon: _search.text.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  _search.clear();
+                  setState(() {});
+                },
+              )
+            : null,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.all(16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: _border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(
+            color: _green,
+            width: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: ['All', '80+', '60–79', 'Below 60']
+            .map(
+              (filter) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(filter),
+                  selected: _filter == filter,
+                  onSelected: (_) {
+                    setState(() => _filter = filter);
+                  },
+                  selectedColor: const Color(0xFFD8F5E5),
+                  backgroundColor: Colors.white,
+                  labelStyle: TextStyle(
+                    color: _filter == filter ? _dark : _muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  side: const BorderSide(color: _border),
+                  showCheckmark: false,
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
 }
 
 
