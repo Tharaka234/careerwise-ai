@@ -551,6 +551,151 @@ class _InterviewHistoryScreenState
       ),
     );
   }
+
+  // Step 8: Implement interview history session card with progress bar and navigation
+  Widget _historyCard(
+    BuildContext context,
+    Map<String, dynamic> data,
+  ) {
+    final score = _score(data['score']);
+    final date = _date(data['createdAt']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => InterviewHistoryDetailScreen(
+                data: data,
+              ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F7EE),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.work_outline,
+                        color: _green,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${data['jobTitle'] ?? 'Interview'}',
+                            style: const TextStyle(
+                              color: _dark,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '${data['company'] ?? 'Company'}',
+                            style: const TextStyle(
+                              color: _muted,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '$score',
+                          style: const TextStyle(
+                            color: _green,
+                            fontSize: 25,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const Text(
+                          '/ 100',
+                          style: TextStyle(
+                            color: _muted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 17),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: score / 100,
+                    backgroundColor: const Color(0xFFE6F0EA),
+                    color: _green,
+                    minHeight: 7,
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 15,
+                      color: _muted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        date,
+                        style: const TextStyle(
+                          color: _muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const Text(
+                      'View Feedback',
+                      style: TextStyle(
+                        color: _green,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 13,
+                      color: _green,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 
