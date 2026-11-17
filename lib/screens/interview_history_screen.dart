@@ -747,5 +747,113 @@ class _InterviewHistoryScreenState
   }
 }
 
+// ============================================================
+// Step 10: Full Interview History Detail Screen Layout
+// ============================================================
+
+class InterviewHistoryDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> data;
+
+  const InterviewHistoryDetailScreen({
+    super.key,
+    required this.data,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final rawFeedback = data['feedback'];
+    final feedback = rawFeedback is Map
+        ? Map<String, dynamic>.from(rawFeedback)
+        : <String, dynamic>{};
+
+    final questions = data['questions'] is List
+        ? data['questions'] as List
+        : <dynamic>[];
+
+    final score = _score(data['score']);
+
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: _bg,
+        title: const Text(
+          'Interview Results',
+          style: TextStyle(
+            color: _dark,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 850),
+          child: ListView(
+            padding: const EdgeInsets.all(18),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(26),
+                decoration: BoxDecoration(
+                  color: _dark,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.emoji_events_outlined,
+                      color: Color(0xFFA7F3D0),
+                      size: 48,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'YOUR PRACTICE SCORE',
+                      style: TextStyle(
+                        color: Color(0xFFA7F3D0),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '$score / 100',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 40,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: score / 100,
+                        color: const Color(0xFF6EE7B7),
+                        backgroundColor: Colors.white24,
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      '${data['jobTitle'] ?? 'Interview'}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${data['company'] ?? ''}',
+                      style: const TextStyle(
+                        color: Color(0xFFCCE5D9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
 
 
