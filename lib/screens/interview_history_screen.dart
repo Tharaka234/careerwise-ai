@@ -1072,3 +1072,24 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
   }
 }
 
+// Step 14: Data Formatting & Score Clamping Helper Functions
+int _score(dynamic value) {
+  final number = value is num
+      ? value.toInt()
+      : int.tryParse('$value') ?? 0;
+
+  return number.clamp(0, 100).toInt();
+}
+
+String _date(dynamic value) {
+  if (value is! Timestamp) return 'Date unavailable';
+
+  final date = value.toDate();
+
+  String two(int n) => n.toString().padLeft(2, '0');
+
+  return '${two(date.day)}/${two(date.month)}/${date.year}'
+      '  •  ${two(date.hour)}:${two(date.minute)}';
+}
+
+
