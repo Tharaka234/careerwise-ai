@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -47,6 +49,9 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email ?? 'No email available';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF0FDF4),
       appBar: AppBar(
@@ -55,93 +60,130 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF0FDF4),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
+      body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        future: user != null
+            ? FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get()
+            : null,
+        builder: (context, snapshot) {
+          final userData = snapshot.data?.data();
 
-              Container(
-                width: 116,
-                height: 116,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF34D399),
-                      Color(0xFF059669),
-                    ],
-                  ),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  size: 65,
-                  color: Colors.white,
-                ),
-              ),
+          final firstName = userData?['firstName'] as String? ?? '';
+          final lastName = userData?['lastName'] as String? ?? '';
 
-              const SizedBox(height: 18),
+          final fullName = '$firstName $lastName'.trim();
 
-              const Text(
-                'CareerWise User',
-                style: TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+          final displayName = fullName.isNotEmpty
+              ? fullName
+              : (user?.displayName?.isNotEmpty == true
+              ? user!.displayName!
+              : 'CareerWise User');
 
-              const Text('user@example.com'),
+          final phone = userData?['phone'] as String? ?? '';
+          final role = userData?['role'] as String? ?? 'Candidate';
 
-              const SizedBox(height: 30),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
 
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Account Information',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                  Container(
+                    width: 116,
+                    height: 116,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          Color(0xFF34D399),
+                          Color(0xFF059669),
+                        ],
                       ),
                     ),
-
-                    const SizedBox(height: 18),
-
-                    _buildInfoRow(
-                      Icons.email_outlined,
-                      'Email Address',
-                      'user@example.com',
+                    child: const Icon(
+                      Icons.person_rounded,
+                      size: 65,
+                      color: Colors.white,
                     ),
+                  ),
 
-                    const Divider(),
+                  const SizedBox(height: 18),
 
-                    _buildInfoRow(
-                      Icons.phone_outlined,
-                      'Phone Number',
-                      'Not available',
+                  Text(
+                    displayName,
+                    style: const TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
                     ),
+                  ),
 
-                    const Divider(),
+                  Text(email),
 
-                    _buildInfoRow(
-                      Icons.verified_user_outlined,
-                      'Account Status',
-                      'Active',
+                  const SizedBox(height: 12),
+
+                  Text(
+                    '$role Member',
+                    style: const TextStyle(
+                      color: Color(0xFF059669),
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Account Information',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        _buildInfoRow(
+                          Icons.email_outlined,
+                          'Email Address',
+                          email,
+                        ),
+
+                        const Divider(),
+
+                        if (phone.isNotEmpty)
+                          _buildInfoRow(
+                            Icons.phone_outlined,
+                            'Phone Number',
+                            phone,
+                          ),
+
+                        const Divider(),
+
+                        _buildInfoRow(
+                          Icons.verified_user_outlined,
+                          'Account Status',
+                          'Active',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
