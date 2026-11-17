@@ -696,6 +696,55 @@ class _InterviewHistoryScreenState
       ),
     );
   }
+
+  // Step 9: Implement empty history state and reusable feedback message card
+  Widget _emptyHistory(bool noInterviews) {
+    return _message(
+      noInterviews
+          ? Icons.history_edu_outlined
+          : Icons.search_off_outlined,
+      noInterviews ? 'No interviews yet' : 'No matching interviews',
+      noInterviews
+          ? 'Complete an AI mock interview to see your '
+              'results here.'
+          : 'Try another search or score filter.',
+    );
+  }
+
+  Widget _message(
+    IconData icon,
+    String title,
+    String description,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 46, color: _green),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: _dark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: _muted),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 
