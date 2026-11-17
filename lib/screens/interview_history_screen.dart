@@ -978,6 +978,97 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
 
+  // Step 13: Reusable Feedback & Section Card Builders
+  Widget _feedbackCard(
+    String title,
+    IconData icon,
+    dynamic items,
+  ) {
+    final values = items is List ? items : <dynamic>[];
+
+    return _sectionCard(
+      title,
+      icon,
+      child: values.isEmpty
+          ? const Text('No feedback available.')
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: values.map((item) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        color: _green,
+                        size: 17,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          '$item',
+                          style: const TextStyle(
+                            color: _dark,
+                            height: 1.55,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+    );
+  }
+
+  Widget _sectionCard(
+    String title,
+    IconData icon, {
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: _green, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: _dark,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+}
 
