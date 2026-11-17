@@ -747,10 +747,8 @@ class _InterviewHistoryScreenState
   }
 }
 
-// ============================================================
-// Step 10: Full Interview History Detail Screen Layout
-// ============================================================
 
+// Step 10: Full Interview History Detail Screen Layout
 class InterviewHistoryDetailScreen extends StatelessWidget {
   final Map<String, dynamic> data;
 
@@ -855,10 +853,8 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              // ============================================================
-              // Step 11: AI Performance Summary, Strengths & Improvement Cards
-              // ============================================================
 
+              // Step 11: AI Performance Summary, Strengths & Improvement Cards
               _sectionCard(
                 'AI Performance Summary',
                 Icons.psychology_outlined,
@@ -888,6 +884,100 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 14),
+
+
+              // Step 12: Question & Answer Review Cards with Navigation
+              const Text(
+                'Questions & Your Answers',
+                style: TextStyle(
+                  color: _dark,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Review your responses to prepare for your next interview.',
+                style: TextStyle(color: _muted, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+
+              ...questions.asMap().entries.map((entry) {
+                final raw = entry.value;
+                final item = raw is Map
+                    ? Map<String, dynamic>.from(raw)
+                    : <String, dynamic>{};
+
+                return _sectionCard(
+                  'Question ${entry.key + 1}',
+                  Icons.chat_bubble_outline,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${item['question'] ?? ''}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: _dark,
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _bg,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'YOUR ANSWER',
+                              style: TextStyle(
+                                color: _green,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(height: 9),
+                            SelectableText(
+                              '${item['answer'] ?? ''}',
+                              style: const TextStyle(
+                                height: 1.6,
+                                color: _dark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 14),
+
+              SizedBox(
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to History'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _green,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
 
 
