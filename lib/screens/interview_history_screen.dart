@@ -855,5 +855,39 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 18),
 
+              // ============================================================
+              // Step 11: AI Performance Summary, Strengths & Improvement Cards
+              // ============================================================
+
+              _sectionCard(
+                'AI Performance Summary',
+                Icons.psychology_outlined,
+                child: Text(
+                  '${feedback['summary'] ?? 'No summary available.'}',
+                  style: const TextStyle(
+                    height: 1.65,
+                    color: _dark,
+                  ),
+                ),
+              ),
+
+              _feedbackCard(
+                'Your Strengths',
+                Icons.check_circle_outline,
+                feedback['strengths'],
+              ),
+              _feedbackCard(
+                'Areas to Improve',
+                Icons.trending_up,
+                feedback['improvements'],
+              ),
+              _feedbackCard(
+                'Preparation Tips',
+                Icons.lightbulb_outline,
+                feedback['tips'],
+              ),
+
+              const SizedBox(height: 14),
+
 
 
