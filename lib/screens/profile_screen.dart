@@ -47,6 +47,42 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // Logout confirmation dialog
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text(
+            'Are you sure you want to log out of CareerWise?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                await FirebaseAuth.instance.signOut();
+
+                if (!context.mounted) return;
+
+                Navigator.popUntil(
+                  context,
+                      (route) => route.isFirst,
+                );
+              },
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -91,6 +127,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 20),
 
+                  // Profile Avatar
                   Container(
                     width: 116,
                     height: 116,
@@ -112,6 +149,7 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
+                  // User Name
                   Text(
                     displayName,
                     style: const TextStyle(
@@ -120,10 +158,14 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
 
+                  const SizedBox(height: 5),
+
+                  // User Email
                   Text(email),
 
                   const SizedBox(height: 12),
 
+                  // User Role
                   Text(
                     '$role Member',
                     style: const TextStyle(
@@ -134,6 +176,7 @@ class ProfileScreen extends StatelessWidget {
 
                   const SizedBox(height: 30),
 
+                  // Account Information Card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -162,14 +205,14 @@ class ProfileScreen extends StatelessWidget {
 
                         const Divider(),
 
-                        if (phone.isNotEmpty)
+                        if (phone.isNotEmpty) ...[
                           _buildInfoRow(
                             Icons.phone_outlined,
                             'Phone Number',
                             phone,
                           ),
-
-                        const Divider(),
+                          const Divider(),
+                        ],
 
                         _buildInfoRow(
                           Icons.verified_user_outlined,
@@ -177,6 +220,21 @@ class ProfileScreen extends StatelessWidget {
                           'Active',
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 26),
+
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _showLogoutDialog(context);
+                      },
+                      icon: const Icon(Icons.logout_rounded),
+                      label: const Text('Logout'),
                     ),
                   ),
                 ],
