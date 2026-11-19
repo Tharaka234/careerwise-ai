@@ -25,22 +25,22 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
+              'you can reconfigure this by running the FlutterFire CLI again.',
         );
       default:
         throw UnsupportedError(
@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC7OerS4W57MNFKqKDBRbm1h43pSzPubYY',
-    appId: '1:830096182836:web:efe9b1ab8b52b595784461',
-    messagingSenderId: '830096182836',
-    projectId: 'careerwise-ai-e873a',
-    authDomain: 'careerwise-ai-e873a.firebaseapp.com',
-    storageBucket: 'careerwise-ai-e873a.firebasestorage.app',
+    apiKey: 'AIzaSyC4-idSXbRbvlTUxbrrHL4yoSYtQlrYxNc',
+    appId: '1:793505994977:web:1bfbfe553053346a163fa0',
+    messagingSenderId: '793505994977',
+    projectId: 'careerwise-sample',
+    authDomain: 'careerwise-sample.firebaseapp.com',
+    storageBucket: 'careerwise-sample.firebasestorage.app',
+    measurementId: 'G-932XLSMVXW',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD56J7mxEJRckD5Ggxx1r518VKsiIO0Z9M',
-    appId: '1:830096182836:android:a3b964cace6b08c8784461',
-    messagingSenderId: '830096182836',
-    projectId: 'careerwise-ai-e873a',
-    storageBucket: 'careerwise-ai-e873a.firebasestorage.app',
+    apiKey: 'AIzaSyCrm0pWNN5CuOCNtq_2wFS4z9X5TjppiBw',
+    appId: '1:793505994977:android:84fa096f3384c2e5163fa0',
+    messagingSenderId: '793505994977',
+    projectId: 'careerwise-sample',
+    storageBucket: 'careerwise-sample.firebasestorage.app',
   );
 }
