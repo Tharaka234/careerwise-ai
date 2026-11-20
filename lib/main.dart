@@ -96,6 +96,113 @@ Future<void> testWifiFirestoreConnection() async {
 
 
 // ==========================================
+// PART 3 - FIRESTORE DIAGNOSTIC TEST
+// ==========================================
+
+Future<void> testCareerWiseData(String uid) async {
+  debugPrint('');
+  debugPrint('========== CAREERWISE FIRESTORE TEST ==========');
+
+  debugPrint(
+    'PROJECT ID: ${Firebase.app().options.projectId}',
+  );
+
+  // ==========================================
+  // TEST 1 - JOBS COLLECTION
+  // ==========================================
+
+  try {
+    final jobs = await FirebaseFirestore.instance
+        .collection('jobs')
+        .limit(5)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint('JOBS FOUND: ${jobs.docs.length}');
+
+    for (final doc in jobs.docs) {
+      debugPrint('JOB DOCUMENT: ${doc.id}');
+    }
+  } on FirebaseException catch (e) {
+    debugPrint('JOBS FIREBASE ERROR: ${e.code}');
+    debugPrint('JOBS ERROR MESSAGE: ${e.message}');
+  } on TimeoutException catch (e) {
+    debugPrint('JOBS TIMEOUT: $e');
+  } catch (e) {
+    debugPrint('JOBS ERROR: $e');
+  }
+
+  // ==========================================
+  // TEST 2 - APPLICATIONS COLLECTION
+  // ==========================================
+
+  try {
+    final applications = await FirebaseFirestore.instance
+        .collection('applications')
+        .where('userId', isEqualTo: uid)
+        .limit(5)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint(
+      'APPLICATIONS FOUND: ${applications.docs.length}',
+    );
+
+    for (final doc in applications.docs) {
+      debugPrint('APPLICATION DOCUMENT: ${doc.id}');
+    }
+  } on FirebaseException catch (e) {
+    debugPrint('APPLICATIONS FIREBASE ERROR: ${e.code}');
+    debugPrint('APPLICATIONS ERROR MESSAGE: ${e.message}');
+  } on TimeoutException catch (e) {
+    debugPrint('APPLICATIONS TIMEOUT: $e');
+  } catch (e) {
+    debugPrint('APPLICATIONS ERROR: $e');
+  }
+
+  // ==========================================
+  // TEST 3 - PRIVATE NOTIFICATIONS
+  // ==========================================
+
+  try {
+    final notifications = await FirebaseFirestore.instance
+        .collection('notification_history')
+        .where('audience', isEqualTo: 'user')
+        .where('recipientUid', isEqualTo: uid)
+        .limit(5)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint(
+      'PRIVATE NOTIFICATIONS FOUND: '
+          '${notifications.docs.length}',
+    );
+
+    for (final doc in notifications.docs) {
+      debugPrint('NOTIFICATION DOCUMENT: ${doc.id}');
+    }
+  } on FirebaseException catch (e) {
+    debugPrint('NOTIFICATIONS FIREBASE ERROR: ${e.code}');
+    debugPrint('NOTIFICATIONS ERROR MESSAGE: ${e.message}');
+  } on TimeoutException catch (e) {
+    debugPrint('NOTIFICATIONS TIMEOUT: $e');
+  } catch (e) {
+    debugPrint('NOTIFICATIONS ERROR: $e');
+  }
+
+  debugPrint('========== TEST COMPLETED ==========');
+  debugPrint('');
+}
+
+
+
+// ==========================================
 // CAREERWISE APPLICATION
 // ==========================================
 
@@ -146,7 +253,10 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
+          final user = snapshot.data!;
+
           return FutureBuilder<bool>(
+            future: checkAdmin(user.uid),
             future: checkAdmin(snapshot.data!.uid),
             builder: (context, adminSnapshot) {
               if (adminSnapshot.connectionState !=
