@@ -1,15 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
-
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
@@ -245,8 +241,17 @@ class CareerWiseApp extends StatelessWidget {
 // BASIC AUTHENTICATION GATE
 // ==========================================
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  String? _checkedUid;
+  String? _adminFutureUid;
+  Future<bool>? _adminFuture;
 
 
   // ==========================================
@@ -296,6 +301,52 @@ class AuthGate extends StatelessWidget {
     }
   }
 
+  // ==========================================
+  // PART 6 - ADMIN CHECK CACHE
+  // ==========================================
+
+  Future<bool> _getAdminFuture(String uid) {
+    if (_adminFutureUid != uid || _adminFuture == null) {
+      _adminFutureUid = uid;
+      _adminFuture = checkAdmin(uid);
+    }
+
+    return _adminFuture!;
+  }
+
+  // ==========================================
+  // RETRY ADMIN CHECK
+  // ==========================================
+
+  void _retryAdminCheck() {
+    setState(() {
+      _adminFuture = null;
+    });
+  }
+
+  // ==========================================
+  // FIRESTORE TEST ONCE PER USER
+  // ==========================================
+
+  void _runFirestoreTestOnce(String uid) {
+    if (_checkedUid == uid) {
+      return;
+    }
+
+    _checkedUid = uid;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (FirebaseAuth.instance.currentUser?.uid != uid) {
+        return;
+      }
+
+      unawaited(testCareerWiseData(uid));
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -314,8 +365,11 @@ class AuthGate extends StatelessWidget {
         if (snapshot.hasData) {
           final user = snapshot.data!;
 
+          _runFirestoreTestOnce(user.uid);
+
           return FutureBuilder<bool>(
-            future: checkAdmin(user.uid),
+            key: ValueKey(user.uid),
+            future: _getAdminFuture(user.uid),
             builder: (context, adminSnapshot) {
               if (adminSnapshot.connectionState !=
                   ConnectionState.done) {
@@ -326,6 +380,48 @@ class AuthGate extends StatelessWidget {
                 );
               }
 
+              if (adminSnapshot.hasError) {
+                debugPrint(
+                  'ADMIN CHECK FAILED: ${adminSnapshot.error}',
+                );
+
+                return Scaffold(
+                  body: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.wifi_off,
+                            size: 48,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Unable to verify your account role.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Check your internet connection '
+                                'and try again.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: _retryAdminCheck,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+
               if (adminSnapshot.data == true) {
                 return const AdminDashboardScreen();
               }
@@ -334,8 +430,13 @@ class AuthGate extends StatelessWidget {
             },
           );
         }
+        _checkedUid = null;
+        _adminFutureUid = null;
+        _adminFuture = null;
 
         return const LoginScreen();
+
+
       },
     );
   }
