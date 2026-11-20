@@ -1,18 +1,24 @@
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
+import 'services/notification_service.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
-import 'services/notification_service.dart';
-// PART 1 - FIREBASE INITIALIZATION
-// ==========================================
 
+// ==========================================
+// MAIN
+// ==========================================
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,12 +38,26 @@ Future<void> main() async {
   // blocking the application startup.
   unawaited(testWifiFirestoreConnection());
 
+  // Register Firebase background notifications.
+  if (NotificationService.isSupported) {
+    FirebaseMessaging.onBackgroundMessage(
+      firebaseMessagingBackgroundHandler,
+    );
+  }
+
+  // Initialize notification service.
+  try {
+    await NotificationService.instance.init();
+    debugPrint('Notification service initialized');
+  } catch (e) {
+    debugPrint('Notification initialization error: $e');
+  }
+
   runApp(const CareerWiseApp());
 }
 
-
 // ==========================================
-// PART 2 - WIFI / FIRESTORE CONNECTION TEST
+// WIFI / FIRESTORE CONNECTION TEST
 // ==========================================
 
 Future<void> testWifiFirestoreConnection() async {
@@ -95,9 +115,8 @@ Future<void> testWifiFirestoreConnection() async {
   debugPrint('');
 }
 
-
 // ==========================================
-// PART 3 - FIRESTORE DIAGNOSTIC TEST
+// FIRESTORE DIAGNOSTIC TEST
 // ==========================================
 
 Future<void> testCareerWiseData(String uid) async {
@@ -108,9 +127,9 @@ Future<void> testCareerWiseData(String uid) async {
     'PROJECT ID: ${Firebase.app().options.projectId}',
   );
 
-  // ==========================================
-  // TEST 1 - JOBS COLLECTION
-  // ==========================================
+  // ------------------------------------------
+  // TEST 1: JOBS
+  // ------------------------------------------
 
   try {
     final jobs = await FirebaseFirestore.instance
@@ -135,9 +154,9 @@ Future<void> testCareerWiseData(String uid) async {
     debugPrint('JOBS ERROR: $e');
   }
 
-  // ==========================================
-  // TEST 2 - APPLICATIONS COLLECTION
-  // ==========================================
+  // ------------------------------------------
+  // TEST 2: APPLICATIONS
+  // ------------------------------------------
 
   try {
     final applications = await FirebaseFirestore.instance
@@ -165,9 +184,9 @@ Future<void> testCareerWiseData(String uid) async {
     debugPrint('APPLICATIONS ERROR: $e');
   }
 
-  // ==========================================
-  // TEST 3 - PRIVATE NOTIFICATIONS
-  // ==========================================
+  // ------------------------------------------
+  // TEST 3: PRIVATE NOTIFICATIONS
+  // ------------------------------------------
 
   try {
     final notifications = await FirebaseFirestore.instance
@@ -201,15 +220,8 @@ Future<void> testCareerWiseData(String uid) async {
   debugPrint('');
 }
 
-
-
 // ==========================================
-// CAREERWISE APPLICATION
-// ==========================================
-
-
-// ==========================================
-// PART 4 - CAREERWISE APPLICATION SETUP
+// CAREERWISE APP
 // ==========================================
 
 class CareerWiseApp extends StatelessWidget {
@@ -236,9 +248,8 @@ class CareerWiseApp extends StatelessWidget {
   }
 }
 
-
 // ==========================================
-// BASIC AUTHENTICATION GATE
+// AUTH GATE
 // ==========================================
 
 class AuthGate extends StatefulWidget {
@@ -253,10 +264,9 @@ class _AuthGateState extends State<AuthGate> {
   String? _adminFutureUid;
   Future<bool>? _adminFuture;
 
-
-  // ==========================================
-  // PART 5 - FIREBASE ADMIN ROLE VERIFICATION
-  // ==========================================
+  // ------------------------------------------
+  // ADMIN CHECK
+  // ------------------------------------------
 
   Future<bool> checkAdmin(String uid) async {
     debugPrint('========== ADMIN CHECK ==========');
@@ -301,9 +311,9 @@ class _AuthGateState extends State<AuthGate> {
     }
   }
 
-  // ==========================================
-  // PART 6 - ADMIN CHECK CACHE
-  // ==========================================
+  // ------------------------------------------
+  // CACHE ADMIN CHECK FUTURE
+  // ------------------------------------------
 
   Future<bool> _getAdminFuture(String uid) {
     if (_adminFutureUid != uid || _adminFuture == null) {
@@ -314,9 +324,9 @@ class _AuthGateState extends State<AuthGate> {
     return _adminFuture!;
   }
 
-  // ==========================================
+  // ------------------------------------------
   // RETRY ADMIN CHECK
-  // ==========================================
+  // ------------------------------------------
 
   void _retryAdminCheck() {
     setState(() {
@@ -324,9 +334,9 @@ class _AuthGateState extends State<AuthGate> {
     });
   }
 
-  // ==========================================
+  // ------------------------------------------
   // FIRESTORE TEST ONCE PER USER
-  // ==========================================
+  // ------------------------------------------
 
   void _runFirestoreTestOnce(String uid) {
     if (_checkedUid == uid) {
@@ -346,13 +356,16 @@ class _AuthGateState extends State<AuthGate> {
     });
   }
 
-
+  // ------------------------------------------
+  // AUTH STATE
+  // ------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
+        // AUTH LOADING
         if (snapshot.connectionState ==
             ConnectionState.waiting) {
           return const Scaffold(
@@ -362,6 +375,22 @@ class _AuthGateState extends State<AuthGate> {
           );
         }
 
+        // AUTH ERROR
+        if (snapshot.hasError) {
+          debugPrint(
+            'AUTH ERROR: ${snapshot.error}',
+          );
+
+          return const Scaffold(
+            body: Center(
+              child: Text(
+                'Authentication error. Please try again.',
+              ),
+            ),
+          );
+        }
+
+        // USER LOGGED IN
         if (snapshot.hasData) {
           final user = snapshot.data!;
 
@@ -371,6 +400,7 @@ class _AuthGateState extends State<AuthGate> {
             key: ValueKey(user.uid),
             future: _getAdminFuture(user.uid),
             builder: (context, adminSnapshot) {
+              // ADMIN CHECK LOADING
               if (adminSnapshot.connectionState !=
                   ConnectionState.done) {
                 return const Scaffold(
@@ -380,6 +410,7 @@ class _AuthGateState extends State<AuthGate> {
                 );
               }
 
+              // ADMIN CHECK ERROR
               if (adminSnapshot.hasError) {
                 debugPrint(
                   'ADMIN CHECK FAILED: ${adminSnapshot.error}',
@@ -421,22 +452,29 @@ class _AuthGateState extends State<AuthGate> {
                 );
               }
 
-
+              // ADMIN DASHBOARD
               if (adminSnapshot.data == true) {
+                debugPrint(
+                  'NAVIGATION: Admin Dashboard',
+                );
+
                 return const AdminDashboardScreen();
               }
+
+              // NORMAL USER HOME
+              debugPrint('NAVIGATION: Home Screen');
 
               return const HomeScreen();
             },
           );
         }
+
+        // USER LOGGED OUT
         _checkedUid = null;
         _adminFutureUid = null;
         _adminFuture = null;
 
         return const LoginScreen();
-
-
       },
     );
   }
