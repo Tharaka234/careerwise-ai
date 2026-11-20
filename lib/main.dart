@@ -7,6 +7,7 @@ import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
+import 'services/notification_service.dart';
 
 // ==========================================
 // PART 1 - FIREBASE INITIALIZATION
@@ -206,6 +207,11 @@ Future<void> testCareerWiseData(String uid) async {
 // CAREERWISE APPLICATION
 // ==========================================
 
+
+// ==========================================
+// PART 4 - CAREERWISE APPLICATION SETUP
+// ==========================================
+
 class CareerWiseApp extends StatelessWidget {
   const CareerWiseApp({super.key});
 
@@ -214,16 +220,22 @@ class CareerWiseApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CareerWise',
+
+      // Notification tap navigation.
+      navigatorKey: appNavigatorKey,
+
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
         ),
         useMaterial3: true,
       ),
+
       home: const AuthGate(),
     );
   }
 }
+
 
 // ==========================================
 // BASIC AUTHENTICATION GATE
