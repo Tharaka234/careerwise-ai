@@ -1,6 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
 
@@ -8,8 +14,6 @@ import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/admin_dashboard_screen.dart';
 import 'services/notification_service.dart';
-
-// ==========================================
 // PART 1 - FIREBASE INITIALIZATION
 // ==========================================
 
@@ -244,11 +248,54 @@ class CareerWiseApp extends StatelessWidget {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+
+  // ==========================================
+  // PART 5 - FIREBASE ADMIN ROLE VERIFICATION
+  // ==========================================
+
   Future<bool> checkAdmin(String uid) async {
-    // Temporary basic implementation.
-    // Full Firestore admin verification comes in Part 5.
-    return false;
+    debugPrint('========== ADMIN CHECK ==========');
+
+    try {
+      final adminDoc = await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(uid)
+          .get(
+        const GetOptions(source: Source.server),
+      )
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint(
+        'Admin document exists: ${adminDoc.exists}',
+      );
+
+      if (!adminDoc.exists) {
+        debugPrint('Normal user: no admin document');
+        return false;
+      }
+
+      final role = adminDoc.data()?['role'];
+
+      debugPrint('Admin role: $role');
+
+      return role
+          ?.toString()
+          .trim()
+          .toLowerCase() ==
+          'admin';
+    } on FirebaseException catch (e) {
+      debugPrint('ADMIN FIREBASE ERROR: ${e.code}');
+      debugPrint('ADMIN ERROR MESSAGE: ${e.message}');
+      rethrow;
+    } on TimeoutException catch (e) {
+      debugPrint('ADMIN CHECK TIMEOUT: $e');
+      rethrow;
+    } catch (e) {
+      debugPrint('ADMIN CHECK ERROR: $e');
+      rethrow;
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +316,6 @@ class AuthGate extends StatelessWidget {
 
           return FutureBuilder<bool>(
             future: checkAdmin(user.uid),
-            future: checkAdmin(snapshot.data!.uid),
             builder: (context, adminSnapshot) {
               if (adminSnapshot.connectionState !=
                   ConnectionState.done) {
