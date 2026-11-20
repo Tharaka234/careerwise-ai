@@ -12,6 +12,7 @@ import 'screens/admin_dashboard_screen.dart';
 // PART 1 - FIREBASE INITIALIZATION
 // ==========================================
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -26,8 +27,73 @@ Future<void> main() async {
   );
   debugPrint('====================================');
 
+  // Run Wi-Fi / Firestore test without
+  // blocking the application startup.
+  unawaited(testWifiFirestoreConnection());
+
   runApp(const CareerWiseApp());
 }
+
+
+// ==========================================
+// PART 2 - WIFI / FIRESTORE CONNECTION TEST
+// ==========================================
+
+Future<void> testWifiFirestoreConnection() async {
+  debugPrint('');
+  debugPrint('========== WIFI FIRESTORE TEST START ==========');
+
+  debugPrint(
+    'PROJECT ID: ${Firebase.app().options.projectId}',
+  );
+
+  debugPrint(
+    'AUTH USER: ${FirebaseAuth.instance.currentUser != null}',
+  );
+
+  try {
+    final result = await FirebaseFirestore.instance
+        .collection('jobs')
+        .limit(1)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint('WIFI FIRESTORE SUCCESS');
+    debugPrint('JOBS DOCUMENT COUNT: ${result.docs.length}');
+    debugPrint('DATA FROM CACHE: ${result.metadata.isFromCache}');
+  } on TimeoutException catch (e) {
+    debugPrint('WIFI FIRESTORE FAILED');
+    debugPrint('ERROR TYPE: TIMEOUT');
+    debugPrint('ERROR: $e');
+  } on FirebaseException catch (e) {
+    debugPrint('WIFI FIRESTORE FAILED');
+    debugPrint('ERROR CODE: ${e.code}');
+    debugPrint('ERROR MESSAGE: ${e.message}');
+
+    if (e.code == 'unavailable') {
+      debugPrint(
+        'POSSIBLE NETWORK ISSUE: Firestore server unavailable',
+      );
+    } else if (e.code == 'permission-denied') {
+      debugPrint(
+        'POSSIBLE RULES ISSUE: Check Firestore permissions',
+      );
+    } else if (e.code == 'failed-precondition') {
+      debugPrint(
+        'POSSIBLE INDEX ISSUE: Check Firestore indexes',
+      );
+    }
+  } catch (e) {
+    debugPrint('WIFI FIRESTORE FAILED');
+    debugPrint('ERROR: $e');
+  }
+
+  debugPrint('========== WIFI FIRESTORE TEST END ==========');
+  debugPrint('');
+}
+
 
 // ==========================================
 // CAREERWISE APPLICATION
