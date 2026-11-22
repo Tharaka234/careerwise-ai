@@ -81,6 +81,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   String _selectedFilter = 'All';
   final Set<String> _expandedIds = {};
+  final Set<String> _sendingCancelIds = {};
 
   final List<String> _filters = const [
     'All',
@@ -896,6 +897,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               width: double.infinity,
             ),
           ),
+          _cancellationSection(id, data, status, jobTitle),
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
             child: SizedBox(
@@ -927,6 +929,191 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+  // =====================================================
+// PART 3 - CANCELLATION REQUEST UI
+// =====================================================
+
+  bool _isFinalStatus(String status) {
+    const finals = {
+      'hired',
+      'accepted',
+      'rejected',
+      'cancelled',
+    };
+
+    return finals.contains(status.trim().toLowerCase());
+  }
+
+  Widget _cancellationSection(
+      String id,
+      Map<String, dynamic> data,
+      String status,
+      String jobTitle,
+      ) {
+    if (status.trim().toLowerCase() == 'cancelled') {
+      return const SizedBox.shrink();
+    }
+
+    final request = data['cancelRequest'];
+
+    final requestStatus = request is Map
+        ? (request['status']?.toString() ?? '').trim().toLowerCase()
+        : '';
+
+    final isPending = requestStatus == 'pending';
+    final wasDeclined = requestStatus == 'declined';
+
+    final canRequest = !_isFinalStatus(status) && !isPending;
+
+    final isSending = _sendingCancelIds.contains(id);
+
+    if (!isPending && !wasDeclined && !canRequest) {
+      return const SizedBox.shrink();
+    }
+
+    const amber = Color(0xFFD97706);
+    const red = Color(0xFFDC2626);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Pending request message
+          if (isPending)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: amber.withValues(
+                  alpha: _colors.isDark ? 0.16 : 0.10,
+                ),
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(
+                  color: amber.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.hourglass_top_rounded,
+                    color: amber,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Cancellation requested. Waiting for the admin to approve it.',
+                      style: TextStyle(
+                        color: _colors.isDark
+                            ? const Color(0xFFFCD34D)
+                            : const Color(0xFF92400E),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Declined request message
+          if (wasDeclined && !isPending)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: red.withValues(
+                  alpha: _colors.isDark ? 0.16 : 0.07,
+                ),
+                borderRadius: BorderRadius.circular(13),
+                border: Border.all(
+                  color: red.withValues(alpha: 0.30),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: red,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Your cancellation request was declined. The application is still active.',
+                      style: TextStyle(
+                        color: _colors.isDark
+                            ? const Color(0xFFFCA5A5)
+                            : const Color(0xFF991B1B),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Request Cancellation button
+          if (canRequest) ...[
+            if (wasDeclined)
+              const SizedBox(height: 10),
+
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: OutlinedButton.icon(
+                onPressed: isSending
+                    ? null
+                    : () => _confirmCancellation(id, jobTitle),
+                icon: isSending
+                    ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+                    : const Icon(
+                  Icons.event_busy_outlined,
+                  size: 18,
+                ),
+                label: Text(
+                  isSending
+                      ? 'Sending...'
+                      : 'Request Cancellation',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: red,
+                  side: BorderSide(
+                    color: red.withValues(alpha: 0.45),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  // PART 3 - Temporary UI handler
+// Replace with backend integration in Part 4.
+
+  void _confirmCancellation(String id, String jobTitle) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Cancellation request backend integration will be added next.',
+        ),
       ),
     );
   }
