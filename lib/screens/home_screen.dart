@@ -6,6 +6,9 @@ import 'admin_profile_screen.dart';
 import 'notification_history_screen.dart';
 import 'profile_screen.dart';
 import 'career_advisor_screen.dart';
+import 'jobs_screen.dart';
+import 'career_history_screen.dart';
+import 'my_applications_screen.dart';
 
 
 class _HomeColors {
@@ -110,20 +113,15 @@ class HomeScreen extends StatelessWidget {
 
                       const SizedBox(height: 12),
 
-                      _buildPlaceholderCard(
-                        icon: Icons.dashboard_outlined,
-                        title: 'Quick Actions',
-                        subtitle:
-                        'Career tools and shortcuts will appear here.',
-                        colors: colors,
-                      ),
-
+                      _buildQuickActions(context, colors),
                       const SizedBox(height: 28),
 
                       // FEATURED JOBS PLACEHOLDER
                       _buildSectionTitle('Featured Jobs', colors),
 
                       const SizedBox(height: 12),
+
+
 
                       _buildPlaceholderCard(
                         icon: Icons.work_outline_rounded,
@@ -139,6 +137,8 @@ class HomeScreen extends StatelessWidget {
                       _buildSectionTitle('AI Career Advisor', colors),
 
                       const SizedBox(height: 12),
+
+
 
                       _buildPlaceholderCard(
                         icon: Icons.auto_awesome_outlined,
@@ -625,6 +625,102 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+  // PART 1 - QUICK ACTIONS
+
+  Widget _buildQuickActions(
+      BuildContext context,
+      _HomeColors colors,
+      ) {
+    final actions = [
+      (
+      'AI Career Advisor',
+      Icons.smart_toy_outlined,
+      const CareerAdvisorScreen() as Widget,
+      ),
+      (
+      'Browse Jobs',
+      Icons.work_outline_rounded,
+      const JobsScreen() as Widget,
+      ),
+      (
+      'Career History',
+      Icons.history_rounded,
+      const CareerHistoryScreen() as Widget,
+      ),
+      (
+      'My Applications',
+      Icons.description_outlined,
+      const MyApplicationsScreen() as Widget,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: constraints.maxWidth < 600 ? 2 : 4,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.4,
+          ),
+          itemCount: actions.length,
+          itemBuilder: (context, index) {
+            final action = actions[index];
+
+            return _homeQuickAction(
+              context,
+              title: action.$1,
+              icon: action.$2,
+              page: action.$3,
+              colors: colors,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _homeQuickAction(
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required Widget page,
+        required _HomeColors colors,
+      }) {
+    return Material(
+      color: colors.cardBg,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => _open(context, page),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: colors.cardBorder),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: colors.primary, size: 28),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
