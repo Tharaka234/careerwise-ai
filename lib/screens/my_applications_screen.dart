@@ -87,8 +87,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     'In Progress',
     'Accepted',
     'Rejected',
+    'Cancelled',
   ];
-
   @override
   void dispose() {
     _searchController.dispose();
@@ -97,7 +97,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   bool _isInProgress(String status) {
     final normalized = status.trim().toLowerCase();
-    return normalized != 'accepted' && normalized != 'rejected';
+
+    return normalized != 'accepted' &&
+        normalized != 'rejected' &&
+        normalized != 'cancelled';
   }
 
   bool _matchesFilter(String status) {
@@ -110,6 +113,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         return normalized == 'accepted';
       case 'Rejected':
         return normalized == 'rejected';
+      case 'Cancelled':
+        return normalized == 'cancelled';
       default:
         return true;
     }
@@ -152,6 +157,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         return const Color(0xFF059669);
       case 'rejected':
         return const Color(0xFFDC2626);
+      case 'cancelled':
+        return const Color(0xFF6B7280);
       default:
         return primary;
     }
@@ -169,6 +176,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         return Icons.check_circle_outline_rounded;
       case 'rejected':
         return Icons.cancel_outlined;
+      case 'cancelled':
+        return Icons.event_busy_outlined;
       default:
         return Icons.schedule_rounded;
     }
