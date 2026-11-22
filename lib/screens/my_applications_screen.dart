@@ -247,7 +247,14 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
               final docs = [
                 ...?snapshot.data?.docs,
-              ];
+              ].where((doc) {
+                final status = (doc.data()['status'] ?? '')
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+                return status != 'cancelled';
+              }).toList();
 
               docs.sort((a, b) {
                 final aDate = _dateValue(a.data());
