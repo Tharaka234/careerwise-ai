@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'ai_mock_interview_screen.dart';
 
 import 'admin_profile_screen.dart';
+import '../services/application_service.dart';
 
 class _ApplicationsColors {
   final bool isDark;
@@ -1105,17 +1106,128 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       ),
     );
   }
-  // PART 3 - Temporary UI handler
-// Replace with backend integration in Part 4.
+  // =====================================================
+// PART 4 - BACKEND CANCELLATION INTEGRATION
+// =====================================================
 
-  void _confirmCancellation(String id, String jobTitle) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Cancellation request backend integration will be added next.',
+  Future<void> _confirmCancellation(
+      String applicationId,
+      String jobTitle,
+      ) async {
+    final reasonController = TextEditingController();
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Request Cancellation'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Do you want to request cancellation for "$jobTitle"?',
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Your application will remain active until an admin approves the request.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: reasonController,
+                  maxLines: 3,
+                  maxLength: 300,
+                  decoration: const InputDecoration(
+                    labelText: 'Reason (optional)',
+                    hintText: 'Why do you want to cancel?',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, false);
+                },
+                child: const Text('Keep Application'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext, true);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Send Request'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true || !mounted) return;
+
+      final reason = reasonController.text.trim();
+
+      setState(() {
+        _sendingCancelIds.add(applicationId);
+      });
+
+      try {
+        await ApplicationService.requestCancellation(
+          applicationId: applicationId,
+          reason: reason.isEmpty ? null : reason,
+        );
+
+        if (!mounted) return;
+
+        _showCancelMessage(
+          'Cancellation request sent. Waiting for admin approval.',
+        );
+      } catch (error) {
+        if (!mounted) return;
+
+        _showCancelMessage(
+          'Unable to send cancellation request. Please try again.',
+          isError: true,
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _sendingCancelIds.remove(applicationId);
+          });
+        }
+      }
+    } finally {
+      // Dispose after the dialog transition has finished.
+      await Future<void>.delayed(
+        const Duration(milliseconds: 300),
+      );
+      reasonController.dispose();
+    }
+  }
+  void _showCancelMessage(
+      String message, {
+        bool isError = false,
+      }) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError
+              ? const Color(0xFFDC2626)
+              : const Color(0xFF059669),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
         ),
-      ),
-    );
+      );
   }
 
   Widget _statusChip(String status) {
