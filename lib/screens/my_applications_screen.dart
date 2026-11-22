@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/application_service.dart';
 import 'ai_mock_interview_screen.dart';
 
 import 'admin_profile_screen.dart';
-import '../services/application_service.dart';
 
 class _ApplicationsColors {
   final bool isDark;
@@ -91,6 +91,7 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     'Rejected',
     'Cancelled',
   ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -99,7 +100,6 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
 
   bool _isInProgress(String status) {
     final normalized = status.trim().toLowerCase();
-
     return normalized != 'accepted' &&
         normalized != 'rejected' &&
         normalized != 'cancelled';
@@ -899,52 +899,48 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
             ),
           ),
           _cancellationSection(id, data, status, jobTitle),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AIMockInterviewScreen(
-                        applicationId: id,
-                        jobTitle: jobTitle,
-                        company: company,
+          if (status.trim().toLowerCase() != 'cancelled')
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AIMockInterviewScreen(
+                          applicationId: id,
+                          jobTitle: jobTitle,
+                          company: company,
+                        ),
                       ),
+                    );
+                  },
+                  icon: const Icon(Icons.psychology_outlined),
+                  label: const Text('Prepare for Interview'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.psychology_outlined),
-                label: const Text('Prepare for Interview'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
+
   // =====================================================
-// PART 3 - CANCELLATION REQUEST UI
-// =====================================================
+  // CANCEL APPLICATION (needs the admin's approval)
+  // =====================================================
 
   bool _isFinalStatus(String status) {
-    const finals = {
-      'hired',
-      'accepted',
-      'rejected',
-      'cancelled',
-    };
-
+    const finals = {'hired', 'accepted', 'rejected', 'cancelled'};
     return finals.contains(status.trim().toLowerCase());
   }
 
@@ -959,16 +955,12 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
     }
 
     final request = data['cancelRequest'];
-
-    final requestStatus = request is Map
-        ? (request['status']?.toString() ?? '').trim().toLowerCase()
-        : '';
+    final requestStatus =
+    request is Map ? request['status']?.toString() ?? '' : '';
 
     final isPending = requestStatus == 'pending';
     final wasDeclined = requestStatus == 'declined';
-
     final canRequest = !_isFinalStatus(status) && !isPending;
-
     final isSending = _sendingCancelIds.contains(id);
 
     if (!isPending && !wasDeclined && !canRequest) {
@@ -983,35 +975,24 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Pending request message
           if (isPending)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: amber.withValues(
-                  alpha: _colors.isDark ? 0.16 : 0.10,
-                ),
+                color: amber.withValues(alpha: _colors.isDark ? 0.16 : 0.10),
                 borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: amber.withValues(alpha: 0.35),
-                ),
+                border: Border.all(color: amber.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.hourglass_top_rounded,
-                    color: amber,
-                    size: 18,
-                  ),
+                  const Icon(Icons.hourglass_top_rounded, color: amber, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Cancellation requested. Waiting for the admin to approve it.',
                       style: TextStyle(
-                        color: _colors.isDark
-                            ? const Color(0xFFFCD34D)
-                            : const Color(0xFF92400E),
+                        color: _colors.isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         height: 1.35,
@@ -1021,36 +1002,24 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 ],
               ),
             ),
-
-          // Declined request message
           if (wasDeclined && !isPending)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
-                color: red.withValues(
-                  alpha: _colors.isDark ? 0.16 : 0.07,
-                ),
+                color: red.withValues(alpha: _colors.isDark ? 0.16 : 0.07),
                 borderRadius: BorderRadius.circular(13),
-                border: Border.all(
-                  color: red.withValues(alpha: 0.30),
-                ),
+                border: Border.all(color: red.withValues(alpha: 0.30)),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    color: red,
-                    size: 18,
-                  ),
+                  const Icon(Icons.info_outline_rounded, color: red, size: 18),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Your cancellation request was declined. The application is still active.',
                       style: TextStyle(
-                        color: _colors.isDark
-                            ? const Color(0xFFFCA5A5)
-                            : const Color(0xFF991B1B),
+                        color: _colors.isDark ? const Color(0xFFFCA5A5) : const Color(0xFF991B1B),
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         height: 1.35,
@@ -1060,12 +1029,8 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                 ],
               ),
             ),
-
-          // Request Cancellation button
           if (canRequest) ...[
-            if (wasDeclined)
-              const SizedBox(height: 10),
-
+            if (wasDeclined) const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               height: 46,
@@ -1077,24 +1042,13 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
                     ? const SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 )
-                    : const Icon(
-                  Icons.event_busy_outlined,
-                  size: 18,
-                ),
-                label: Text(
-                  isSending
-                      ? 'Sending...'
-                      : 'Request Cancellation',
-                ),
+                    : const Icon(Icons.event_busy_outlined, size: 18),
+                label: Text(isSending ? 'Sending...' : 'Request Cancellation'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: red,
-                  side: BorderSide(
-                    color: red.withValues(alpha: 0.45),
-                  ),
+                  side: BorderSide(color: red.withValues(alpha: 0.45)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -1106,114 +1060,88 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       ),
     );
   }
-  // =====================================================
-// PART 4 - BACKEND CANCELLATION INTEGRATION
-// =====================================================
 
-  Future<void> _confirmCancellation(
-      String applicationId,
-      String jobTitle,
-      ) async {
+  Future<void> _confirmCancellation(String id, String jobTitle) async {
     final reasonController = TextEditingController();
 
-    try {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('Request Cancellation'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Do you want to request cancellation for "$jobTitle"?',
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Your application will remain active until an admin approves the request.',
-                  style: TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: reasonController,
-                  maxLines: 3,
-                  maxLength: 300,
-                  decoration: const InputDecoration(
-                    labelText: 'Reason (optional)',
-                    hintText: 'Why do you want to cancel?',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: cardBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Cancel this application?',
+          style: TextStyle(color: dark, fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your request for "$jobTitle" will be sent to the admin. '
+                  'The application stays active until the admin approves it.',
+              style: TextStyle(color: muted, fontSize: 13, height: 1.4),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext, false);
-                },
-                child: const Text('Keep Application'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext, true);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  foregroundColor: Colors.white,
+            const SizedBox(height: 14),
+            TextField(
+              controller: reasonController,
+              maxLength: 300,
+              maxLines: 3,
+              style: TextStyle(color: dark),
+              decoration: InputDecoration(
+                hintText: 'Reason (optional)',
+                hintStyle: TextStyle(color: muted),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Send Request'),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('Keep application', style: TextStyle(color: muted)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Send request'),
+          ),
+        ],
+      ),
+    );
+
+    final reason = reasonController.text;
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _sendingCancelIds.add(id));
+
+    try {
+      await ApplicationService.requestCancellation(
+        applicationId: id,
+        reason: reason,
       );
 
-      if (confirmed != true || !mounted) return;
-
-      final reason = reasonController.text.trim();
-
-      setState(() {
-        _sendingCancelIds.add(applicationId);
-      });
-
-      try {
-        await ApplicationService.requestCancellation(
-          applicationId: applicationId,
-          reason: reason.isEmpty ? null : reason,
-        );
-
-        if (!mounted) return;
-
-        _showCancelMessage(
-          'Cancellation request sent. Waiting for admin approval.',
-        );
-      } catch (error) {
-        if (!mounted) return;
-
-        _showCancelMessage(
-          'Unable to send cancellation request. Please try again.',
-          isError: true,
-        );
-      } finally {
-        if (mounted) {
-          setState(() {
-            _sendingCancelIds.remove(applicationId);
-          });
-        }
-      }
+      _showCancelMessage('Request sent. The admin will review it.');
+    } on ApplicationException catch (e) {
+      _showCancelMessage(e.message, error: true);
+    } catch (_) {
+      _showCancelMessage('Could not send the request. Please try again.', error: true);
     } finally {
-      // Dispose after the dialog transition has finished.
-      await Future<void>.delayed(
-        const Duration(milliseconds: 300),
-      );
-      reasonController.dispose();
+      if (mounted) setState(() => _sendingCancelIds.remove(id));
     }
   }
-  void _showCancelMessage(
-      String message, {
-        bool isError = false,
-      }) {
+
+  void _showCancelMessage(String message, {bool error = false}) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
@@ -1221,11 +1149,9 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: isError
-              ? const Color(0xFFDC2626)
-              : const Color(0xFF059669),
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
+          backgroundColor:
+          error ? const Color(0xFFDC2626) : const Color(0xFF15803D),
         ),
       );
   }
@@ -1265,6 +1191,32 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
   }
 
   Widget _timeline(String status) {
+    if (status.toLowerCase() == 'cancelled') {
+      return Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: _colors.isDark ? const Color(0x336B7280) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.event_busy_outlined, color: Color(0xFF6B7280)),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Text(
+                'You cancelled this application. You can apply again from the job page.',
+                style: TextStyle(
+                  color: _colors.isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (status.toLowerCase() == 'rejected') {
       return Container(
         padding: const EdgeInsets.all(15),
