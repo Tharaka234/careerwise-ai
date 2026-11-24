@@ -210,3 +210,44 @@ class _CancelRequestBannerState extends State<CancelRequestBanner> {
     );
   }
 }
+
+/// Replaces the hiring pipeline on the admin card once an application is cancelled.
+class CancelledApplicationNotice extends StatelessWidget {
+  const CancelledApplicationNotice({
+    super.key,
+    required this.isDark,
+    required this.textColor,
+  });
+
+  final bool isDark;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: _grey.withValues(alpha: isDark ? 0.18 : 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _grey.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.event_busy_outlined, color: _grey, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Cancelled by the applicant (approved).',
+              style: TextStyle(
+                color: textColor,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
