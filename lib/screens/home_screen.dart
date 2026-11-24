@@ -1430,4 +1430,79 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  // FIRESTORE HELPERS
+
+  Stream<QuerySnapshot> _latestRecommendationStream() {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Stream.empty();
+    }
+
+    return FirebaseFirestore.instance
+        .collection('career_recommendations')
+        .where('userId', isEqualTo: user.uid)
+        .snapshots();
+  }
+
+  QueryDocumentSnapshot? _getLatestRecommendation(QuerySnapshot snapshot) {
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+
+    final documents = List<QueryDocumentSnapshot>.from(snapshot.docs);
+
+    documents.sort((a, b) {
+      final tsA =
+          (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+      final tsB =
+          (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+
+      if (tsA == null && tsB == null) return 0;
+      if (tsA == null) return 1;
+      if (tsB == null) return -1;
+
+      return tsB.compareTo(tsA);
+    });
+
+    return documents.first;
+  }
+
+  Map<String, dynamic>? _parseRecommendation(dynamic value) {
+    if (value == null) return null;
+
+    try {
+      if (value is Map) {
+        return Map<String, dynamic>.from(value);
+      }
+      if (value is String) {
+        final decoded = jsonDecode(value);
+        if (decoded is Map) {
+          return Map<String, dynamic>.from(decoded);
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+
+    return null;
+  }
+
+  String? _getCareerFromRecommendation(dynamic recommendation) {
+    final parsed = _parseRecommendation(recommendation);
+    if (parsed == null) return null;
+
+    final careers = parsed['careers'];
+
+    if (careers is List && careers.isNotEmpty) {
+      final first = careers.first;
+      if (first is Map && first['title'] != null) {
+        final career = first['title'].toString().trim();
+        if (career.isNotEmpty) return career;
+      }
+    }
+
+    return null;
+  }
 }
