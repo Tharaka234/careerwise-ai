@@ -125,3 +125,189 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // Add HEADER
+
+  Widget _buildHeader(
+    BuildContext context,
+    String initial,
+    _HomeColors colors,
+  ) {
+    return Row(
+      children: [
+        // App Logo Icon
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: colors.isDark
+                  ? const [Color(0xFF047857), Color(0xFF059669)]
+                  : const [Color(0xFF059669), Color(0xFF10B981)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: colors.primary.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 26),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'CareerWise',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: colors.textPrimary,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Your AI Career Companion',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 1. Theme Toggle Button (Sun / Moon)
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: colors.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                    .withValues(alpha: colors.isDark ? 0.3 : 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: IconButton(
+            tooltip: colors.isDark
+                ? 'Switch to Light Theme'
+                : 'Switch to Dark Theme',
+            padding: EdgeInsets.zero,
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 280),
+              transitionBuilder: (child, animation) {
+                return RotationTransition(
+                  turns: child.key == const ValueKey('dark_icon')
+                      ? Tween<double>(begin: 0.75, end: 1.0).animate(animation)
+                      : Tween<double>(begin: 0.25, end: 0.0).animate(animation),
+                  child: ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  ),
+                );
+              },
+              child: colors.isDark
+                  ? const Icon(
+                      Icons.wb_sunny_rounded,
+                      key: ValueKey('dark_icon'),
+                      color: Color(0xFFFDE047),
+                      size: 21,
+                    )
+                  : Icon(
+                      Icons.nightlight_round,
+                      key: const ValueKey('light_icon'),
+                      color: colors.primary,
+                      size: 21,
+                    ),
+            ),
+            onPressed: () {
+              AdminThemeManager.isDarkMode.value =
+                  !AdminThemeManager.isDarkMode.value;
+            },
+          ),
+        ),
+
+        const SizedBox(width: 10),
+
+        // 2. Notification History Button
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: colors.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                    .withValues(alpha: colors.isDark ? 0.3 : 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: () => _open(context, const NotificationHistoryScreen()),
+            tooltip: 'Notification history',
+            icon: Icon(
+              Icons.notifications_none_rounded,
+              color: colors.textPrimary,
+              size: 22,
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 10),
+
+        // 3. Profile Avatar
+        GestureDetector(
+          onTap: () => _open(context, const ProfileScreen()),
+          child: Container(
+            width: 44,
+            height: 44,
+            padding: const EdgeInsets.all(2.5),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: colors.primary, width: 1.5),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: colors.isDark
+                      ? const [Color(0xFF047857), Color(0xFF059669)]
+                      : const [Color(0xFF059669), Color(0xFF10B981)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
