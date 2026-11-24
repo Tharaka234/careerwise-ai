@@ -41,3 +41,14 @@ class _BroadcastColors {
   // Icon Boxes & Badges
   Color get iconBoxBg => isDark ? const Color(0x3310B981) : const Color(0x1F059669);
 }
+
+// Step 3: Main Screen Widget Skeleton (StatefulWidget)
+
+
+/// Admin-only screen used to send CareerWise announcements.
+class AdminBroadcastScreen extends StatefulWidget {
+  const AdminBroadcastScreen({super.key});
+
+  @override
+  State<AdminBroadcastScreen> createState() => _AdminBroadcastScreenState();
+}
