@@ -495,4 +495,134 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // SECTION TITLE
+
+  Widget _buildSectionTitle(
+    String title,
+    _HomeColors colors, {
+    String? trailing,
+  }) {
+    return Row(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: 28,
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [colors.primary, colors.primaryAccent],
+                ),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ],
+        ),
+        if (trailing != null) ...[
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              trailing,
+              textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 3),
+          Icon(
+            Icons.arrow_forward_rounded,
+            size: 14,
+            color: colors.textSecondary,
+          ),
+        ],
+      ],
+    );
+  }
+
+
+  // QUICK ACTIONS
+
+  Widget _buildQuickActions(BuildContext context, _HomeColors colors) {
+    final items = <Widget>[
+      _quickAction(
+        context,
+        icon: Icons.smart_toy_outlined,
+        title: 'AI Career Advisor',
+        subtitle: 'Get personalized career recommendations',
+        color: colors.isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+        page: const CareerAdvisorScreen(),
+        colors: colors,
+      ),
+      _quickAction(
+        context,
+        icon: Icons.work_outline_rounded,
+        title: 'Browse Jobs',
+        subtitle: 'Find opportunities that match you',
+        color: colors.isDark ? const Color(0xFF818CF8) : const Color(0xFF6366F1),
+        page: const JobsScreen(),
+        colors: colors,
+      ),
+      _quickAction(
+        context,
+        icon: Icons.history_rounded,
+        title: 'Career History',
+        subtitle: 'View your past recommendations',
+        color: colors.isDark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488),
+        page: const CareerHistoryScreen(),
+        colors: colors,
+      ),
+      _quickAction(
+        context,
+        icon: Icons.description_outlined,
+        title: 'My Applications',
+        subtitle: 'Track your job applications',
+        color: colors.isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+        page: const MyApplicationsScreen(),
+        colors: colors,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final int columns = constraints.maxWidth < 600 ? 2 : 4;
+        final double gap = constraints.maxWidth >= 700 ? 14 : 10;
+
+        final rows = <Widget>[];
+        for (int i = 0; i < items.length; i += columns) {
+          final rowItems = items.skip(i).take(columns).toList();
+          final children = <Widget>[];
+          for (int j = 0; j < rowItems.length; j++) {
+            if (j > 0) children.add(SizedBox(width: gap));
+            children.add(Expanded(child: rowItems[j]));
+          }
+          if (i > 0) rows.add(SizedBox(height: gap));
+          rows.add(
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: children,
+              ),
+            ),
+          );
+        }
+
+        return Column(children: rows);
+      },
+    );
+  }
 
