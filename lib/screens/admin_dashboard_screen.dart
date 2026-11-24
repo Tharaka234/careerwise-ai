@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class _AdminColors {
   final bool isDark;
@@ -68,12 +69,183 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState
     extends State<AdminDashboardScreen> {
 
+  // CHECK ADMIN
+  Future<DocumentSnapshot?> _getAdminDocument() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return null;
+    }
+
+    return FirebaseFirestore.instance
+        .collection('admins')
+        .doc(user.uid)
+        .get();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Please login first.',
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      );
+    }
+
     final colors = _AdminColors(
       isDark: Theme.of(context).brightness == Brightness.dark,
     );
 
+    return FutureBuilder<DocumentSnapshot?>(
+      future: _getAdminDocument(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: colors.pageBg,
+            body: Center(
+              child: CircularProgressIndicator(
+                color: colors.primary,
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: colors.pageBg,
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Error checking admin access:\n\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: colors.textPrimary),
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return _accessDeniedScreen(
+            'You are not an administrator.',
+            colors,
+          );
+        }
+
+        final data =
+        snapshot.data!.data() as Map<String, dynamic>?;
+
+        if (data?['role'] != 'admin') {
+          return _accessDeniedScreen(
+            'You are not an administrator.',
+            colors,
+          );
+        }
+
+        final adminName =
+        data?['name']?.toString().trim().isNotEmpty == true
+            ? data!['name'].toString()
+            : 'Admin';
+
+        return _buildDashboard(context, adminName, colors);
+      },
+    );
+  }
+  // =====================================================
+// ACCESS DENIED
+// =====================================================
+
+  Widget _accessDeniedScreen(
+      String message,
+      _AdminColors colors,
+      ) {
+    return Scaffold(
+      backgroundColor: colors.pageBg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(25),
+            child: Container(
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                color: colors.cardBg,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: colors.cardBorder,
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: colors.isDark ? 0.3 : 0.06,
+                    ),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'Access Denied',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  // =====================================================
+// MAIN DASHBOARD
+// =====================================================
+
+  Widget _buildDashboard(
+      BuildContext context,
+      String adminName,
+      _AdminColors colors,
+      ) {
     return Scaffold(
       backgroundColor: colors.pageBg,
 
@@ -117,7 +289,7 @@ class _AdminDashboardScreenState
                 const SizedBox(height: 20),
 
                 Text(
-                  'Admin Dashboard',
+                  'Welcome, $adminName',
                   style: TextStyle(
                     color: colors.textPrimary,
                     fontSize: 24,
