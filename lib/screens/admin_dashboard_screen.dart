@@ -5,6 +5,7 @@ import 'admin_profile_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_recommendations_screen.dart';
 import 'add_job_screen.dart';
+import 'package:flutter/services.dart';
 
 class _AdminColors {
   final bool isDark;
@@ -103,6 +104,25 @@ class _AdminDashboardScreenState
         .collection('admins')
         .doc(user.uid)
         .get();
+  }
+  // GET APPLICANT USER DATA
+  Future<Map<String, dynamic>?> _getUserData(
+      String userId,
+      ) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (doc.exists) {
+        return doc.data();
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
@@ -1970,6 +1990,8 @@ class _AdminDashboardScreenState
 
     final company =
         data['company']?.toString() ?? 'Unknown Company';
+    final userId =
+        data['userId']?.toString() ?? 'Unknown User';
 
     final status =
         data['status']?.toString() ?? 'Applied';
@@ -2151,7 +2173,26 @@ class _AdminDashboardScreenState
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
+
+                      // Candidate Identity Card
+                      _applicantIdentityBox(
+                        context,
+                        userId,
+                        colors,
+                      ),
+
+
+                      const SizedBox(height: 12),
+
+                      // Recruitment Pipeline
+                      if (status.trim().toLowerCase() != 'cancelled')
+                        _buildApplicationPipeline(
+                          status,
+                          colors,
+                        ),
+
+                      const SizedBox(height: 12),
 
                       Divider(
                         color: colors.divider,
@@ -2183,6 +2224,56 @@ class _AdminDashboardScreenState
                           ),
                         ],
                       ),
+                      const SizedBox(height: 14),
+
+// UPDATE APPLICATION STATUS
+                      if (status.trim().toLowerCase() != 'cancelled')
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary.withValues(
+                                alpha: colors.isDark ? 0.16 : 0.08,
+                              ),
+
+                              foregroundColor: colors.primary,
+                              elevation: 0,
+
+                              side: BorderSide(
+                                color: colors.primary.withValues(alpha: 0.35),
+                                width: 1.2,
+                              ),
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+
+                            onPressed: () {
+                              _showStatusDialog(
+                                context,
+                                applicationId,
+                                status,
+                                colors,
+                              );
+                            },
+
+                            icon: const Icon(
+                              Icons.tune_rounded,
+                              size: 18,
+                            ),
+
+                            label: const Text(
+                              'Update Application Status',
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -2191,6 +2282,679 @@ class _AdminDashboardScreenState
           ),
         ),
       ),
+    );
+  }
+  // =====================================================
+// APPLICANT IDENTITY CARD
+// =====================================================
+
+  Widget _applicantIdentityBox(
+      BuildContext context,
+      String userId,
+      _AdminColors colors,
+      ) {
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _getUserData(userId),
+
+      builder: (context, snapshot) {
+        String displayName = 'Candidate';
+        String email = '';
+        String initials = 'C';
+
+        final shortId = userId.length > 8
+            ? userId.substring(0, 8)
+            : userId;
+
+        if (snapshot.hasData && snapshot.data != null) {
+          final data = snapshot.data!;
+
+          final first =
+          (data['firstName'] ?? '').toString().trim();
+
+          final last =
+          (data['lastName'] ?? '').toString().trim();
+
+          final fullName = '$first $last'.trim();
+
+          if (fullName.isNotEmpty) {
+            displayName = fullName;
+
+            if (first.isNotEmpty && last.isNotEmpty) {
+              initials = '${first[0]}${last[0]}'.toUpperCase();
+            } else if (first.isNotEmpty) {
+              initials = first[0].toUpperCase();
+            } else if (last.isNotEmpty) {
+              initials = last[0].toUpperCase();
+            }
+          }
+
+          email = (data['email'] ?? '').toString().trim();
+        } else {
+          displayName = 'Applicant #$shortId';
+
+          if (userId.isNotEmpty) {
+            initials = userId[0].toUpperCase();
+          }
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(13),
+
+          decoration: BoxDecoration(
+            color: colors.primary.withValues(
+              alpha: colors.isDark ? 0.08 : 0.04,
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: colors.cardBorder,
+            ),
+          ),
+
+          child: Row(
+            children: [
+              // Applicant Avatar
+              Container(
+                width: 48,
+                height: 48,
+
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colors.primaryDark,
+                      colors.primaryAccent,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+
+                alignment: Alignment.center,
+
+                child: Text(
+                  initials,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 6),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+
+                          decoration: BoxDecoration(
+                            color: colors.badgeBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+
+                          child: Text(
+                            'APPLICANT',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: colors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Applicant Email
+                    if (email.isNotEmpty) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.mail_outline_rounded,
+                            size: 13,
+                            color: colors.textSecondary,
+                          ),
+
+                          const SizedBox(width: 5),
+
+                          Flexible(
+                            child: Text(
+                              email,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 3),
+                    ],
+
+                    // Applicant UID
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.fingerprint_rounded,
+                          size: 13,
+                          color: colors.textSecondary,
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        Flexible(
+                          child: Text(
+                            'ID: $shortId...',
+                            overflow: TextOverflow.ellipsis,
+
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.textSecondary,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        InkWell(
+                          onTap: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: userId),
+                            );
+
+                            if (!context.mounted) return;
+
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Applicant ID copied successfully.',
+                                ),
+                                backgroundColor: Color(0xFF10B981),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+
+                          child: Padding(
+                            padding: const EdgeInsets.all(3),
+
+                            child: Icon(
+                              Icons.copy_rounded,
+                              size: 14,
+                              color: colors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  // =====================================================
+// RECRUITMENT PIPELINE STEPPER
+// =====================================================
+
+  Widget _buildApplicationPipeline(
+      String status,
+      _AdminColors colors,
+      ) {
+    int currentStep = 1;
+    bool isRejected = false;
+
+    final lower = status.trim().toLowerCase();
+
+    if (lower == 'under review') {
+      currentStep = 2;
+    } else if (
+    lower == 'shortlisted' ||
+        lower.contains('interview')) {
+      currentStep = 3;
+    } else if (
+    lower == 'hired' ||
+        lower == 'accepted') {
+      currentStep = 4;
+    } else if (lower == 'rejected') {
+      currentStep = 4;
+      isRejected = true;
+    }
+
+    final steps = [
+      'Applied',
+      'Review',
+      'Interview',
+      isRejected ? 'Rejected' : 'Hired',
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 12,
+      ),
+
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(
+          alpha: colors.isDark ? 0.05 : 0.03,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.cardBorder,
+        ),
+      ),
+
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+
+        children: [
+          Text(
+            'Recruitment Pipeline',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+
+            children: List.generate(
+              steps.length,
+                  (index) {
+                final stepNumber = index + 1;
+
+                final isCompleted =
+                    stepNumber < currentStep;
+
+                final isCurrent =
+                    stepNumber == currentStep;
+
+                final rejectedStep =
+                    isRejected && stepNumber == 4;
+
+                final stepColor = rejectedStep
+                    ? Colors.redAccent
+                    : (isCompleted || isCurrent)
+                    ? colors.primary
+                    : colors.textMuted;
+
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 2,
+                              color: index == 0
+                                  ? Colors.transparent
+                                  : isCompleted || isCurrent
+                                  ? colors.primary
+                                  : colors.divider,
+                            ),
+                          ),
+
+                          Container(
+                            width: 28,
+                            height: 28,
+
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+
+                              color: isCompleted || isCurrent
+                                  ? stepColor
+                                  : colors.cardBg,
+
+                              border: Border.all(
+                                color: stepColor,
+                                width: 1.5,
+                              ),
+                            ),
+
+                            child: Center(
+                              child: rejectedStep
+                                  ? const Icon(
+                                Icons.close_rounded,
+                                size: 15,
+                                color: Colors.white,
+                              )
+                                  : isCompleted
+                                  ? const Icon(
+                                Icons.check_rounded,
+                                size: 15,
+                                color: Colors.white,
+                              )
+                                  : Text(
+                                '$stepNumber',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight:
+                                  FontWeight.bold,
+                                  color: isCurrent
+                                      ? Colors.white
+                                      : stepColor,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Expanded(
+                            child: Container(
+                              height: 2,
+                              color: index == steps.length - 1
+                                  ? Colors.transparent
+                                  : isCompleted
+                                  ? colors.primary
+                                  : colors.divider,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 7),
+
+                      Text(
+                        steps[index],
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: isCurrent
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: stepColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  // =====================================================
+// UPDATE APPLICATION STATUS DIALOG
+// =====================================================
+
+  void _showStatusDialog(
+      BuildContext context,
+      String applicationId,
+      String currentStatus,
+      _AdminColors colors,
+      ) {
+    final statuses = [
+      'Applied',
+      'Under Review',
+      'Shortlisted',
+      'Interviewed',
+      'Hired',
+      'Rejected',
+    ];
+
+    if (currentStatus.trim().toLowerCase() == 'cancelled') {
+      return;
+    }
+
+    String initialStatus = currentStatus;
+
+    if (currentStatus == 'Interview') {
+      initialStatus = 'Interviewed';
+    }
+
+    if (currentStatus == 'Accepted') {
+      initialStatus = 'Hired';
+    }
+
+    if (!statuses.contains(initialStatus)) {
+      initialStatus = 'Applied';
+    }
+
+    showDialog(
+      context: context,
+
+      builder: (dialogContext) {
+        String selectedStatus = initialStatus;
+        bool isSaving = false;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: colors.cardBg,
+
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(22),
+                side: BorderSide(
+                  color: colors.cardBorder,
+                  width: 1.2,
+                ),
+              ),
+
+              title: Text(
+                'Update Application Status',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: colors.textPrimary,
+                ),
+              ),
+
+              content: DropdownButtonFormField<String>(
+                initialValue: selectedStatus,
+                isExpanded: true,
+                dropdownColor: colors.cardBg,
+
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 14,
+                ),
+
+                decoration: InputDecoration(
+                  labelText: 'Application Status',
+
+                  labelStyle: TextStyle(
+                    color: colors.textSecondary,
+                  ),
+
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: colors.cardBorder,
+                    ),
+                  ),
+
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: colors.primary,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+
+                items: statuses.map((status) {
+                  return DropdownMenuItem<String>(
+                    value: status,
+                    child: Text(status),
+                  );
+                }).toList(),
+
+                onChanged: isSaving
+                    ? null
+                    : (value) {
+                  if (value != null) {
+                    setDialogState(() {
+                      selectedStatus = value;
+                    });
+                  }
+                },
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.pop(dialogContext),
+
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                    setDialogState(() {
+                      isSaving = true;
+                    });
+
+                    try {
+                      final firestore =
+                          FirebaseFirestore.instance;
+
+                      final ref = firestore
+                          .collection('applications')
+                          .doc(applicationId);
+
+                      await firestore.runTransaction(
+                            (transaction) async {
+                          final snapshot =
+                          await transaction.get(ref);
+
+                          if (!snapshot.exists) {
+                            throw Exception(
+                              'Application not found.',
+                            );
+                          }
+
+                          final data = snapshot.data();
+
+                          final latestStatus =
+                          (data?['status'] ?? '')
+                              .toString()
+                              .trim()
+                              .toLowerCase();
+
+                          if (latestStatus == 'cancelled') {
+                            throw Exception(
+                              'Cancelled applications cannot be updated.',
+                            );
+                          }
+
+                          transaction.update(ref, {
+                            'status': selectedStatus,
+                            'updatedAt':
+                            FieldValue.serverTimestamp(),
+                          });
+                        },
+                      );
+
+                      if (!dialogContext.mounted) return;
+
+                      Navigator.pop(dialogContext);
+
+                      if (!this.context.mounted) return;
+
+                      ScaffoldMessenger.of(this.context)
+                          .showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Application status updated successfully.',
+                          ),
+                          backgroundColor:
+                          Color(0xFF10B981),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!dialogContext.mounted) return;
+
+                      setDialogState(() {
+                        isSaving = false;
+                      });
+
+                      ScaffoldMessenger.of(dialogContext)
+                          .showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Failed to update status: $e',
+                          ),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  },
+
+                  child: isSaving
+                      ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                      : const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
   // DATE FORMAT
