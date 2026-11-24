@@ -1,14 +1,14 @@
+
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:video_player/video_player.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:video_player/video_player.dart';
 
 import 'register_screen.dart';
+import 'home_screen.dart';
 import 'admin_dashboard_screen.dart';
-
-
 
 const emerald = Color(0xFF10B981);
 const mint = Color(0xFF6EE7B7);
@@ -83,20 +83,29 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       final user = credential.user;
+
       if (user == null) {
         throw Exception('Login failed');
       }
 
+// Check whether the logged-in user is an admin.
       final isAdmin = await checkAdmin(user.uid);
 
       if (!mounted) return;
 
-
+// Navigate according to the user's role.
       if (isAdmin) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const AdminDashboardScreen(),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
           ),
         );
       }
