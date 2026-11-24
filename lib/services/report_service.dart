@@ -14,4 +14,36 @@ class ReportService {
     'Duplicate post',
     'Other',
   ];
+
+  /// One report per user per job (re-reporting just updates it), which also
+  /// keeps Firestore writes low.
+  static Future<void> reportJob({
+    required String jobId,
+    required String jobTitle,
+    required String reason,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('Please login to report a post.');
+    }
+
+    await FirebaseFirestore.instance
+        .collection('reports')
+        .doc('${jobId}_${user.uid}')
+        .set({
+      'jobId': jobId,
+      'jobTitle': jobTitle,
+      'reason': reason,
+      'reporterId': user.uid,
+      'status': 'open',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Fire and forget: the report is already saved.
+    NotificationService.instance.notifyJobReported(
+      jobId: jobId,
+      jobTitle: jobTitle,
+      reason: reason,
+    );
+  }
 }
