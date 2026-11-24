@@ -122,4 +122,64 @@ class ApplicationService {
       reason: cleanReason,
     );
   }
+
+  // 2. ADMIN approves or declines
+
+  static Future<void> decideCancellation({
+    required String applicationId,
+    required bool approve,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw ApplicationException('Please login first.');
+
+    final ref = _db.collection('applications').doc(applicationId);
+
+    Map<String, dynamic> application;
+
+    try {
+      application = await _db.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+
+        if (!snap.exists) {
+          throw ApplicationException('Application was not found.');
+        }
+
+        final data = snap.data()!;
+        final request = data['cancelRequest'];
+
+        if (request is! Map || request['status'] != 'pending') {
+          throw ApplicationException('There is no pending cancellation request.');
+        }
+
+        final update = <String, dynamic>{
+          'cancelRequest.status': approve ? 'approved' : 'declined',
+          'cancelRequest.decidedAt': FieldValue.serverTimestamp(),
+          'cancelRequest.decidedBy': user.uid,
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        if (approve) {
+          update['status'] = 'Cancelled';
+          update['previousStatus'] = data['status'] ?? 'Applied';
+          update['cancelledAt'] = FieldValue.serverTimestamp();
+        }
+
+        tx.update(ref, update);
+        return data;
+      });
+    } on FirebaseException catch (e) {
+      throw _friendly(e);
+    }
+
+    await NotificationService.instance.notifyCancellationDecision(
+      applicationId: applicationId,
+      applicantUid: '${application['userId'] ?? ''}',
+      jobTitle: '${application['jobTitle'] ?? 'the position'}',
+      company: '${application['company'] ?? 'the company'}',
+      approved: approve,
+      currentStatus: approve
+          ? 'Cancelled'
+          : '${application['status'] ?? 'Applied'}',
+    );
+  }
 }
