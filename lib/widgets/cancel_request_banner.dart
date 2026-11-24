@@ -98,4 +98,115 @@ class _CancelRequestBannerState extends State<CancelRequestBanner> {
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = widget.data['status']?.toString() ?? 'Applied';
+    final request = widget.data['cancelRequest'];
+
+    if (request is! Map ||
+        request['status'] != 'pending' ||
+        _isFinal(status)) {
+      return const SizedBox.shrink();
+    }
+
+    final reason = request['reason']?.toString().trim() ?? '';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _amber.withValues(alpha: widget.isDark ? 0.14 : 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _amber.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.event_busy_outlined, color: _amber, size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'CANCELLATION REQUESTED',
+                  style: TextStyle(
+                    color: _amber,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'The applicant wants to cancel this application.',
+            style: TextStyle(
+              color: widget.textColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (reason.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Reason: $reason',
+              style: TextStyle(
+                color: widget.mutedColor,
+                fontSize: 12.5,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _busy ? null : () => _decide(false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: BorderSide(
+                      color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Decline'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _busy ? null : () => _decide(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Approve'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
