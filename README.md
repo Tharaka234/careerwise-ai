@@ -64,9 +64,9 @@ Built with Flutter, Firebase, and Google Gemini AI, CareerWise integrates artifi
 | Firebase Authentication | User identity and authentication |
 | Cloud Firestore | Cloud database and real-time data storage |
 | Firebase Cloud Messaging | Push notification integration |
-| Google Gemini API | AI interviews, feedback, and career roadmaps |
+| Google Gemini API | AI-powered career recommendations, job matching, mock interviews, performance feedback, and personalized career roadmaps |
 | Git & GitHub | Version control and collaboration |
-| Visual Studio Code | Development environment |
+| Android Studio | Development environment |
 
 ## 🏗️ System Architecture
 
