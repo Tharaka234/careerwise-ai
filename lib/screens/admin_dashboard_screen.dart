@@ -76,6 +76,7 @@ class _AdminDashboardScreenState
   final GlobalKey _applicationsSectionKey = GlobalKey();
 
   bool _showAllJobs = false;
+  bool _showAllApplications = false;
 
   void _scrollToSection(GlobalKey key) {
     final targetContext = key.currentContext;
@@ -571,6 +572,25 @@ class _AdminDashboardScreenState
               _jobsList(context, colors),
 
               const SizedBox(height: 36),
+
+              // JOB APPLICATIONS SECTION
+              Container(
+                key: _applicationsSectionKey,
+                child: _sectionHeader(
+                  title: 'Job Applications',
+                  subtitle: 'Review applicants & track hiring pipeline',
+                  icon: Icons.groups_outlined,
+                  colors: colors,
+                  streamCollection: 'applications',
+                  countSuffix: 'Applicants',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              _applicationsList(colors),
+
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -1850,6 +1870,338 @@ class _AdminDashboardScreenState
         ),
       );
     }
+  }
+  // APPLICATION LIST
+  Widget _applicationsList(_AdminColors colors) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('applications')
+          .snapshots(),
+
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _loadingCard(colors);
+        }
+
+        if (snapshot.hasError) {
+          return _errorCard(
+            'Error loading applications:\n\n${snapshot.error}',
+            colors,
+          );
+        }
+
+        final applications = snapshot.data?.docs ?? [];
+
+        if (applications.isEmpty) {
+          return _emptyCard(
+            icon: Icons.description_outlined,
+            title: 'No applications yet',
+            subtitle:
+            'Applications will appear here when users apply for jobs.',
+            colors: colors,
+          );
+        }
+
+        // Most recent applications first
+        final sortedApplications = [...applications];
+
+        sortedApplications.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+
+          final aDate = aData['appliedAt'] as Timestamp?;
+          final bDate = bData['appliedAt'] as Timestamp?;
+
+          if (aDate == null && bDate == null) return 0;
+          if (aDate == null) return 1;
+          if (bDate == null) return -1;
+
+          return bDate.compareTo(aDate);
+        });
+
+        final visibleApplications = _showAllApplications
+            ? sortedApplications
+            : sortedApplications.take(4).toList();
+
+        return Column(
+          children: [
+            ...visibleApplications.map((document) {
+              final data =
+              document.data() as Map<String, dynamic>;
+
+              return _applicationCard(
+                context,
+                document.id,
+                data,
+                colors,
+              );
+            }),
+
+            if (sortedApplications.length > 4)
+              _viewAllButton(
+                colors: colors,
+                showAll: _showAllApplications,
+                totalCount: sortedApplications.length,
+                label: 'Applications',
+                onPressed: () {
+                  setState(() {
+                    _showAllApplications =
+                    !_showAllApplications;
+                  });
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+  // =====================================================
+// APPLICATION CARD
+// =====================================================
+
+  Widget _applicationCard(
+      BuildContext context,
+      String applicationId,
+      Map<String, dynamic> data,
+      _AdminColors colors,
+      ) {
+    final jobTitle =
+        data['jobTitle']?.toString() ?? 'Unknown Job';
+
+    final company =
+        data['company']?.toString() ?? 'Unknown Company';
+
+    final status =
+        data['status']?.toString() ?? 'Applied';
+
+    final appliedAt = data['appliedAt'] is Timestamp
+        ? data['appliedAt'] as Timestamp
+        : null;
+
+    // Application status color
+    Color statusColor = const Color(0xFF3B82F6);
+
+    switch (status.toLowerCase()) {
+      case 'under review':
+        statusColor = const Color(0xFFF59E0B);
+        break;
+
+      case 'shortlisted':
+        statusColor = const Color(0xFF8B5CF6);
+        break;
+
+      case 'interview':
+      case 'interviewed':
+        statusColor = const Color(0xFF06B6D4);
+        break;
+
+      case 'accepted':
+      case 'hired':
+        statusColor = const Color(0xFF10B981);
+        break;
+
+      case 'rejected':
+        statusColor = const Color(0xFFEF4444);
+        break;
+
+      case 'cancelled':
+        statusColor = const Color(0xFF6B7280);
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(22),
+
+        border: Border.all(
+          color: colors.cardBorder,
+          width: 1.2,
+        ),
+
+        boxShadow: [
+          BoxShadow(
+            color: (
+                colors.isDark
+                    ? Colors.black
+                    : const Color(0xFF059669)
+            ).withValues(
+              alpha: colors.isDark ? 0.35 : 0.06,
+            ),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+
+            children: [
+              // Left status accent bar
+              Container(
+                width: 5,
+                color: statusColor,
+              ),
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                    children: [
+                      // APPLICATION HEADER
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderRadius:
+                              BorderRadius.circular(14),
+                            ),
+
+                            child: Icon(
+                              Icons.description_outlined,
+                              color: statusColor,
+                              size: 24,
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+
+                              children: [
+                                Text(
+                                  jobTitle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 5),
+
+                                Text(
+                                  company,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          // STATUS BADGE
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderRadius:
+                              BorderRadius.circular(20),
+                              border: Border.all(
+                                color: statusColor.withValues(
+                                  alpha: 0.25,
+                                ),
+                              ),
+                            ),
+
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: statusColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Divider(
+                        color: colors.divider,
+                        height: 1,
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // APPLIED DATE
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 15,
+                            color: colors.textSecondary,
+                          ),
+
+                          const SizedBox(width: 7),
+
+                          Text(
+                            appliedAt != null
+                                ? 'Applied on ${_formatDate(appliedAt)}'
+                                : 'Applied date unavailable',
+
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  // DATE FORMAT
+  String _formatDate(Timestamp timestamp) {
+    final date = timestamp.toDate();
+
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year;
+
+    return '$day/$month/$year';
   }
   Widget _viewAllButton({
     required _AdminColors colors,
