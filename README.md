@@ -126,8 +126,8 @@ careerwise_sample/
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd careerwise_sample
+git clone <https://github.com/Tharaka234/careerwise-ai.git>
+cd careerwise-ai
 ```
 
 Replace `<repository-url>` with the actual GitHub repository URL and adjust the directory name if needed.
