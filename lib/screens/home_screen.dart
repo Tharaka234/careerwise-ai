@@ -1160,4 +1160,274 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  // CTA BANNER (LUSH EMERALD GRADIENT)
+
+  Widget _buildCtaBanner(BuildContext context, _HomeColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          colors: colors.isDark
+              ? const [Color(0xFF047857), Color(0xFF065F46)]
+              : const [Color(0xFF059669), Color(0xFF10B981)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.3),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.22),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ready for your next step?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Get AI-powered career advice tailored just for you.',
+                  style: TextStyle(color: Color(0xFFE2FBEA), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _open(context, const CareerAdvisorScreen()),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Get Started',
+                    style: TextStyle(
+                      color: colors.primaryDark,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 14,
+                    color: colors.primaryDark,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  // BOTTOM NAVIGATION
+
+  Widget _buildBottomNav(BuildContext context, _HomeColors colors) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(color: colors.cardBorder, width: 1.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: colors.isDark ? 0.35 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: SizedBox(
+              height: 66,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _navItem(
+                          Icons.home_rounded,
+                          'Home',
+                          true,
+                          () {},
+                          colors,
+                        ),
+                      ),
+                      Expanded(
+                        child: _navItem(
+                          Icons.work_outline_rounded,
+                          'Jobs',
+                          false,
+                          () => _open(context, const JobsScreen()),
+                          colors,
+                        ),
+                      ),
+                      const Expanded(child: SizedBox()),
+                      Expanded(
+                        child: _navItem(
+                          Icons.history_rounded,
+                          'History',
+                          false,
+                          () => _open(context, const CareerHistoryScreen()),
+                          colors,
+                        ),
+                      ),
+                      Expanded(
+                        child: _navItem(
+                          Icons.person_outline_rounded,
+                          'Profile',
+                          false,
+                          () => _open(context, const ProfileScreen()),
+                          colors,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Floating AI Middle Button
+                  Positioned(
+                    top: -24,
+                    left: 0,
+                    right: 0,
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () =>
+                              _open(context, const CareerAdvisorScreen()),
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: colors.cardBg,
+                              border: Border.all(
+                                color: colors.cardBg,
+                                width: 5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colors.primary.withValues(alpha: 0.35),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: colors.isDark
+                                      ? const [
+                                          Color(0xFF047857),
+                                          Color(0xFF059669)
+                                        ]
+                                      : const [
+                                          Color(0xFF059669),
+                                          Color(0xFF10B981)
+                                        ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.auto_awesome,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'AI',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: colors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(
+    IconData icon,
+    String label,
+    bool active,
+    VoidCallback onTap,
+    _HomeColors colors,
+  ) {
+    final color = active ? colors.primary : colors.textMuted;
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 25),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
