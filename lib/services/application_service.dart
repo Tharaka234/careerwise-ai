@@ -46,4 +46,80 @@ class ApplicationService {
     }
     return ApplicationException('Something went wrong. Please try again.');
   }
+
+  // 1. APPLICANT asks to cancel
+
+  static Future<void> requestCancellation({
+    required String applicationId,
+    String? reason,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw ApplicationException('Please login first.');
+
+    final ref = _db.collection('applications').doc(applicationId);
+    final cleanReason = reason?.trim() ?? '';
+
+    Map<String, dynamic> application;
+
+    try {
+      // Transaction: two quick taps can never create two requests.
+      application = await _db.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+
+        if (!snap.exists) {
+          throw ApplicationException('Application was not found.');
+        }
+
+        final data = snap.data()!;
+
+        if (data['userId'] != user.uid) {
+          throw ApplicationException(
+            'You can only cancel your own applications.',
+          );
+        }
+
+        if (_finalStatuses.contains(_normalize(data['status']))) {
+          throw ApplicationException(
+            'This application can no longer be cancelled.',
+          );
+        }
+
+        final existing = data['cancelRequest'];
+        if (existing is Map && existing['status'] == 'pending') {
+          throw ApplicationException(
+            'A cancellation request is already waiting for approval.',
+          );
+        }
+
+        tx.update(ref, {
+          'cancelRequest': {
+            'status': 'pending',
+            'reason': cleanReason,
+            'requestedAt': FieldValue.serverTimestamp(),
+          },
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        return data;
+      });
+    } on FirebaseException catch (e) {
+      throw _friendly(e);
+    }
+
+    // The request is saved. Telling the admin is best effort.
+    String? publisherId;
+    try {
+      final job =
+          await _db.collection('jobs').doc('${application['jobId']}').get();
+      publisherId = job.data()?['publisherId']?.toString();
+    } catch (_) {}
+
+    await NotificationService.instance.notifyCancellationRequested(
+      applicationId: applicationId,
+      jobId: '${application['jobId'] ?? ''}',
+      jobTitle: '${application['jobTitle'] ?? 'a job'}',
+      publisherId: publisherId,
+      reason: cleanReason,
+    );
+  }
 }
