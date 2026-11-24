@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'admin_profile_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_recommendations_screen.dart';
+import 'add_job_screen.dart';
 
 class _AdminColors {
   final bool isDark;
@@ -73,6 +74,8 @@ class _AdminDashboardScreenState
     extends State<AdminDashboardScreen> {
   final GlobalKey _jobsSectionKey = GlobalKey();
   final GlobalKey _applicationsSectionKey = GlobalKey();
+
+  bool _showAllJobs = false;
 
   void _scrollToSection(GlobalKey key) {
     final targetContext = key.currentContext;
@@ -538,16 +541,45 @@ class _AdminDashboardScreenState
              // Real-time Statistics
               _statisticsGrid(colors),
 
+
               const SizedBox(height: 34),
+
+              // JOB MANAGEMENT HEADER
+              Container(
+                key: _jobsSectionKey,
+                child: _sectionHeader(
+                  title: 'Job Management',
+                  subtitle: 'Manage and publish career opportunities',
+                  icon: Icons.work_outline_rounded,
+                  colors: colors,
+                  streamCollection: 'jobs',
+                  countSuffix: 'Active Jobs',
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+             // ADD JOB BUTTON
+              _addJobButton(
+                context: context,
+                colors: colors,
+              ),
+
+              const SizedBox(height: 16),
+
+             // JOBS LIST
+              _jobsList(context, colors),
+
+              const SizedBox(height: 36),
             ],
           ),
         ),
       ),
     );
   }
-  // =====================================================
-// WELCOME BANNER
-// =====================================================
+
+  // WELCOME BANNER
+
 
   Widget _welcomeBanner(
       BuildContext context,
@@ -691,15 +723,14 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // =====================================================
-// SECTION HEADER
-// =====================================================
-
+  // SECTION HEADER
   Widget _sectionHeader({
     required String title,
     required String subtitle,
     required IconData icon,
     required _AdminColors colors,
+    String? streamCollection,
+    String? countSuffix,
   }) {
     return Row(
       children: [
@@ -754,13 +785,72 @@ class _AdminDashboardScreenState
             ],
           ),
         ),
+
+        if (streamCollection != null) ...[
+          const SizedBox(width: 8),
+
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection(streamCollection)
+                .snapshots(),
+
+            builder: (context, snapshot) {
+              final count = snapshot.data?.docs.length ?? 0;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.badgeBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primary.withValues(
+                              alpha: 0.6,
+                            ),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 6),
+
+                    Text(
+                      '$count ${countSuffix ?? ''}'.trim(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ],
     );
   }
-  // =====================================================
-// STATISTICS GRID
-// =====================================================
-
+  // STATISTICS GRID
   Widget _statisticsGrid(_AdminColors colors) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -848,10 +938,7 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // =====================================================
-// REAL-TIME STAT CARD
-// =====================================================
-
+  // REAL-TIME STAT CARD
   Widget _statCard({
     required String collection,
     required String title,
@@ -1004,4 +1091,909 @@ class _AdminDashboardScreenState
       },
     );
   }
+  // ADD JOB HERO ACTION CARD (PREMIUM CALLOUT DESIGN)
+  Widget _addJobButton({
+    required BuildContext context,
+    required _AdminColors colors,
+  }) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors.isDark
+              ? const [Color(0xFF064E3B), Color(0xFF047857), Color(0xFF065F46)]
+              : const [Color(0xFF065F46), Color(0xFF059669), Color(0xFF10B981)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: colors.isDark ? 0.15 : 0.25),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: colors.isDark ? 0.35 : 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AddJobScreen(),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.add_business_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Post a New Career Opportunity',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Publish openings & attract qualified talent',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        color: colors.primaryDark,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Add Job',
+                        style: TextStyle(
+                          color: colors.primaryDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  // JOB LIST
+  Widget _jobsList(BuildContext context, _AdminColors colors) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('jobs')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _loadingCard(colors);
+        }
+
+        if (snapshot.hasError) {
+          return _errorCard(
+            'Error loading jobs:\n\n${snapshot.error}',
+            colors,
+          );
+        }
+
+        final jobs = snapshot.data?.docs ?? [];
+
+        if (jobs.isEmpty) {
+          return _emptyCard(
+            icon: Icons.work_off_outlined,
+            title: 'No jobs found',
+            subtitle: 'Add your first job using the button above.',
+            colors: colors,
+          );
+        }
+
+        final visibleJobs = _showAllJobs
+            ? jobs
+            : jobs.take(4).toList();
+
+        return Column(
+          children: [
+            ...visibleJobs.map((document) {
+              final data = document.data() as Map<String, dynamic>;
+
+              return _jobCard(
+                context,
+                document.id,
+                data,
+                colors,
+              );
+            }),
+
+            if (jobs.length > 4)
+              _viewAllButton(
+                colors: colors,
+                showAll: _showAllJobs,
+                totalCount: jobs.length,
+                label: 'Jobs',
+                onPressed: () {
+                  setState(() {
+                    _showAllJobs = !_showAllJobs;
+                  });
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+  // JOB CARD (REDESIGNED PREMIUM EXECUTIVE VIEW)
+  Widget _jobCard(
+      BuildContext context,
+      String jobId,
+      Map<String, dynamic> data,
+      _AdminColors colors,
+      ) {
+    final title = data['title']?.toString() ?? 'Unknown Job';
+    final company = data['company']?.toString() ?? 'Unknown Company';
+    final location = data['location']?.toString() ?? 'Unknown Location';
+    final salary = data['salary']?.toString() ?? 'Salary not specified';
+    final jobType = data['jobType']?.toString() ?? 'Full Time';
+    final description = data['description']?.toString() ?? '';
+
+    // Company Avatar Initial
+    final initial = company.trim().isNotEmpty
+        ? company.trim()[0].toUpperCase()
+        : (title.trim().isNotEmpty ? title.trim()[0].toUpperCase() : 'J');
+
+    // Job type color & dot indicator
+    Color jobTypeColor = colors.primary;
+    if (jobType.toLowerCase().contains('part')) {
+      jobTypeColor = const Color(0xFFF59E0B);
+    } else if (jobType.toLowerCase().contains('remote')) {
+      jobTypeColor = const Color(0xFF8B5CF6);
+    } else if (jobType.toLowerCase().contains('contract')) {
+      jobTypeColor = const Color(0xFF06B6D4);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: colors.cardBorder,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                .withValues(alpha: colors.isDark ? 0.35 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left decorative accent bar
+              Container(
+                width: 5,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      colors.primary,
+                      colors.primaryAccent,
+                    ],
+                  ),
+                ),
+              ),
+
+              // Main Card Body
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header: Avatar, Title & Job Type
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Company Initial Avatar
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: colors.isDark
+                                    ? const [Color(0xFF064E3B), Color(0xFF059669)]
+                                    : const [Color(0xFF059669), Color(0xFF10B981)],
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colors.primary.withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                initial,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: colors.textPrimary,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.business_rounded,
+                                      size: 15,
+                                      color: colors.textSecondary,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Flexible(
+                                      child: Text(
+                                        company,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: colors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          // Job Type Pill with glowing indicator dot
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: jobTypeColor.withValues(alpha: colors.isDark ? 0.2 : 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: jobTypeColor.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: jobTypeColor,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: jobTypeColor.withValues(alpha: 0.6),
+                                        blurRadius: 3,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  jobType,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: jobTypeColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Location & Salary Pills
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _featurePill(
+                            icon: Icons.location_on_rounded,
+                            label: location,
+                            iconColor: colors.primary,
+                            colors: colors,
+                          ),
+                          _featurePill(
+                            icon: Icons.payments_rounded,
+                            label: salary,
+                            iconColor: const Color(0xFF10B981),
+                            colors: colors,
+                          ),
+                        ],
+                      ),
+
+                      // Description Container
+                      if (description.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: colors.isDark
+                                ? const Color(0xFF0F1E17)
+                                : const Color(0xFFF7FAF8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colors.cardBorder,
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              height: 1.45,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 14),
+
+                      Divider(color: colors.divider, height: 1),
+
+                      const SizedBox(height: 12),
+
+                      // Action Buttons (Edit & Delete - Perfectly Aligned & Modern)
+                      Row(
+                        children: [
+                          // 1. EDIT JOB BUTTON
+                          Expanded(
+                            child: Container(
+                              height: 44,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: colors.isDark
+                                      ? [
+                                    const Color(0xFF064E3B).withValues(alpha: 0.35),
+                                    const Color(0xFF10B981).withValues(alpha: 0.18),
+                                  ]
+                                      : [
+                                    const Color(0xFF059669).withValues(alpha: 0.12),
+                                    const Color(0xFF10B981).withValues(alpha: 0.06),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: colors.primary.withValues(
+                                    alpha: colors.isDark ? 0.45 : 0.35,
+                                  ),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: colors.primary.withValues(
+                                      alpha: colors.isDark ? 0.15 : 0.08,
+                                    ),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => _editJob(context, jobId, data),
+                                  child: Center(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.edit_rounded,
+                                          size: 17,
+                                          color: colors.primary,
+                                        ),
+                                        const SizedBox(width: 7),
+                                        Text(
+                                          'Edit Job',
+                                          style: TextStyle(
+                                            color: colors.primary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13.5,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          // 2. DELETE BUTTON
+                          Expanded(
+                            child: Container(
+                              height: 44,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: colors.isDark
+                                      ? [
+                                    Colors.redAccent.withValues(alpha: 0.28),
+                                    Colors.redAccent.withValues(alpha: 0.14),
+                                  ]
+                                      : [
+                                    Colors.redAccent.withValues(alpha: 0.12),
+                                    Colors.redAccent.withValues(alpha: 0.06),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.redAccent.withValues(
+                                    alpha: colors.isDark ? 0.45 : 0.35,
+                                  ),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.redAccent.withValues(
+                                      alpha: colors.isDark ? 0.15 : 0.08,
+                                    ),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => _confirmDeleteJob(
+                                    context,
+                                    jobId,
+                                    title,
+                                    colors,
+                                  ),
+                                  child: const Center(
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 18,
+                                          color: Colors.redAccent,
+                                        ),
+                                        SizedBox(width: 7),
+                                        Text(
+                                          'Delete',
+                                          style: TextStyle(
+                                            color: Colors.redAccent,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13.5,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  // FEATURE PILL HELPER
+  Widget _featurePill({
+    required IconData icon,
+    required String label,
+    required Color iconColor,
+    required _AdminColors colors,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.isDark
+            ? const Color(0xFF0F1E17)
+            : const Color(0xFFF4F9F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: colors.cardBorder,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: iconColor),
+          const SizedBox(width: 5),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  // EDIT JOB
+  Future<void> _editJob(
+      BuildContext context,
+      String jobId,
+      Map<String, dynamic> data,
+      ) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddJobScreen(
+          jobId: jobId,
+          existingJob: data,
+        ),
+      ),
+    );
+  }
+  // DELETE CONFIRMATION
+  void _confirmDeleteJob(
+      BuildContext context,
+      String jobId,
+      String jobTitle,
+      _AdminColors colors,
+      ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: colors.cardBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+            side: BorderSide(color: colors.cardBorder, width: 1.2),
+          ),
+          title: Text(
+            'Delete Job?',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+              fontSize: 18,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete "$jobTitle"?\n\nThis action cannot be undone.',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: colors.textSecondary),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+
+                await _deleteJob(
+                  context,
+                  jobId,
+                );
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  // DELETE JOB
+  Future<void> _deleteJob(
+      BuildContext context,
+      String jobId,
+      ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('jobs')
+          .doc(jobId)
+          .delete();
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Job deleted successfully.'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete job:\n$e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+  Widget _viewAllButton({
+    required _AdminColors colors,
+    required bool showAll,
+    required int totalCount,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 12),
+      child: SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: colors.primary,
+            backgroundColor: colors.cardBg,
+            side: BorderSide(
+              color: colors.primary.withValues(alpha: 0.35),
+              width: 1.2,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+          icon: Icon(
+            showAll
+                ? Icons.keyboard_arrow_up_rounded
+                : Icons.grid_view_rounded,
+            size: 20,
+          ),
+          label: Text(
+            showAll
+                ? 'Show Less'
+                : 'View All $totalCount $label',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13.5,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
+  // LOADING CARD
+  // =====================================================
+
+  Widget _loadingCard(_AdminColors colors) {
+    return Container(
+      padding: const EdgeInsets.all(35),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+      ),
+      child: Center(
+        child: CircularProgressIndicator(
+          color: colors.primary,
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
+  // ERROR CARD
+  // =====================================================
+
+  Widget _errorCard(String message, _AdminColors colors) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: colors.isDark ? 0.15 : 0.05),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.red.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Text(
+        message,
+        style: const TextStyle(
+          color: Colors.redAccent,
+        ),
+      ),
+    );
+  }
+
+  // =====================================================
+  // EMPTY CARD
+  // =====================================================
+
+  Widget _emptyCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required _AdminColors colors,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.cardBorder, width: 1.2),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 46,
+            color: colors.isDark
+                ? const Color(0xFF335242)
+                : const Color(0xFFA7C1B3),
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 }
