@@ -309,5 +309,190 @@ class HomeScreen extends StatelessWidget {
       ],
     );
   }
-}
+
+  // HERO BANNER (LUSH EMERALD MINT GRADIENT)
+
+  static const String _heroImage = 'assets/images/hero_student.jpg';
+
+  Widget _buildHero(
+    BuildContext context,
+    String userName,
+    _HomeColors colors,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double w = constraints.maxWidth;
+        final bool wide = w >= 700;
+
+        final double height = wide ? 250 : 190;
+        final double imageWidth = wide ? w * 0.36 : w * 0.36;
+
+        return Container(
+          height: height,
+          width: double.infinity,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            gradient: LinearGradient(
+              colors: colors.isDark
+                  ? const [
+                      Color(0xFF064E3B),
+                      Color(0xFF047857),
+                      Color(0xFF065F46),
+                    ]
+                  : const [
+                      Color(0xFFE6F9EE),
+                      Color(0xFFD1FAE5),
+                      Color(0xFFA7F3D0),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.primary.withValues(alpha: colors.isDark ? 0.3 : 0.15),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              // Image fills the right side and fades smoothly
+              Positioned(
+                top: 0,
+                bottom: 0,
+                right: 0,
+                width: imageWidth,
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (rect) => const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Colors.transparent, Colors.black],
+                    stops: [0.0, 0.4],
+                  ).createShader(rect),
+                  child: Image.asset(
+                    _heroImage,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    errorBuilder: (context, error, stackTrace) => Center(
+                      child: Icon(
+                        Icons.school_rounded,
+                        size: wide ? 110 : 80,
+                        color: colors.primary.withValues(alpha: 0.35),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Text & Call to Action
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  wide ? 32 : 18,
+                  16,
+                  imageWidth * 0.85,
+                  16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Hello, $userName',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: wide ? 17 : 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.isDark
+                            ? const Color(0xFFD1FAE5)
+                            : const Color(0xFF065F46),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Good to see you 👋',
+                        style: TextStyle(
+                          fontSize: wide ? 34 : 22,
+                          fontWeight: FontWeight.w800,
+                          color: colors.textPrimary,
+                          height: 1.15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Take the next step towards your dream career with CareerWise.',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: wide ? 15 : 12,
+                        color: colors.textSecondary,
+                        height: 1.35,
+                      ),
+                    ),
+                    SizedBox(height: wide ? 18 : 12),
+                    GestureDetector(
+                      onTap: () => _open(context, const CareerAdvisorScreen()),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: wide ? 20 : 14,
+                          vertical: wide ? 13 : 10,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: colors.isDark
+                                ? const [Color(0xFF059669), Color(0xFF047857)]
+                                : const [Color(0xFF059669), Color(0xFF10B981)],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: colors.primary.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Explore Career Paths',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: wide ? 18 : 15,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 
