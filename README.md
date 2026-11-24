@@ -321,20 +321,6 @@ Existing interviews without `interviewType` are treated as initial interviews. R
 - `env.json` and `--dart-define` are development conveniences, not secure secret storage. Keys can be extracted from compiled clients. Production AI requests should use an authenticated server-side integration.
 - AI-generated scores and recommendations are educational guidance, not definitive hiring assessments. Reusing questions improves consistency of question content but introduces practice effects; AI scoring can vary. Score differences do not establish that the roadmap caused skill improvement.
 
-## 📸 Application Screenshots
-
-Suggested screenshots to add to the repository:
-
-| Job Seeker | AI Career Decision Support | Administrator |
-|---|---|---|
-| Home Screen | AI Career Recommendations | Admin Dashboard |
-| Job Listings | Recommended Job Matches | Job Management |
-| My Applications | AI Mock Interview | Application Management |
-| User Profile | Interview Results | Cancellation Requests |
-| Notifications | Interview History | Applicant Recommendations |
-| Light & Dark Mode | AI Career Roadmap | Application Statistics |
-| — | Completed Roadmap & Retake Interview | — |
-| — | Performance Comparison & Detailed Feedback (Light/Dark) | — |
 
 ## 🧪 Testing & Build
 
