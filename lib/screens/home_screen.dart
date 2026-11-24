@@ -818,100 +818,346 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-Widget _quickAction(
-    BuildContext context, {
-      required IconData icon,
-      required String title,
-      required String subtitle,
-      required Color color,
-      required Widget page,
-      required _HomeColors colors,
-    }) {
-  return Container(
-    decoration: BoxDecoration(
-      color: colors.cardBg,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: colors.cardBorder, width: 1.2),
-      boxShadow: [
-        BoxShadow(
-          color: (colors.isDark ? Colors.black : const Color(0xFF059669))
-              .withValues(alpha: colors.isDark ? 0.3 : 0.05),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
+
+  // FEATURED JOBS
+
+  Widget _buildFeaturedHeader(BuildContext context, _HomeColors colors) {
+    return Row(
+      children: [
+        Icon(
+          Icons.business_center_outlined,
+          color: colors.primary,
+          size: 24,
         ),
-      ],
-    ),
-    child: Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: () => _open(context, page),
-        borderRadius: BorderRadius.circular(18),
-        mouseCursor: SystemMouseCursors.click,
-        splashColor: color.withValues(alpha: 0.12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Featured Jobs',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () => _open(context, const JobsScreen()),
+          child: Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: colors.isDark ? 0.22 : 0.12),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(height: 10),
               Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                'View All',
                 style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                  height: 1.2,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: colors.primary,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  color: colors.textSecondary,
-                  height: 1.3,
-                ),
-              ),
-              const Spacer(),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: colors.isDark ? 0.2 : 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 13,
-                    color: color,
-                  ),
-                ),
+              const SizedBox(width: 3),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colors.primary,
+                size: 20,
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturedJobs(_HomeColors colors) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return _messageCard(
+        'Please login to see recommended jobs.',
+        colors,
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: _latestRecommendationStream(),
+      builder: (context, recSnap) {
+        if (recSnap.connectionState == ConnectionState.waiting) {
+          return _buildLoading(colors);
+        }
+        if (recSnap.hasError) {
+          return _messageCard(
+            'Unable to load your career recommendation.',
+            colors,
+          );
+        }
+        if (!recSnap.hasData || recSnap.data!.docs.isEmpty) {
+          return _messageCard(
+            'Complete the AI Career Advisor to discover jobs that match your career path.',
+            colors,
+          );
+        }
+
+        final latest = _getLatestRecommendation(recSnap.data!);
+        if (latest == null) {
+          return _messageCard(
+            'Complete the AI Career Advisor to discover jobs that match your career path.',
+            colors,
+          );
+        }
+
+        final data = latest.data() as Map<String, dynamic>;
+        final career = _getCareerFromRecommendation(data['recommendation']);
+
+        if (career == null || career.isEmpty) {
+          return _messageCard(
+            'Complete the AI Career Advisor to discover jobs that match your career path.',
+            colors,
+          );
+        }
+
+        return StreamBuilder<List<Job>>(
+          stream: JobService().getRelatedJobs(career),
+          builder: (context, jobSnap) {
+            if (jobSnap.connectionState == ConnectionState.waiting) {
+              return _buildLoading(colors);
+            }
+            if (jobSnap.hasError) {
+              return _messageCard(
+                'Unable to load recommended jobs.',
+                colors,
+              );
+            }
+
+            final jobs = (jobSnap.data ?? []).take(5).toList();
+
+            if (jobs.isEmpty) {
+              return _messageCard(
+                'No jobs found for $career yet.',
+                colors,
+              );
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final double w = constraints.maxWidth;
+
+                // Desktop / tablet: cards share row
+                if (w >= 700) {
+                  final shown = jobs.take(3).toList();
+                  return SizedBox(
+                    height: 168,
+                    child: Row(
+                      children: [
+                        for (int i = 0; i < 3; i++) ...[
+                          if (i > 0) const SizedBox(width: 14),
+                          Expanded(
+                            child: i < shown.length
+                                ? _buildJobCard(context, shown[i], i, colors)
+                                : const SizedBox(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }
+
+                // Mobile: horizontal scroll
+                final double cardWidth = w * 0.76;
+                return SizedBox(
+                  height: 160,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: jobs.length,
+                    separatorBuilder: (context, index) => const SizedBox(width: 12),
+                    itemBuilder: (_, i) => SizedBox(
+                      width: cardWidth,
+                      child: _buildJobCard(context, jobs[i], i, colors),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildJobCard(
+    BuildContext context,
+    Job job,
+    int index,
+    _HomeColors colors,
+  ) {
+    final company = job.company.trim();
+    final letter = company.isNotEmpty ? company[0].toUpperCase() : 'J';
+
+    return GestureDetector(
+      onTap: () => _open(context, JobDetailsScreen(job: job)),
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: colors.cardBg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: colors.cardBorder, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                  .withValues(alpha: colors.isDark ? 0.3 : 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(
+                      alpha: colors.isDark ? 0.22 : 0.12,
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    letter,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(
+                        alpha: colors.isDark ? 0.2 : 0.08,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      job.jobType,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              job.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              job.company,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: colors.textMuted,
+                ),
+                const SizedBox(width: 3),
+                Expanded(
+                  child: Text(
+                    job.location,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(
+                      alpha: colors.isDark ? 0.2 : 0.1,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 15,
+                    color: colors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildLoading(_HomeColors colors) {
+    return Container(
+      width: double.infinity,
+      height: 130,
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2.5,
+          color: colors.primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _messageCard(String message, _HomeColors colors) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: colors.cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 13,
+          color: colors.textSecondary,
+          height: 1.4,
+        ),
+      ),
+    );
+  }
 }
