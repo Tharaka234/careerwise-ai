@@ -1,4 +1,4 @@
-# 🚀 CareerWise — AI-Powered Career Development & Job Application Platform
+# 🚀 CareerWise — AI-Powered Career Decision Support & Job Application Platform
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
@@ -7,7 +7,9 @@
 
 **Prepare smarter. Apply confidently. Grow continuously.**
 
-CareerWise is an AI-powered mobile application designed to connect job seekers with career opportunities while supporting interview preparation and continuous professional development. It combines job application management, personalized AI feedback, and interactive career roadmaps in a modern, user-friendly platform.
+CareerWise is an AI-powered career decision support system designed to help job seekers make informed career decisions through intelligent job application management, AI-powered mock interviews, personalized career roadmaps, and performance analysis.
+
+Built with Flutter, Firebase, and Google Gemini AI, CareerWise integrates artificial intelligence and real-time cloud services to support career planning, interview preparation, and informed career decision-making.
 
 ## ✨ Key Features
 
