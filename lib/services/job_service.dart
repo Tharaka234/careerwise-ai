@@ -1,10 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:careerwise_sample/model/job.dart';
+import 'package:careerwise-ai/model/job.dart';
 
 class JobService {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
-
 
   // Get All Jobs
   Stream<List<Job>> getJobs() {
@@ -21,10 +20,7 @@ class JobService {
       }).toList();
     });
   }
-  // ==========================================================
-// Get Jobs Related to Career
-// ==========================================================
-
+  // Get Jobs Related to Career
   Stream<List<Job>> getRelatedJobs(String career) {
     return getJobs().map((jobs) {
       return _filterJobsByCareer(
@@ -33,9 +29,10 @@ class JobService {
       );
     });
   }
+
   // ==========================================================
-// Career Matching
-// ==========================================================
+  // Career Matching
+  // ==========================================================
 
   List<Job> _filterJobsByCareer(
       List<Job> jobs,
@@ -58,17 +55,12 @@ class JobService {
       );
     }).toList();
   }
-  // ==========================================================
-// Career Keywords / Related Titles
-// ==========================================================
 
-  // ==========================================================
-// Career Keywords / Related Titles
-// ==========================================================
-
+  // Career Keywords / Related Titles
   List<String> _getCareerKeywords(String career) {
     final normalized = career.toLowerCase().trim();
 
+    // Prevent empty career values from matching all jobs
     if (normalized.isEmpty) {
       return [];
     }
@@ -119,6 +111,7 @@ class JobService {
         'mobile application',
       ];
     }
+
     // Data Analysis
     if (normalized.contains('data analyst') ||
         normalized.contains('data analysis')) {
@@ -133,6 +126,7 @@ class JobService {
         'tableau',
       ];
     }
+
     // Data Science and Machine Learning
     if (normalized.contains('data scientist') ||
         normalized.contains('machine learning')) {
@@ -146,8 +140,9 @@ class JobService {
         'python',
       ];
     }
+
     // Artificial Intelligence
-    if (normalized.contains('ai') ||
+    if (RegExp(r'\bai\b').hasMatch(normalized) ||
         normalized.contains('artificial intelligence')) {
       return [
         'ai engineer',
@@ -158,6 +153,7 @@ class JobService {
         'ai developer',
       ];
     }
+
     // Cybersecurity
     if (normalized.contains('cybersecurity') ||
         normalized.contains('cyber security')) {
@@ -168,6 +164,50 @@ class JobService {
         'security engineer',
         'information security',
         'soc analyst',
+      ];
+    }
+
+    // UI/UX Design
+    if (normalized.contains('ui/ux') ||
+        normalized.contains('ui ux') ||
+        normalized.contains('designer')) {
+      return [
+        'ui/ux',
+        'ui ux',
+        'ui designer',
+        'ux designer',
+        'product designer',
+        'user experience',
+        'user interface',
+      ];
+    }
+
+    // Backend Development
+    if (normalized.contains('backend') ||
+        normalized.contains('back end')) {
+      return [
+        'backend',
+        'back end',
+        'backend developer',
+        'server-side',
+        'api developer',
+        'java developer',
+        'spring boot',
+        '.net developer',
+      ];
+    }
+
+    // Frontend Development
+    if (normalized.contains('frontend') ||
+        normalized.contains('front end')) {
+      return [
+        'frontend',
+        'front end',
+        'frontend developer',
+        'web developer',
+        'react',
+        'angular',
+        'vue',
       ];
     }
 
