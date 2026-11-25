@@ -669,4 +669,129 @@ Widget _buildAccountInfoCard({
     );
   }
 
+  // Step 14: Reusable Info Row & Privilege Row Builder Widgets
+
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color iconBg,
+    required Color iconColor,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color borderColor,
+    bool isMono = false,
+    Widget? badge,
+    Widget? trailing,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: iconBg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textSecondary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                        fontFamily: isMono ? 'monospace' : null,
+                      ),
+                    ),
+                  ),
+                  if (badge != null) ...[
+                    const SizedBox(width: 8),
+                    badge,
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+        ?trailing,
+      ],
+    );
+  }
+
+  Widget _buildPrivilegeRow({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+    required Color textPrimary,
+    required Color textSecondary,
+    required bool isDark,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Icon(
+          Icons.check_circle_rounded,
+          color: Color(0xFF10B981),
+          size: 18,
+        ),
+      ],
+    );
+  }
+}
+
 
