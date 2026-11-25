@@ -1540,4 +1540,147 @@ class NotificationService {
       );
     });
   }
+  // =====================================================================
+// APPLICATION CANCELLATION REQUEST
+// =====================================================================
+
+  Future<void> notifyCancellationRequested({
+    required String applicationId,
+    required String jobId,
+    required String jobTitle,
+    String? publisherId,
+    String? reason,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || applicationId.isEmpty) return;
+
+      final displayName = user.displayName?.trim() ?? '';
+
+      final applicantName = displayName.isNotEmpty
+          ? displayName
+          : user.email?.split('@').first ?? 'A candidate';
+
+      final cleanReason = reason?.trim() ?? '';
+
+      const title = 'Cancellation request';
+
+      final body =
+          '$applicantName asked to cancel their application '
+          'for $jobTitle.'
+          '${cleanReason.isEmpty ? '' : ' Reason: $cleanReason'}';
+
+      // Save cancellation request in admin notification history.
+      await _saveHistory(
+        title: title,
+        body: body,
+        type: NotificationTypes.cancelRequest,
+        audience: HistoryAudience.admins,
+        jobId: jobId,
+        applicationId: applicationId,
+      );
+
+      final data = _data(
+        NotificationTypes.cancelRequest,
+        {
+          'applicationId': applicationId,
+          'jobId': jobId,
+        },
+      );
+
+      final ownerUid = publisherId ?? '';
+
+      // Remote delivery when a trusted sender is configured.
+      if (ownerUid.isNotEmpty && ownerUid != user.uid) {
+        await sendToUser(
+          uid: ownerUid,
+          title: title,
+          body: 'A new cancellation request requires your review.',
+          data: data,
+        );
+      }
+
+      debugPrint('CANCELLATION REQUEST HISTORY SAVED');
+    });
+  }
+  // =====================================================================
+// APPLICATION CANCELLATION DECISION
+// =====================================================================
+
+  Future<void> notifyCancellationDecision({
+    required String applicationId,
+    required String applicantUid,
+    required String jobTitle,
+    required String company,
+    required bool approved,
+    required String currentStatus,
+  }) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null ||
+          applicantUid.isEmpty ||
+          applicationId.isEmpty) {
+        return;
+      }
+
+      // Only admins can send cancellation decisions.
+      final admin = await _checkIsAdmin(user.uid);
+
+      if (!admin) return;
+
+      final title = approved
+          ? 'Cancellation Request Approved'
+          : 'Cancellation Request Declined';
+
+      final body = approved
+          ? 'Your cancellation request for $jobTitle '
+          'at $company was approved.'
+          : 'Your cancellation request for $jobTitle '
+          'at $company was declined.';
+
+      final status = approved
+          ? 'Cancelled'
+          : currentStatus;
+
+      // STEP 1: Save applicant notification history.
+      await _db
+          .collection(HistoryFields.collection)
+          .doc('cancel_decision_$applicationId')
+          .set({
+        HistoryFields.title: title,
+        HistoryFields.body: body,
+        HistoryFields.type: NotificationTypes.applicationStatus,
+        HistoryFields.audience: HistoryAudience.user,
+        HistoryFields.recipientUid: applicantUid,
+        HistoryFields.applicationId: applicationId,
+        HistoryFields.senderUid: user.uid,
+        HistoryFields.createdAt: FieldValue.serverTimestamp(),
+
+        'status': status,
+        'approved': approved,
+      });
+
+      debugPrint('CANCEL HISTORY SAVED');
+
+      // STEP 2: Prepare remote notification delivery.
+      await sendToUser(
+        uid: applicantUid,
+        title: title,
+        body: body,
+        data: _data(
+          NotificationTypes.applicationStatus,
+          {
+            'applicationId': applicationId,
+            'status': status,
+            'approved': approved.toString(),
+          },
+        ),
+      );
+
+    } catch (e) {
+      debugPrint('CANCELLATION NOTIFICATION ERROR: $e');
+    }
+  }
 }
