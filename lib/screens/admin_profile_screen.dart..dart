@@ -317,3 +317,79 @@ Widget _buildAvatarSection({
   );
 }
 
+// Step 8 & 9: Role and Active Account Status Badges
+
+
+Widget _buildStatusBadges({
+  required Color badgeBg,
+  required Color badgeText,
+  required bool isDark,
+  required Color primaryColor,
+}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          color: badgeBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? primaryColor.withValues(alpha: 0.3) : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.verified_rounded,
+              size: 14,
+              color: badgeText,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'ADMINISTRATOR',
+              style: TextStyle(
+                color: badgeText,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 8),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFF10B981),
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              'Active',
+              style: TextStyle(
+                color: Color(0xFF10B981),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
