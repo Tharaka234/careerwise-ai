@@ -1236,4 +1236,308 @@ class NotificationService {
         );
     }
   }
+  // =====================================================================
+// NOTIFICATION HELPERS
+// =====================================================================
+
+  Future<void> _guard(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e) {
+      debugPrint('Notification event error: $e');
+    }
+  }
+
+  Map<String, String> _data(
+      String type, [
+        Map<String, String> extra = const {},
+      ]) {
+    return {
+      ...extra,
+      'type': type,
+    };
+  }
+
+  Future<void> _saveHistory({
+    required String title,
+    required String body,
+    required String type,
+    required String audience,
+    String? category,
+    String? jobId,
+    String? recipientUid,
+    String? applicationId,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    await _db.collection(HistoryFields.collection).add({
+      HistoryFields.title: title,
+      HistoryFields.body: body,
+      HistoryFields.type: type,
+      HistoryFields.audience: audience,
+
+      if (category != null)
+        HistoryFields.category: category,
+
+      if (jobId != null)
+        HistoryFields.jobId: jobId,
+
+      if (recipientUid != null)
+        HistoryFields.recipientUid: recipientUid,
+
+      if (applicationId != null)
+        HistoryFields.applicationId: applicationId,
+
+      HistoryFields.senderUid: uid,
+      HistoryFields.createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+  // =====================================================================
+// CHAT MESSAGE NOTIFICATIONS
+// =====================================================================
+
+  Future<void> notifyChatMessage({
+    required String recipientUid,
+    required String senderName,
+    required String message,
+    required String chatId,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null ||
+          recipientUid.isEmpty ||
+          recipientUid == user.uid ||
+          message.trim().isEmpty) {
+        return;
+      }
+
+      final preview = message.length > 120
+          ? '${message.substring(0, 117)}...'
+          : message;
+
+      await sendToUser(
+        uid: recipientUid,
+        title: senderName,
+        body: preview,
+        data: _data(
+          NotificationTypes.chatMessage,
+          {
+            'chatId': chatId,
+            'senderName': senderName,
+          },
+        ),
+      );
+    });
+  }
+  // =====================================================================
+// NEW JOB NOTIFICATIONS
+// =====================================================================
+
+  Future<void> notifyNewJobPosted({
+    required String jobId,
+    required String title,
+    required String company,
+    required String category,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) return;
+
+      final heading = 'New $category job';
+      final body = '$title at $company';
+
+      await _saveHistory(
+        title: heading,
+        body: body,
+        type: NotificationTypes.newJob,
+        category: category,
+        audience: HistoryAudience.category,
+        jobId: jobId,
+      );
+
+      await sendToTopic(
+        topic: NotificationTopics.forCategory(category),
+        title: heading,
+        body: body,
+        data: _data(
+          NotificationTypes.newJob,
+          {
+            'jobId': jobId,
+            'category': category,
+          },
+        ),
+      );
+    });
+  }
+  // =====================================================================
+// JOB UPDATE NOTIFICATIONS
+// =====================================================================
+
+  Future<void> notifyJobUpdated({
+    required String jobId,
+    required String title,
+    required String company,
+    required String category,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) return;
+
+      const heading = 'Job updated';
+      final body = '$title at $company was updated.';
+
+      await _saveHistory(
+        title: heading,
+        body: body,
+        type: NotificationTypes.jobUpdated,
+        category: category,
+        audience: HistoryAudience.category,
+        jobId: jobId,
+      );
+
+      await sendToTopic(
+        topic: NotificationTopics.forCategory(category),
+        title: heading,
+        body: body,
+        data: _data(
+          NotificationTypes.jobUpdated,
+          {
+            'jobId': jobId,
+            'category': category,
+          },
+        ),
+      );
+    });
+  }
+  // =====================================================================
+// JOB DELETION NOTIFICATIONS
+// =====================================================================
+
+  Future<void> notifyJobDeleted({
+    required String title,
+    required String company,
+    required String category,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) return;
+
+      const heading = 'Job removed';
+      final body = '$title at $company is no longer available.';
+
+      await _saveHistory(
+        title: heading,
+        body: body,
+        type: NotificationTypes.jobDeleted,
+        category: category,
+        audience: HistoryAudience.category,
+      );
+
+      await sendToTopic(
+        topic: NotificationTopics.forCategory(category),
+        title: heading,
+        body: body,
+        data: _data(
+          NotificationTypes.jobDeleted,
+          {
+            'category': category,
+          },
+        ),
+      );
+    });
+  }
+  // =====================================================================
+// JOB REPORT NOTIFICATIONS
+// =====================================================================
+
+  Future<void> notifyJobReported({
+    required String jobId,
+    required String jobTitle,
+    required String reason,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || reason.trim().isEmpty) return;
+
+      const title = 'Job post reported';
+
+      final body =
+          '"$jobTitle" was reported: ${reason.trim()}';
+
+      await _saveHistory(
+        title: title,
+        body: body,
+        type: NotificationTypes.flaggedPost,
+        audience: HistoryAudience.admins,
+        jobId: jobId,
+      );
+
+      // Sensitive report details remain in protected Firestore history.
+      // Do not broadcast them through a public FCM topic.
+    });
+  }
+  // =====================================================================
+// JOB MODERATION NOTIFICATIONS
+// =====================================================================
+
+  Future<void> notifyJobModeration({
+    required String publisherUid,
+    required String jobId,
+    required String jobTitle,
+    required bool approved,
+    String? reason,
+  }) {
+    return _guard(() async {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || publisherUid.isEmpty) return;
+
+      final admin = await _checkIsAdmin(user.uid);
+
+      if (!admin) return;
+
+      final cleanReason = reason?.trim() ?? '';
+
+      final title = approved
+          ? 'Job post approved'
+          : 'Job post rejected';
+
+      final body = approved
+          ? '"$jobTitle" is now live.'
+          : '"$jobTitle" was rejected'
+          '${cleanReason.isEmpty ? '.' : ': $cleanReason'}';
+
+      final type = approved
+          ? NotificationTypes.jobApproved
+          : NotificationTypes.jobRejected;
+
+      await _saveHistory(
+        title: title,
+        body: body,
+        type: type,
+        audience: HistoryAudience.user,
+        recipientUid: publisherUid,
+        jobId: jobId,
+      );
+
+      await sendToUser(
+        uid: publisherUid,
+        title: title,
+        body: body,
+        data: _data(
+          type,
+          {
+            'jobId': jobId,
+          },
+        ),
+      );
+    });
+  }
 }
