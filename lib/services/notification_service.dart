@@ -9,6 +9,7 @@ import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:careerwise-ai/firebase_options.dart';
 
 import 'notification_types.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 // =======================================================================
 // GLOBALS
 // =======================================================================
@@ -212,6 +213,25 @@ class NotificationService {
 
   bool get isAdmin => _isAdmin;
 
+  /// Resolves the admin role from Firestore.
+  /// Works on mobile, web and desktop.
+  Future<bool> refreshAdminStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      _isAdmin = false;
+      _adminCheckedUid = null;
+      return false;
+    }
+
+    if (_adminCheckedUid == uid) return _isAdmin;
+
+    _isAdmin = await _checkIsAdmin(uid);
+    _adminCheckedUid = uid;
+
+    return _isAdmin;
+  }
+
   // =====================================================================
   // INIT
   // =====================================================================
@@ -248,7 +268,237 @@ class NotificationService {
       sound: true,
     );
 
+    // Token and topic subscriptions follow the logged-in user.
+    messaging.onTokenRefresh.listen(_onTokenRefresh);
+
+    FirebaseAuth.instance.authStateChanges().listen(
+      _onAuthChanged,
+    );
+
     _initialized = true;
+  }
+  // =====================================================================
+// AUTH / TOKEN / TOPICS
+// =====================================================================
+
+  Future<void> _onAuthChanged(User? user) async {
+    if (user == null) {
+      _currentUid = null;
+      _isAdmin = false;
+      _adminCheckedUid = null;
+      return;
+    }
+
+    if (_currentUid == user.uid) return;
+
+    _currentUid = user.uid;
+
+    try {
+      await _onLogin(user);
+    } catch (e) {
+      debugPrint('Notification login setup error: $e');
+    }
+  }
+
+  Future<void> _onLogin(User user) async {
+    final uid = user.uid;
+    final messaging = FirebaseMessaging.instance;
+
+    _isAdmin = await _checkIsAdmin(uid);
+    _adminCheckedUid = uid;
+
+    final settingsRef = _db
+        .collection('notification_settings')
+        .doc(uid);
+
+    final snapshot = await settingsRef.get();
+
+    final saved = snapshot.data() ?? <String, dynamic>{};
+
+    final bool announcements =
+        saved['announcements'] as bool? ?? true;
+
+    final List<String> categories = List<String>.from(
+      saved['jobCategories'] ?? const <String>[],
+    );
+
+    final token = await messaging.getToken();
+
+    await settingsRef.set({
+      'role': _isAdmin ? 'admin' : 'candidate',
+      'updatedAt': FieldValue.serverTimestamp(),
+
+      if (token != null)
+        'tokens': FieldValue.arrayUnion([token]),
+
+      if (!snapshot.exists)
+        'announcements': true,
+
+      if (!snapshot.exists)
+        'jobCategories': <String>[],
+
+    }, SetOptions(merge: true));
+
+    // -------------------------------------------------------------------
+    // Topic subscriptions
+    // -------------------------------------------------------------------
+
+    if (_isAdmin) {
+      // Admin notification subscriptions.
+      await _unsubscribe(NotificationTopics.allUsers);
+
+      for (final category in JobCategories.all) {
+        await _unsubscribe(
+          NotificationTopics.forCategory(category),
+        );
+      }
+
+      await _subscribe(NotificationTopics.admins);
+
+    } else {
+      // Job seeker notification subscriptions.
+      await _unsubscribe(NotificationTopics.admins);
+
+      if (announcements) {
+        await _subscribe(NotificationTopics.allUsers);
+      } else {
+        await _unsubscribe(NotificationTopics.allUsers);
+      }
+
+      for (final category in JobCategories.all) {
+        if (categories.contains(category)) {
+          await _subscribe(
+            NotificationTopics.forCategory(category),
+          );
+        } else {
+          await _unsubscribe(
+            NotificationTopics.forCategory(category),
+          );
+        }
+      }
+    }
+  }
+
+// =====================================================================
+// TOKEN REFRESH
+// =====================================================================
+
+  Future<void> _onTokenRefresh(String token) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    try {
+      await _db
+          .collection('notification_settings')
+          .doc(uid)
+          .set({
+        'tokens': FieldValue.arrayUnion([token]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+    } catch (e) {
+      debugPrint('Token refresh save error: $e');
+    }
+  }
+
+// =====================================================================
+// ADMIN ROLE VERIFICATION
+// =====================================================================
+
+  Future<bool> _checkIsAdmin(String uid) async {
+    try {
+      final doc = await _db
+          .collection('admins')
+          .doc(uid)
+          .get();
+
+      if (!doc.exists) return false;
+
+      return doc.data()?['role'] == 'admin';
+
+    } catch (_) {
+      return false;
+    }
+  }
+
+// =====================================================================
+// LOGOUT CLEANUP
+// =====================================================================
+
+  /// Call this before FirebaseAuth.instance.signOut().
+  Future<void> onBeforeLogout() async {
+    if (!isSupported) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    try {
+      final messaging = FirebaseMessaging.instance;
+
+      if (uid != null) {
+        final ref = _db
+            .collection('notification_settings')
+            .doc(uid);
+
+        final snapshot = await ref.get();
+
+        final categories = List<String>.from(
+          snapshot.data()?['jobCategories'] ??
+              const <String>[],
+        );
+
+        final token = await messaging.getToken();
+
+        if (token != null) {
+          await ref.set({
+            'tokens': FieldValue.arrayRemove([token]),
+          }, SetOptions(merge: true));
+        }
+
+        await _unsubscribe(NotificationTopics.allUsers);
+        await _unsubscribe(NotificationTopics.admins);
+
+        for (final category in categories) {
+          await _unsubscribe(
+            NotificationTopics.forCategory(category),
+          );
+        }
+      }
+
+      // Remove scheduled reminders belonging to the previous user.
+      await _local.cancelAll();
+
+    } catch (e) {
+      debugPrint('Notification logout cleanup error: $e');
+    }
+
+    _currentUid = null;
+    _isAdmin = false;
+    _adminCheckedUid = null;
+  }
+
+// =====================================================================
+// TOPIC SUBSCRIPTION HELPERS
+// =====================================================================
+
+  Future<void> _subscribe(String topic) async {
+    try {
+      await FirebaseMessaging.instance.subscribeToTopic(topic);
+
+      debugPrint('FCM SUBSCRIBED SUCCESS: $topic');
+
+    } catch (e) {
+      debugPrint('FCM SUBSCRIBE FAILED: $topic -> $e');
+    }
+  }
+
+  Future<void> _unsubscribe(String topic) async {
+    try {
+      await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
+
+    } catch (e) {
+      debugPrint('Unsubscribe $topic failed: $e');
+    }
   }
 
   // =====================================================================
