@@ -47,3 +47,21 @@ class AdminProfileScreen extends StatelessWidget {
   }
 }
 
+// Step 4: Authentication & Logout Handler
+Future<void> _logout(BuildContext context) async {
+  try {
+    await NotificationService.instance.onBeforeLogout();
+  } catch (e) {
+    debugPrint('Error before admin logout: $e');
+  }
+
+  await FirebaseAuth.instance.signOut();
+
+  if (!context.mounted) return;
+
+  Navigator.popUntil(
+    context,
+        (route) => route.isFirst,
+  );
+}
+
