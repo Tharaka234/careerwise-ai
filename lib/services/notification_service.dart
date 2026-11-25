@@ -1,8 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+
+import 'package:careerwise-ai/firebase_options.dart';
 
 import 'notification_types.dart';
-
 // =======================================================================
 // GLOBALS
 // =======================================================================
@@ -11,6 +17,24 @@ import 'notification_types.dart';
 /// BuildContext.
 final GlobalKey<NavigatorState> appNavigatorKey =
 GlobalKey<NavigatorState>();
+
+/// FCM background / terminated handler.
+/// Must be a top-level function.
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(
+    RemoteMessage message,
+    ) async {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  if (message.notification == null &&
+      message.data['title'] != null) {
+    await NotificationService.showDataOnlyMessageInBackground(
+      message,
+    );
+  }
+}
 
 /// What the user chose in the Notification Settings screen.
 class NotificationPrefs {
@@ -114,4 +138,144 @@ class NotificationService {
 
   static final NotificationService instance =
   NotificationService._();
+
+  // ---------------------------------------------------------------------
+  // Config
+  // ---------------------------------------------------------------------
+
+  /// Required fields for profile completeness.
+  static const List<String> _requiredProfileFields = [
+    'firstName',
+    'lastName',
+    'phone',
+  ];
+
+  static const Duration _profileReminderDelay =
+  Duration(hours: 24);
+
+  static const int _profileReminderId = 4101;
+
+  static const AndroidNotificationChannel _channel =
+  AndroidNotificationChannel(
+    NotificationChannels.highImportance,
+    NotificationChannels.highImportanceName,
+    description:
+    NotificationChannels.highImportanceDescription,
+    importance: Importance.high,
+  );
+
+  static const NotificationDetails _details =
+  NotificationDetails(
+    android: AndroidNotificationDetails(
+      NotificationChannels.highImportance,
+      NotificationChannels.highImportanceName,
+      channelDescription:
+      NotificationChannels.highImportanceDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
+
+  static const InitializationSettings _initSettings =
+  InitializationSettings(
+    android: AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    ),
+    iOS: DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    ),
+  );
+
+  // ---------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------
+
+  final FlutterLocalNotificationsPlugin _local =
+  FlutterLocalNotificationsPlugin();
+
+  FirebaseFirestore get _db => FirebaseFirestore.instance;
+
+  bool _initialized = false;
+  String? _currentUid;
+  bool _isAdmin = false;
+  String? _adminCheckedUid;
+  DateTime? _lastInterviewSync;
+
+  /// Notifications are supported on Android and iOS.
+  static bool get isSupported =>
+      !kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.android ||
+              defaultTargetPlatform == TargetPlatform.iOS);
+
+  bool get isAdmin => _isAdmin;
+
+  // =====================================================================
+  // INIT
+  // =====================================================================
+
+  Future<void> init() async {
+    if (_initialized || !isSupported) return;
+
+    tzdata.initializeTimeZones();
+
+    // Initialize local notifications.
+    await _local.initialize(
+      settings: _initSettings,
+    );
+
+    // Create Android notification channel.
+    await _local
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_channel);
+
+    // Request notification permissions.
+    final messaging = FirebaseMessaging.instance;
+
+    await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // Configure iOS foreground notifications.
+    await messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    _initialized = true;
+  }
+
+  // =====================================================================
+  // BACKGROUND NOTIFICATIONS
+  // =====================================================================
+
+  static Future<void> showDataOnlyMessageInBackground(
+      RemoteMessage message,
+      ) async {
+    final plugin = FlutterLocalNotificationsPlugin();
+
+    await plugin.initialize(
+      settings: _initSettings,
+    );
+
+    await plugin
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(_channel);
+
+    await plugin.show(
+      id: DateTime.now()
+          .millisecondsSinceEpoch
+          .remainder(0x7fffffff),
+      title: message.data['title'],
+      body: message.data['body'],
+      notificationDetails: _details,
+    );
+  }
 }
