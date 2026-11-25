@@ -199,3 +199,194 @@ List<QueryDocumentSnapshot> _filterUsers(List<QueryDocumentSnapshot> docs) {
     return true;
   }).toList();
 }
+
+// Step 7: Emerald Gradient Hero Header Banner
+
+
+Widget _buildHeader({
+  required _UserColors colors,
+  required int totalCount,
+  required int adminCount,
+  required int candidateCount,
+}) {
+  return Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: colors.isDark
+            ? const [Color(0xFF03442C), Color(0xFF065F46), Color(0xFF047857)]
+            : const [Color(0xFF047857), Color(0xFF059669), Color(0xFF10B981)],
+      ),
+      borderRadius: const BorderRadius.only(
+        bottomLeft: Radius.circular(32),
+        bottomRight: Radius.circular(32),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: colors.primary.withValues(alpha: colors.isDark ? 0.35 : 0.25),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        // Background ambient circles
+        Positioned(
+          right: -40,
+          top: -50,
+          child: Container(
+            width: 170,
+            height: 170,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+        ),
+        Positioned(
+          left: -50,
+          bottom: -60,
+          child: Container(
+            width: 160,
+            height: 160,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.06),
+            ),
+          ),
+        ),
+
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row
+                Row(
+                  children: [
+                    _headerIconButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: () => Navigator.maybePop(context),
+                    ),
+                    const Spacer(),
+
+                    // Active Total Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.26),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF34D399),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 7),
+                          Text(
+                            '$totalCount Registered Users',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 22),
+
+                // Title and Subtitle
+                Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.people_alt_rounded,
+                        color: Colors.white,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'User Directory',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 23,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Real-time overview of candidate & admin accounts',
+                            style: TextStyle(
+                              color: Color(0xFFE2FBEA),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                // Pill metrics row
+                Row(
+                  children: [
+                    _headerStatPill(
+                      icon: Icons.person_outline_rounded,
+                      label: '$candidateCount Candidates',
+                      color: const Color(0xFF38BDF8),
+                    ),
+                    const SizedBox(width: 10),
+                    _headerStatPill(
+                      icon: Icons.shield_outlined,
+                      label: '$adminCount Admins',
+                      color: const Color(0xFFFBBF24),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
