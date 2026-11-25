@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -267,6 +268,10 @@ class NotificationService {
       badge: true,
       sound: true,
     );
+
+    // Foreground notification listener.
+    FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+
 
     // Token and topic subscriptions follow the logged-in user.
     messaging.onTokenRefresh.listen(_onTokenRefresh);
@@ -628,11 +633,121 @@ class NotificationService {
 
     return FirebaseMessaging.instance.getToken();
   }
+  // =====================================================================
+// TEST NOTIFICATIONS
+// =====================================================================
+
+  Future<String> sendTestPush({int delaySeconds = 0}) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        return 'Please login before testing notifications.';
+      }
+
+      if (!isSupported) {
+        return 'Test notifications are supported on Android and iOS.';
+      }
+
+      final token = await getDeviceToken();
+
+      if (token == null || token.isEmpty) {
+        return 'No FCM token yet. Test on a real Android/iOS device.';
+      }
+
+      if (delaySeconds > 0) {
+        await Future.delayed(
+          Duration(seconds: delaySeconds),
+        );
+      }
+
+      // Save the latest device token in Firestore.
+      await _db
+          .collection('notification_settings')
+          .doc(user.uid)
+          .set({
+        'tokens': FieldValue.arrayUnion([token]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      return 'FCM token is ready. Use Firebase Console to send a test push.';
+
+    } catch (e) {
+      debugPrint('Test push error: $e');
+
+      return 'Failed to prepare test notification. Please try again.';
+    }
+  }
+
+  /// Tests local notification display on this device.
+  Future<void> sendTestLocalNotification() async {
+    await showLocal(
+      title: 'CareerWise Test Notification',
+      body: 'Your local notification is working!',
+      data: {
+        'type': NotificationTypes.announcement,
+      },
+    );
+  }
+  // =====================================================================
+// SHOWING LOCAL NOTIFICATIONS
+// =====================================================================
+
+  void _onForegroundMessage(RemoteMessage message) {
+    debugPrint(
+      'USER FCM RECEIVED: ${message.notification?.title}',
+    );
+
+    final title =
+        message.notification?.title ?? message.data['title'];
+
+    final body =
+        message.notification?.body ?? message.data['body'];
+
+    if (title == null && body == null) return;
+
+    // Android does not automatically display foreground FCM notifications.
+    // iOS already displays banners for notification messages.
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        message.notification == null) {
+      showLocal(
+        title: title ?? 'CareerWise',
+        body: body ?? '',
+        data: message.data,
+      );
+    }
+  }
+
+  Future<void> showLocal({
+    required String title,
+    required String body,
+    Map<String, dynamic> data = const {},
+    int? id,
+  }) async {
+    if (!isSupported) return;
+
+    try {
+      await _local.show(
+        id: id ??
+            DateTime.now()
+                .millisecondsSinceEpoch
+                .remainder(0x7fffffff),
+        title: title,
+        body: body,
+        notificationDetails: _details,
+        payload: jsonEncode(data),
+      );
+
+    } catch (e) {
+      debugPrint('Local notification error: $e');
+    }
+  }
 
   // =====================================================================
   // BACKGROUND NOTIFICATIONS
   // =====================================================================
 
+  /// Displays data-only messages received in the background.
   static Future<void> showDataOnlyMessageInBackground(
       RemoteMessage message,
       ) async {
@@ -654,6 +769,7 @@ class NotificationService {
       title: message.data['title'],
       body: message.data['body'],
       notificationDetails: _details,
+      payload: jsonEncode(message.data),
     );
   }
 }
