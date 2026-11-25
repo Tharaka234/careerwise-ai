@@ -235,3 +235,84 @@ Widget build(BuildContext context) {
   );
 }
 
+// Step 7: Profile Avatar Stack with Shield / Verified Badge Overlay
+Widget _buildAvatarSection({
+  required bool isDark,
+  required Color primaryColor,
+  required Color secondaryColor,
+  required Color cardBg,
+  required Color iconBoxBg,
+  required Color iconColor,
+}) {
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      Container(
+        width: 110,
+        height: 110,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [primaryColor, secondaryColor],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withValues(alpha: isDark ? 0.4 : 0.25),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(3.5),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: cardBg,
+          ),
+          padding: const EdgeInsets.all(3),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: iconBoxBg,
+            ),
+            child: Icon(
+              Icons.person,
+              size: 65,
+              color: iconColor,
+            ),
+          ),
+        ),
+      ),
+
+      // Shield / Verified badge overlay
+      Positioned(
+        bottom: 2,
+        right: 2,
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: const Color(0xFF10B981),
+            border: Border.all(color: cardBg, width: 2.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.shield_rounded,
+            color: Colors.white,
+            size: 14,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+
