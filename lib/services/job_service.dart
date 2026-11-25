@@ -21,4 +21,57 @@ class JobService {
       }).toList();
     });
   }
+  // ==========================================================
+// Get Jobs Related to Career
+// ==========================================================
+
+  Stream<List<Job>> getRelatedJobs(String career) {
+    return getJobs().map((jobs) {
+      return _filterJobsByCareer(
+        jobs,
+        career,
+      );
+    });
+  }
+  // ==========================================================
+// Career Matching
+// ==========================================================
+
+  List<Job> _filterJobsByCareer(
+      List<Job> jobs,
+      String career,
+      ) {
+    final keywords = _getCareerKeywords(career);
+
+    return jobs.where((job) {
+      final searchableText = [
+        job.title,
+        job.company,
+        job.description,
+        job.jobType,
+      ].join(' ').toLowerCase();
+
+      return keywords.any(
+            (keyword) => searchableText.contains(
+          keyword.toLowerCase(),
+        ),
+      );
+    }).toList();
+  }
+  // ==========================================================
+// Career Keywords / Related Titles
+// ==========================================================
+
+  List<String> _getCareerKeywords(String career) {
+    final normalized = career.toLowerCase().trim();
+
+    if (normalized.isEmpty) {
+      return [];
+    }
+
+    // Generic fallback
+    return [
+      normalized,
+    ];
+  }
 }
