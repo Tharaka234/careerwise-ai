@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'add_job_screen.dart';
+
+import 'admin_broadcast_screen.dart';
 import 'admin_profile_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_recommendations_screen.dart';
-import 'add_job_screen.dart';
-import 'package:flutter/services.dart';
-import 'admin_broadcast_screen.dart';
 import 'notification_history_screen.dart';
 import '../widgets/cancel_request_banner.dart';
+
+
+// DYNAMIC THEME COLOR PALETTE (PREMIUM GREEN THEME)
 
 
 class _AdminColors {
@@ -16,76 +21,48 @@ class _AdminColors {
 
   const _AdminColors({required this.isDark});
 
-  // Background Colors
-  Color get pageBg =>
-      isDark ? const Color(0xFF0A140F) : const Color(0xFFF0FDF4);
+  // Backgrounds:
+  // Light Mode: Fresh, soothing emerald/mint green tint (Tailwind emerald-50 style)
+  // Dark Mode: Deep, luxurious obsidian forest green
+  Color get pageBg => isDark ? const Color(0xFF0A140F) : const Color(0xFFF0FDF4);
+  Color get cardBg => isDark ? const Color(0xFF13231B) : Colors.white;
+  Color get cardBorder => isDark ? const Color(0xFF1E382A) : const Color(0xFFD1FAE5);
+  Color get appBarBg => isDark ? const Color(0xFF0E1B15) : Colors.white;
+  Color get appBarBorder => isDark ? const Color(0xFF1A3325) : const Color(0xFFE2EFE7);
 
-  Color get cardBg =>
-      isDark ? const Color(0xFF13231B) : Colors.white;
-
-  Color get cardBorder =>
-      isDark ? const Color(0xFF1E382A) : const Color(0xFFD1FAE5);
-
-  Color get appBarBg =>
-      isDark ? const Color(0xFF0E1B15) : Colors.white;
-
-  Color get appBarBorder =>
-      isDark ? const Color(0xFF1A3325) : const Color(0xFFE2EFE7);
-
-  // Brand Colors
-  Color get primary =>
-      isDark ? const Color(0xFF10B981) : const Color(0xFF059669);
-
-  Color get primaryAccent =>
-      isDark ? const Color(0xFF34D399) : const Color(0xFF10B981);
-
-  Color get primaryDark =>
-      isDark ? const Color(0xFF059669) : const Color(0xFF047857);
+  // Brand / Emerald Accent Colors
+  Color get primary => isDark ? const Color(0xFF10B981) : const Color(0xFF059669);
+  Color get primaryAccent => isDark ? const Color(0xFF34D399) : const Color(0xFF10B981);
+  Color get primaryDark => isDark ? const Color(0xFF059669) : const Color(0xFF047857);
 
   // Text Colors
-  Color get textPrimary =>
-      isDark ? const Color(0xFFF0FDF4) : const Color(0xFF0F241B);
+  Color get textPrimary => isDark ? const Color(0xFFF0FDF4) : const Color(0xFF0F241B);
+  Color get textSecondary => isDark ? const Color(0xFFA7C1B3) : const Color(0xFF4B6354);
+  Color get textMuted => isDark ? const Color(0xFF6B7280) : const Color(0xFF94A3B8);
 
-  Color get textSecondary =>
-      isDark ? const Color(0xFFA7C1B3) : const Color(0xFF4B6354);
-
-  Color get textMuted =>
-      isDark ? const Color(0xFF6B7280) : const Color(0xFF94A3B8);
-
-  // Dividers and Badges
-  Color get divider =>
-      isDark ? const Color(0xFF1C3426) : const Color(0xFFE5EFE9);
-
-  Color get badgeBg =>
-      isDark ? const Color(0x3310B981) : const Color(0x1F059669);
-
-  Color get badgeText =>
-      isDark ? const Color(0xFF34D399) : const Color(0xFF047857);
+  // Dividers & Badges
+  Color get divider => isDark ? const Color(0xFF1C3426) : const Color(0xFFE5EFE9);
+  Color get badgeBg => isDark ? const Color(0x3310B981) : const Color(0x1F059669);
+  Color get badgeText => isDark ? const Color(0xFF34D399) : const Color(0xFF047857);
 }
-
-// =====================================================
-// ADMIN DASHBOARD SCREEN
-// =====================================================
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  State<AdminDashboardScreen> createState() =>
-      _AdminDashboardScreenState();
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState
-    extends State<AdminDashboardScreen> {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final GlobalKey _jobsSectionKey = GlobalKey();
   final GlobalKey _applicationsSectionKey = GlobalKey();
 
   bool _showAllJobs = false;
   bool _showAllApplications = false;
 
+
   void _scrollToSection(GlobalKey key) {
     final targetContext = key.currentContext;
-
     if (targetContext != null) {
       Scrollable.ensureVisible(
         targetContext,
@@ -94,6 +71,9 @@ class _AdminDashboardScreenState
         alignment: 0.05,
       );
     }
+
+
+
   }
 
   // CHECK ADMIN
@@ -109,29 +89,20 @@ class _AdminDashboardScreenState
         .doc(user.uid)
         .get();
   }
-  // GET APPLICANT USER DATA
-  Future<Map<String, dynamic>?> _getUserData(
-      String userId,
-      ) async {
+
+  // FETCH USER DETAILS FOR CANDIDATE APPLICANTS
+  Future<Map<String, dynamic>?> _getUserData(String userId) async {
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .get();
-
-      if (doc.exists) {
+      if (doc.exists && doc.data() != null) {
         return doc.data();
       }
-
-      return null;
-    } catch (e) {
-      return null;
-    }
+    } catch (_) {}
+    return null;
   }
-  // =====================================================
-// REMOVE CANCELLED APPLICATION
-// =====================================================
-
   Future<void> _confirmRemoveCancelledApplication(
       BuildContext context,
       String applicationId,
@@ -140,46 +111,30 @@ class _AdminDashboardScreenState
       ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-
       builder: (dialogContext) => AlertDialog(
         backgroundColor: colors.cardBg,
-
         title: Text(
           'Remove Cancelled Application?',
-          style: TextStyle(
-            color: colors.textPrimary,
-          ),
+          style: TextStyle(color: colors.textPrimary),
         ),
-
         content: Text(
           'Remove the cancelled application for "$jobTitle" '
               'from the Admin Dashboard?\n\n'
               'The cancellation record will be preserved.',
-
-          style: TextStyle(
-            color: colors.textSecondary,
-          ),
+          style: TextStyle(color: colors.textSecondary),
         ),
-
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
-
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Keep'),
           ),
-
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
             ),
-
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
-
+            onPressed: () => Navigator.pop(dialogContext, true),
             icon: const Icon(Icons.delete_outline),
-
             label: const Text('Remove'),
           ),
         ],
@@ -189,72 +144,50 @@ class _AdminDashboardScreenState
     if (confirmed != true || !context.mounted) return;
 
     try {
-      // Check authenticated admin
       final uid = FirebaseAuth.instance.currentUser?.uid;
-
-      if (uid == null) {
-        throw StateError('Not signed in');
-      }
+      if (uid == null) throw StateError('Not signed in');
 
       final adminDoc = await FirebaseFirestore.instance
           .collection('admins')
           .doc(uid)
           .get();
 
-      if (!adminDoc.exists ||
-          adminDoc.data()?['role'] != 'admin') {
-        throw StateError(
-          'Administrator access required',
-        );
+      if (!adminDoc.exists || adminDoc.data()?['role'] != 'admin') {
+        throw StateError('Administrator access required');
       }
 
-      // Get application document
       final ref = FirebaseFirestore.instance
           .collection('applications')
           .doc(applicationId);
 
-      // Archive cancelled application safely
-      await FirebaseFirestore.instance.runTransaction(
-            (transaction) async {
-          final snapshot = await transaction.get(ref);
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(ref);
 
-          if (!snapshot.exists) {
-            throw StateError(
-              'Application no longer exists',
-            );
-          }
+        if (!snapshot.exists) {
+          throw StateError('Application no longer exists');
+        }
 
-          final data = snapshot.data()!;
+        final data = snapshot.data()!;
+        final status = (data['status'] ?? '').toString().toLowerCase();
 
-          final status = (data['status'] ?? '')
-              .toString()
-              .trim()
-              .toLowerCase();
+        if (status != 'cancelled') {
+          throw StateError('Only cancelled applications can be removed');
+        }
 
-          if (status != 'cancelled') {
-            throw StateError(
-              'Only cancelled applications can be removed',
-            );
-          }
+        if (data['adminArchived'] == true) return;
 
-          if (data['adminArchived'] == true) return;
-
-          transaction.update(ref, {
-            'adminArchived': true,
-            'adminArchivedAt':
-            FieldValue.serverTimestamp(),
-            'adminArchivedBy': uid,
-          });
-        },
-      );
+        transaction.update(ref, {
+          'adminArchived': true,
+          'adminArchivedAt': FieldValue.serverTimestamp(),
+          'adminArchivedBy': uid,
+        });
+      });
 
       if (!context.mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Cancelled application removed from Admin Dashboard',
-          ),
+          content: Text('Cancelled application removed from Admin Dashboard'),
           backgroundColor: Color(0xFF059669),
         ),
       );
@@ -263,14 +196,13 @@ class _AdminDashboardScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Unable to remove application: $e',
-          ),
+          content: Text('Unable to remove application: $e'),
           backgroundColor: Colors.redAccent,
         ),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -287,6 +219,7 @@ class _AdminDashboardScreenState
       );
     }
 
+    // Dynamic Theme Listener
     return ValueListenableBuilder<bool>(
       valueListenable: AdminThemeManager.isDarkMode,
       builder: (context, isDark, _) {
@@ -295,8 +228,7 @@ class _AdminDashboardScreenState
         return FutureBuilder<DocumentSnapshot?>(
           future: _getAdminDocument(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState ==
-                ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 backgroundColor: colors.pageBg,
                 body: Center(
@@ -316,17 +248,14 @@ class _AdminDashboardScreenState
                     child: Text(
                       'Error checking admin access:\n\n${snapshot.error}',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                      ),
+                      style: TextStyle(color: colors.textPrimary),
                     ),
                   ),
                 ),
               );
             }
 
-            if (!snapshot.hasData ||
-                !snapshot.data!.exists) {
+            if (!snapshot.hasData || !snapshot.data!.exists) {
               return _accessDeniedScreen(
                 'You are not an administrator.',
                 colors,
@@ -348,24 +277,16 @@ class _AdminDashboardScreenState
                 ? data!['name'].toString()
                 : 'Admin';
 
-            return _buildDashboard(
-              context,
-              adminName,
-              colors,
-            );
+            return _buildDashboard(context, adminName, colors);
           },
         );
       },
     );
   }
-  // =====================================================
-// ACCESS DENIED
-// =====================================================
 
-  Widget _accessDeniedScreen(
-      String message,
-      _AdminColors colors,
-      ) {
+
+  // ACCESS DENIED
+  Widget _accessDeniedScreen(String message, _AdminColors colors) {
     return Scaffold(
       backgroundColor: colors.pageBg,
       body: SafeArea(
@@ -377,15 +298,10 @@ class _AdminDashboardScreenState
               decoration: BoxDecoration(
                 color: colors.cardBg,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: colors.cardBorder,
-                  width: 1.2,
-                ),
+                border: Border.all(color: colors.cardBorder, width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: colors.isDark ? 0.3 : 0.06,
-                    ),
+                    color: Colors.black.withValues(alpha: colors.isDark ? 0.3 : 0.06),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -406,9 +322,7 @@ class _AdminDashboardScreenState
                       color: Colors.red,
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   Text(
                     'Access Denied',
                     textAlign: TextAlign.center,
@@ -418,9 +332,7 @@ class _AdminDashboardScreenState
                       color: colors.textPrimary,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     message,
                     textAlign: TextAlign.center,
@@ -437,12 +349,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-
-// MAIN DASHBOARD
-
-
-
-// ADMIN PROFILE
+  // ADMIN PROFILE
   void _showAdminProfile(
       BuildContext context,
       String adminName,
@@ -456,11 +363,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-
-  // =====================================================
-// MAIN DASHBOARD
-// =====================================================
-
+  // MAIN DASHBOARD
   Widget _buildDashboard(
       BuildContext context,
       String adminName,
@@ -469,17 +372,14 @@ class _AdminDashboardScreenState
     return Scaffold(
       backgroundColor: colors.pageBg,
 
-      // =================================================
-      // APP BAR
-      // =================================================
 
+      // APP BAR
       appBar: AppBar(
         automaticallyImplyLeading: false,
         elevation: 0,
         backgroundColor: colors.appBarBg,
         surfaceTintColor: colors.appBarBg,
         titleSpacing: 14,
-
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
@@ -488,10 +388,10 @@ class _AdminDashboardScreenState
           ),
         ),
 
+        // Responsive AppBar title
         title: LayoutBuilder(
           builder: (context, constraints) {
-            final showAdminBadge =
-                constraints.maxWidth >= 215;
+            final showAdminBadge = constraints.maxWidth >= 215;
 
             return Row(
               children: [
@@ -500,21 +400,13 @@ class _AdminDashboardScreenState
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: colors.isDark
-                          ? const [
-                        Color(0xFF047857),
-                        Color(0xFF059669),
-                      ]
-                          : const [
-                        Color(0xFF059669),
-                        Color(0xFF10B981),
-                      ],
+                          ? const [Color(0xFF047857), Color(0xFF059669)]
+                          : const [Color(0xFF059669), Color(0xFF10B981)],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: colors.primary.withValues(
-                          alpha: 0.3,
-                        ),
+                        color: colors.primary.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -545,7 +437,6 @@ class _AdminDashboardScreenState
 
                 if (showAdminBadge) ...[
                   const SizedBox(width: 8),
-
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -555,9 +446,8 @@ class _AdminDashboardScreenState
                       color: colors.badgeBg,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: colors.primary.withValues(
-                          alpha: 0.3,
-                        ),
+                        color: colors.primary.withValues(alpha: 0.3),
+                        width: 1,
                       ),
                     ),
                     child: Text(
@@ -579,14 +469,9 @@ class _AdminDashboardScreenState
         actions: [
           // Theme Toggle Button
           Container(
-            margin: const EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 2,
-            ),
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
             decoration: BoxDecoration(
-              color: colors.primary.withValues(
-                alpha: colors.isDark ? 0.2 : 0.08,
-              ),
+              color: colors.primary.withValues(alpha: colors.isDark ? 0.2 : 0.08),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -594,24 +479,14 @@ class _AdminDashboardScreenState
                   ? 'Switch to Light Theme'
                   : 'Switch to Dark Theme',
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 36,
-                minHeight: 36,
-              ),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               icon: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 280),
                 transitionBuilder: (child, animation) {
                   return RotationTransition(
-                    turns: child.key ==
-                        const ValueKey('dark_icon_admin')
-                        ? Tween<double>(
-                      begin: 0.75,
-                      end: 1.0,
-                    ).animate(animation)
-                        : Tween<double>(
-                      begin: 0.25,
-                      end: 0.0,
-                    ).animate(animation),
+                    turns: child.key == const ValueKey('dark_icon_admin')
+                        ? Tween<double>(begin: 0.75, end: 1.0).animate(animation)
+                        : Tween<double>(begin: 0.25, end: 0.0).animate(animation),
                     child: ScaleTransition(
                       scale: animation,
                       child: child,
@@ -641,25 +516,20 @@ class _AdminDashboardScreenState
 
           // Admin Profile Button
           Container(
-            margin: const EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 2,
-            ),
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
             decoration: BoxDecoration(
-              color: colors.primary.withValues(
-                alpha: colors.isDark ? 0.2 : 0.08,
-              ),
+              color: colors.primary.withValues(alpha: colors.isDark ? 0.2 : 0.08),
               shape: BoxShape.circle,
             ),
             child: IconButton(
               tooltip: 'Admin Profile',
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(
-                minWidth: 36,
-                minHeight: 36,
-              ),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               onPressed: () {
-                _showAdminProfile(context, adminName);
+                _showAdminProfile(
+                  context,
+                  adminName,
+                );
               },
               icon: Icon(
                 Icons.person_rounded,
@@ -670,103 +540,76 @@ class _AdminDashboardScreenState
           ),
           // Notification History Button
           Container(
-            margin: const EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 2,
-            ),
-
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
             decoration: BoxDecoration(
               color: colors.primary.withValues(
                 alpha: colors.isDark ? 0.2 : 0.08,
               ),
               shape: BoxShape.circle,
             ),
-
             child: IconButton(
               tooltip: 'Notification History',
               padding: EdgeInsets.zero,
-
               constraints: const BoxConstraints(
                 minWidth: 36,
                 minHeight: 36,
               ),
-
               icon: Icon(
                 Icons.notifications_outlined,
                 color: colors.primary,
                 size: 21,
               ),
-
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                    const NotificationHistoryScreen(),
+                    builder: (_) => const NotificationHistoryScreen(),
                   ),
                 );
               },
             ),
           ),
+
           // Broadcast Announcement Button
           Container(
-            margin: const EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: 2,
-            ),
-
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
             decoration: BoxDecoration(
-              color: colors.primary.withValues(
-                alpha: colors.isDark ? 0.2 : 0.08,
-              ),
+              color: colors.primary.withValues(alpha: colors.isDark ? 0.2 : 0.08),
               shape: BoxShape.circle,
             ),
-
             child: IconButton(
               tooltip: 'Send announcement',
               padding: EdgeInsets.zero,
-
-              constraints: const BoxConstraints(
-                minWidth: 36,
-                minHeight: 36,
-              ),
-
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               icon: Icon(
                 Icons.campaign_outlined,
                 color: colors.primary,
                 size: 22,
               ),
-
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                    const AdminBroadcastScreen(),
+                    builder: (_) => const AdminBroadcastScreen(),
                   ),
                 );
               },
             ),
           ),
 
+
           const SizedBox(width: 8),
         ],
       ),
-
-      // =================================================
       // BODY
-      // =================================================
-
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 22,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 1. WELCOME BANNER
               _welcomeBanner(
                 context,
                 adminName,
@@ -775,7 +618,7 @@ class _AdminDashboardScreenState
 
               const SizedBox(height: 28),
 
-              // Dashboard Overview
+              // 2. OVERVIEW SECTION HEADER
               _sectionHeader(
                 title: 'Dashboard Overview',
                 subtitle: 'Real-time metrics & insights',
@@ -783,16 +626,14 @@ class _AdminDashboardScreenState
                 colors: colors,
               ),
 
-
               const SizedBox(height: 16),
 
-             // Real-time Statistics
+              // 3. STATISTICS GRID
               _statisticsGrid(colors),
-
 
               const SizedBox(height: 34),
 
-              // JOB MANAGEMENT HEADER
+              // 4. JOB MANAGEMENT HEADER (WITH LIVE ACTIVE BADGE)
               Container(
                 key: _jobsSectionKey,
                 child: _sectionHeader(
@@ -807,7 +648,7 @@ class _AdminDashboardScreenState
 
               const SizedBox(height: 16),
 
-             // ADD JOB BUTTON
+              // 5. ADD JOB HERO CALLOUT
               _addJobButton(
                 context: context,
                 colors: colors,
@@ -815,12 +656,12 @@ class _AdminDashboardScreenState
 
               const SizedBox(height: 16),
 
-             // JOBS LIST
+              // 6. JOBS LIST
               _jobsList(context, colors),
 
               const SizedBox(height: 36),
 
-              // JOB APPLICATIONS SECTION
+              // 7. JOB APPLICATIONS HEADER (WITH LIVE APPLICANTS BADGE)
               Container(
                 key: _applicationsSectionKey,
                 child: _sectionHeader(
@@ -835,6 +676,7 @@ class _AdminDashboardScreenState
 
               const SizedBox(height: 16),
 
+              // 8. APPLICATIONS LIST
               _applicationsList(colors),
 
               const SizedBox(height: 32),
@@ -844,10 +686,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-
   // WELCOME BANNER
-
-
   Widget _welcomeBanner(
       BuildContext context,
       String adminName,
@@ -860,7 +699,6 @@ class _AdminDashboardScreenState
         return Container(
           width: double.infinity,
           padding: EdgeInsets.all(isNarrow ? 20 : 24),
-
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -877,27 +715,19 @@ class _AdminDashboardScreenState
                 Color(0xFF10B981),
               ],
             ),
-
             borderRadius: BorderRadius.circular(24),
-
             border: Border.all(
-              color: Colors.white.withValues(
-                alpha: colors.isDark ? 0.15 : 0.25,
-              ),
+              color: Colors.white.withValues(alpha: colors.isDark ? 0.15 : 0.25),
               width: 1.2,
             ),
-
             boxShadow: [
               BoxShadow(
-                color: colors.primary.withValues(
-                  alpha: colors.isDark ? 0.25 : 0.35,
-                ),
+                color: colors.primary.withValues(alpha: colors.isDark ? 0.25 : 0.35),
                 blurRadius: 22,
                 offset: const Offset(0, 10),
               ),
             ],
           ),
-
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -911,18 +741,21 @@ class _AdminDashboardScreenState
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(
-                          alpha: 0.18,
-                        ),
+                        color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'Good to see you 👋',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Good to see you 👋',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -949,9 +782,7 @@ class _AdminDashboardScreenState
                       maxLines: isNarrow ? 3 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Colors.white.withValues(
-                          alpha: 0.9,
-                        ),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 14,
                         height: 1.5,
                       ),
@@ -967,14 +798,10 @@ class _AdminDashboardScreenState
                   isNarrow ? 14 : 18,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(
-                    alpha: 0.18,
-                  ),
+                  color: Colors.white.withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.white.withValues(
-                      alpha: 0.3,
-                    ),
+                    color: Colors.white.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -990,7 +817,7 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // SECTION HEADER
+  // SECTION HEADER (WITH OPTIONAL LIVE BADGE)
   Widget _sectionHeader({
     required String title,
     required String subtitle,
@@ -1004,9 +831,7 @@ class _AdminDashboardScreenState
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: colors.primary.withValues(
-              alpha: colors.isDark ? 0.2 : 0.12,
-            ),
+            color: colors.primary.withValues(alpha: colors.isDark ? 0.2 : 0.12),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: colors.primary.withValues(alpha: 0.25),
@@ -1055,20 +880,18 @@ class _AdminDashboardScreenState
 
         if (streamCollection != null) ...[
           const SizedBox(width: 8),
-
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection(streamCollection)
-                .snapshots(),
-
+            stream: FirebaseFirestore.instance.collection(streamCollection).snapshots(),
             builder: (context, snapshot) {
-              final count = snapshot.data?.docs.length ?? 0;
-
+              final count = snapshot.hasData
+                  ? snapshot.data!.docs.where((doc) {
+                if (streamCollection != 'applications') return true;
+                final data = doc.data() as Map<String, dynamic>;
+                return data['adminArchived'] != true;
+              }).length
+                  : 0;
               return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: colors.badgeBg,
                   borderRadius: BorderRadius.circular(20),
@@ -1077,7 +900,6 @@ class _AdminDashboardScreenState
                     width: 1,
                   ),
                 ),
-
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1089,17 +911,13 @@ class _AdminDashboardScreenState
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: colors.primary.withValues(
-                              alpha: 0.6,
-                            ),
+                            color: colors.primary.withValues(alpha: 0.6),
                             blurRadius: 3,
                           ),
                         ],
                       ),
                     ),
-
                     const SizedBox(width: 6),
-
                     Text(
                       '$count ${countSuffix ?? ''}'.trim(),
                       style: TextStyle(
@@ -1121,23 +939,18 @@ class _AdminDashboardScreenState
   Widget _statisticsGrid(_AdminColors colors) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount =
-        constraints.maxWidth >= 750 ? 4 : 2;
+        final crossAxisCount = constraints.maxWidth >= 750 ? 4 : 2;
 
         return GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 14,
             mainAxisSpacing: 14,
-            mainAxisExtent:
-            constraints.maxWidth >= 750 ? 150 : 154,
+            mainAxisExtent: constraints.maxWidth >= 750 ? 150 : 154,
           ),
-
           children: [
-            // TOTAL USERS
             _statCard(
               collection: 'users',
               title: 'Total Users',
@@ -1156,7 +969,6 @@ class _AdminDashboardScreenState
               },
             ),
 
-            // TOTAL JOBS
             _statCard(
               collection: 'jobs',
               title: 'Total Jobs',
@@ -1168,7 +980,6 @@ class _AdminDashboardScreenState
               onTap: () => _scrollToSection(_jobsSectionKey),
             ),
 
-            // APPLICATIONS
             _statCard(
               collection: 'applications',
               title: 'Applications',
@@ -1177,11 +988,9 @@ class _AdminDashboardScreenState
                   ? const Color(0xFFFBBF24)
                   : const Color(0xFFD97706),
               colors: colors,
-              onTap: () =>
-                  _scrollToSection(_applicationsSectionKey),
+              onTap: () => _scrollToSection(_applicationsSectionKey),
             ),
 
-            // AI RECOMMENDATIONS
             _statCard(
               collection: 'career_recommendations',
               title: 'AI Recommendations',
@@ -1194,8 +1003,7 @@ class _AdminDashboardScreenState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                    const AdminRecommendationsScreen(),
+                    builder: (_) => const AdminRecommendationsScreen(),
                   ),
                 );
               },
@@ -1205,7 +1013,7 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // REAL-TIME STAT CARD
+  // STAT CARD
   Widget _statCard({
     required String collection,
     required String title,
@@ -1215,18 +1023,20 @@ class _AdminDashboardScreenState
     required VoidCallback onTap,
   }) {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection(collection)
-          .snapshots(),
-
+      stream: FirebaseFirestore.instance.collection(collection).snapshots(),
       builder: (context, snapshot) {
-        final count = snapshot.data?.docs.length ?? 0;
+        int count = 0;
 
-        final countLabel = snapshot.hasError
-            ? 'Error'
-            : snapshot.connectionState == ConnectionState.waiting
-            ? '...'
-            : '$count';
+        if (snapshot.hasData) {
+          if (collection == 'applications') {
+            count = snapshot.data!.docs.where((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              return data['adminArchived'] != true;
+            }).length;
+          } else {
+            count = snapshot.data!.docs.length;
+          }
+        }
 
         return Container(
           decoration: BoxDecoration(
@@ -1238,41 +1048,30 @@ class _AdminDashboardScreenState
             ),
             boxShadow: [
               BoxShadow(
-                color: (
-                    colors.isDark
-                        ? Colors.black
-                        : const Color(0xFF059669)
-                ).withValues(
-                  alpha: colors.isDark ? 0.35 : 0.05,
-                ),
+                color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                    .withValues(alpha: colors.isDark ? 0.35 : 0.05),
                 blurRadius: 14,
                 offset: const Offset(0, 5),
               ),
             ],
           ),
-
           child: Material(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(18),
-
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
               onTap: onTap,
               mouseCursor: SystemMouseCursors.click,
-
               splashColor: color.withValues(alpha: 0.14),
               highlightColor: color.withValues(alpha: 0.06),
-
               child: Padding(
                 padding: const EdgeInsets.all(16),
-
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Top row
                     Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.spaceBetween,
-
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
                           padding: const EdgeInsets.all(9),
@@ -1280,13 +1079,12 @@ class _AdminDashboardScreenState
                             color: color.withValues(
                               alpha: colors.isDark ? 0.22 : 0.12,
                             ),
-                            borderRadius:
-                            BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: color.withValues(alpha: 0.3),
+                              width: 1,
                             ),
                           ),
-
                           child: Icon(
                             icon,
                             color: color,
@@ -1294,24 +1092,21 @@ class _AdminDashboardScreenState
                           ),
                         ),
 
-                        // Navigation Arrow
+                        // Interactive arrow action button
                         Container(
                           width: 32,
                           height: 32,
-
                           decoration: BoxDecoration(
                             color: color.withValues(
                               alpha: colors.isDark ? 0.18 : 0.08,
                             ),
-                            borderRadius:
-                            BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: color.withValues(
                                 alpha: colors.isDark ? 0.3 : 0.22,
                               ),
                             ),
                           ),
-
                           child: Icon(
                             Icons.arrow_outward_rounded,
                             size: 16,
@@ -1323,9 +1118,8 @@ class _AdminDashboardScreenState
 
                     const Spacer(),
 
-                    // Real-time Firestore Count
                     Text(
-                      countLabel,
+                      '$count',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -2118,13 +1912,11 @@ class _AdminDashboardScreenState
       );
     }
   }
-  // APPLICATION LIST
-  Widget _applicationsList(_AdminColors colors) {
+  // APPLICATION LISTWidget _applicationsList(_AdminColors colors) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('applications')
           .snapshots(),
-
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _loadingCard(colors);
@@ -2140,7 +1932,6 @@ class _AdminDashboardScreenState
         final applications = (snapshot.data?.docs ?? [])
             .where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-
           return data['adminArchived'] != true;
         })
             .toList();
@@ -2149,13 +1940,12 @@ class _AdminDashboardScreenState
           return _emptyCard(
             icon: Icons.description_outlined,
             title: 'No applications yet',
-            subtitle:
-            'Applications will appear here when users apply for jobs.',
+            subtitle: 'Applications will appear here when users apply for jobs.',
             colors: colors,
           );
         }
 
-        // Most recent applications first
+        // Most recent applications first.
         final sortedApplications = [...applications];
 
         sortedApplications.sort((a, b) {
@@ -2179,8 +1969,7 @@ class _AdminDashboardScreenState
         return Column(
           children: [
             ...visibleApplications.map((document) {
-              final data =
-              document.data() as Map<String, dynamic>;
+              final data = document.data() as Map<String, dynamic>;
 
               return _applicationCard(
                 context,
@@ -2198,8 +1987,7 @@ class _AdminDashboardScreenState
                 label: 'Applications',
                 onPressed: () {
                   setState(() {
-                    _showAllApplications =
-                    !_showAllApplications;
+                    _showAllApplications = !_showAllApplications;
                   });
                 },
               ),
@@ -2208,57 +1996,40 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // =====================================================
-// APPLICATION CARD
-// =====================================================
-
+  // APPLICATION CARD (REDESIGNED CANDIDATE PIPELINE VIEW)
   Widget _applicationCard(
       BuildContext context,
       String applicationId,
       Map<String, dynamic> data,
       _AdminColors colors,
       ) {
-    final jobTitle =
-        data['jobTitle']?.toString() ?? 'Unknown Job';
+    final jobTitle = data['jobTitle']?.toString() ?? 'Unknown Job';
+    final company = data['company']?.toString() ?? 'Unknown Company';
+    final userId = data['userId']?.toString() ?? 'Unknown User';
+    final status = data['status']?.toString() ?? 'Applied';
+    final appliedAt =
+    data['appliedAt'] is Timestamp ? data['appliedAt'] as Timestamp : null;
 
-    final company =
-        data['company']?.toString() ?? 'Unknown Company';
-    final userId =
-        data['userId']?.toString() ?? 'Unknown User';
-
-    final status =
-        data['status']?.toString() ?? 'Applied';
-
-    final appliedAt = data['appliedAt'] is Timestamp
-        ? data['appliedAt'] as Timestamp
-        : null;
-
-    // Application status color
+    // Status Accent Color for indicator & accent bar
     Color statusColor = const Color(0xFF3B82F6);
-
     switch (status.toLowerCase()) {
       case 'under review':
         statusColor = const Color(0xFFF59E0B);
         break;
-
       case 'shortlisted':
         statusColor = const Color(0xFF8B5CF6);
         break;
-
       case 'interview':
       case 'interviewed':
         statusColor = const Color(0xFF06B6D4);
         break;
-
       case 'accepted':
       case 'hired':
         statusColor = const Color(0xFF10B981);
         break;
-
       case 'rejected':
         statusColor = const Color(0xFFEF4444);
         break;
-
       case 'cancelled':
         statusColor = const Color(0xFF6B7280);
         break;
@@ -2266,38 +2037,27 @@ class _AdminDashboardScreenState
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-
       decoration: BoxDecoration(
         color: colors.cardBg,
         borderRadius: BorderRadius.circular(22),
-
         border: Border.all(
           color: colors.cardBorder,
           width: 1.2,
         ),
-
         boxShadow: [
           BoxShadow(
-            color: (
-                colors.isDark
-                    ? Colors.black
-                    : const Color(0xFF059669)
-            ).withValues(
-              alpha: colors.isDark ? 0.35 : 0.06,
-            ),
+            color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                .withValues(alpha: colors.isDark ? 0.35 : 0.06),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
         ],
       ),
-
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
-
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-
             children: [
               // Left status accent bar
               Container(
@@ -2305,68 +2065,74 @@ class _AdminDashboardScreenState
                 color: statusColor,
               ),
 
+              // Main Card Body
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(18),
-
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
-                      // APPLICATION HEADER
+                      // Role Header & Status Chip
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
-
+                            padding: const EdgeInsets.all(11),
                             decoration: BoxDecoration(
                               color: statusColor.withValues(
-                                alpha: 0.12,
+                                alpha: colors.isDark ? 0.22 : 0.12,
                               ),
-                              borderRadius:
-                              BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: statusColor.withValues(alpha: 0.3),
+                              ),
                             ),
-
                             child: Icon(
-                              Icons.description_outlined,
+                              Icons.assignment_ind_rounded,
                               color: statusColor,
                               size: 24,
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 13),
 
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
-
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   jobTitle,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-
                                   style: TextStyle(
-                                    fontSize: 17,
+                                    fontSize: 17.5,
                                     fontWeight: FontWeight.bold,
                                     color: colors.textPrimary,
+                                    letterSpacing: -0.3,
                                   ),
                                 ),
-
-                                const SizedBox(height: 5),
-
-                                Text(
-                                  company,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: colors.textSecondary,
-                                  ),
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.business_rounded,
+                                      size: 14,
+                                      color: colors.textSecondary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        company,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: colors.textSecondary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -2374,94 +2140,51 @@ class _AdminDashboardScreenState
 
                           const SizedBox(width: 8),
 
-                          // STATUS BADGE
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(
-                                alpha: 0.12,
-                              ),
-                              borderRadius:
-                              BorderRadius.circular(20),
-                              border: Border.all(
-                                color: statusColor.withValues(
-                                  alpha: 0.25,
-                                ),
-                              ),
-                            ),
-
-                            child: Text(
-                              status,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
-                              ),
-                            ),
-                          ),
+                          _statusChip(status, colors),
                         ],
                       ),
 
                       const SizedBox(height: 14),
 
-                      // Candidate Identity Card
-                      _applicantIdentityBox(
-                        context,
-                        userId,
-                        colors,
-                      ),
-
+                      // Candidate Identity Card (Name, Avatar, Email, UID)
+                      _applicantIdentityBox(context, userId, colors),
 
                       const SizedBox(height: 12),
 
-                      // Recruitment Pipeline or Cancelled Notice
-                      status.trim().toLowerCase() == 'cancelled'
+                      // Recruitment Pipeline Visual Tracker
+                      status.toLowerCase() == 'cancelled'
                           ? CancelledApplicationNotice(
                         isDark: colors.isDark,
                         textColor: colors.textPrimary,
                       )
-                          : _buildApplicationPipeline(
-                        status,
-                        colors,
-                      ),
+                          : _buildApplicationPipeline(status, colors),
+
                       const SizedBox(height: 12),
 
-                      Divider(
-                        color: colors.divider,
-                        height: 1,
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // APPLIED DATE
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_outlined,
-                            size: 15,
-                            color: colors.textSecondary,
-                          ),
-
-                          const SizedBox(width: 7),
-
-                          Text(
-                            appliedAt != null
-                                ? 'Applied on ${_formatDate(appliedAt)}'
-                                : 'Applied date unavailable',
-
-                            style: TextStyle(
-                              fontSize: 12,
+                      // Applied Date row
+                      if (appliedAt != null)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.event_available_rounded,
+                              size: 15,
                               color: colors.textSecondary,
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Submitted on ${_formatDate(appliedAt)}',
+                              style: TextStyle(
+                                color: colors.textSecondary,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+
                       const SizedBox(height: 14),
-                      // Applicant Cancellation Request
+
+                      // Applicant asked to cancel -> admin approves / declines
                       CancelRequestBanner(
                         applicationId: applicationId,
                         data: data,
@@ -2470,38 +2193,28 @@ class _AdminDashboardScreenState
                         mutedColor: colors.textSecondary,
                       ),
 
-                      // REMOVE CANCELLED APPLICATION
+
                       if (status.trim().toLowerCase() == 'cancelled') ...[
                         const SizedBox(height: 12),
-
                         Align(
                           alignment: Alignment.centerRight,
-
                           child: OutlinedButton.icon(
-                            onPressed: () =>
-                                _confirmRemoveCancelledApplication(
-                                  context,
-                                  applicationId,
-                                  jobTitle,
-                                  colors,
-                                ),
-
+                            onPressed: () => _confirmRemoveCancelledApplication(
+                              context,
+                              applicationId,
+                              jobTitle,
+                              colors,
+                            ),
                             icon: const Icon(
                               Icons.delete_outline_rounded,
                               size: 19,
                             ),
-
                             label: const Text('Remove'),
-
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.redAccent,
-
                               side: BorderSide(
-                                color: Colors.redAccent.withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: Colors.redAccent.withValues(alpha: 0.4),
                               ),
-
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -2510,33 +2223,28 @@ class _AdminDashboardScreenState
                         ),
                       ],
 
-                      const SizedBox(height: 12),
 
-                      // UPDATE APPLICATION STATUS
-                      if (status.trim().toLowerCase() != 'cancelled')
+                      // Action Button to update status (not for cancelled ones)
+                      if (status.toLowerCase() != 'cancelled')
                         SizedBox(
                           width: double.infinity,
                           height: 48,
-
-                          child: ElevatedButton.icon(
+                          child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: colors.primary.withValues(
                                 alpha: colors.isDark ? 0.16 : 0.08,
                               ),
-
                               foregroundColor: colors.primary,
                               elevation: 0,
-
                               side: BorderSide(
                                 color: colors.primary.withValues(alpha: 0.35),
                                 width: 1.2,
                               ),
-
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                             ),
-
                             onPressed: () {
                               _showStatusDialog(
                                 context,
@@ -2545,18 +2253,30 @@ class _AdminDashboardScreenState
                                 colors,
                               );
                             },
-
-                            icon: const Icon(
-                              Icons.tune_rounded,
-                              size: 18,
-                            ),
-
-                            label: const Text(
-                              'Update Application Status',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 18,
+                                  color: colors.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Update Application Status',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13.5,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 13,
+                                  color: colors.primary,
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -2570,10 +2290,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-  // =====================================================
-// APPLICANT IDENTITY CARD
-// =====================================================
-
+  // APPLICANT IDENTITY CARD (FETCHES CANDIDATE NAME/EMAIL)
   Widget _applicantIdentityBox(
       BuildContext context,
       String userId,
@@ -2581,96 +2298,87 @@ class _AdminDashboardScreenState
       ) {
     return FutureBuilder<Map<String, dynamic>?>(
       future: _getUserData(userId),
-
       builder: (context, snapshot) {
         String displayName = 'Candidate';
         String email = '';
         String initials = 'C';
 
-        final shortId = userId.length > 8
-            ? userId.substring(0, 8)
-            : userId;
-
         if (snapshot.hasData && snapshot.data != null) {
           final data = snapshot.data!;
-
-          final first =
-          (data['firstName'] ?? '').toString().trim();
-
-          final last =
-          (data['lastName'] ?? '').toString().trim();
-
+          final first = (data['firstName'] ?? '').toString().trim();
+          final last = (data['lastName'] ?? '').toString().trim();
           final fullName = '$first $last'.trim();
-
           if (fullName.isNotEmpty) {
             displayName = fullName;
-
             if (first.isNotEmpty && last.isNotEmpty) {
               initials = '${first[0]}${last[0]}'.toUpperCase();
             } else if (first.isNotEmpty) {
               initials = first[0].toUpperCase();
-            } else if (last.isNotEmpty) {
-              initials = last[0].toUpperCase();
             }
           }
-
           email = (data['email'] ?? '').toString().trim();
         } else {
+          final shortId = userId.length > 8 ? userId.substring(0, 8) : userId;
           displayName = 'Applicant #$shortId';
-
           if (userId.isNotEmpty) {
             initials = userId[0].toUpperCase();
           }
         }
 
+        final shortId = userId.length > 8 ? userId.substring(0, 8) : userId;
+
         return Container(
           padding: const EdgeInsets.all(13),
-
           decoration: BoxDecoration(
-            color: colors.primary.withValues(
-              alpha: colors.isDark ? 0.08 : 0.04,
-            ),
-            borderRadius: BorderRadius.circular(14),
+            color: colors.isDark ? const Color(0xFF0F1E17) : const Color(0xFFF7FAF8),
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(
               color: colors.cardBorder,
+              width: 1,
             ),
           ),
-
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Applicant Avatar
+              // Avatar with Initials
               Container(
-                width: 48,
-                height: 48,
-
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      colors.primaryDark,
-                      colors.primaryAccent,
-                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: colors.isDark
+                        ? const [Color(0xFF047857), Color(0xFF10B981)]
+                        : const [Color(0xFF059669), Color(0xFF34D399)],
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(13),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-
-                alignment: Alignment.center,
-
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                child: Center(
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(width: 12),
 
+              // Name, Email / Phone, UID
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
                     Row(
                       children: [
@@ -2679,43 +2387,35 @@ class _AdminDashboardScreenState
                             displayName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.bold,
                               color: colors.textPrimary,
                             ),
                           ),
                         ),
-
                         const SizedBox(width: 6),
-
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: colors.badgeBg,
                             borderRadius: BorderRadius.circular(6),
                           ),
-
                           child: Text(
                             'APPLICANT',
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: colors.primary,
+                              letterSpacing: 0.4,
                             ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
 
-                    // Applicant Email
                     if (email.isNotEmpty) ...[
                       Row(
                         children: [
@@ -2724,15 +2424,12 @@ class _AdminDashboardScreenState
                             size: 13,
                             color: colors.textSecondary,
                           ),
-
                           const SizedBox(width: 5),
-
                           Flexible(
                             child: Text(
                               email,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.textSecondary,
@@ -2741,11 +2438,9 @@ class _AdminDashboardScreenState
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 3),
+                      const SizedBox(height: 2),
                     ],
 
-                    // Applicant UID
                     Row(
                       children: [
                         Icon(
@@ -2753,50 +2448,32 @@ class _AdminDashboardScreenState
                           size: 13,
                           color: colors.textSecondary,
                         ),
-
                         const SizedBox(width: 5),
-
-                        Flexible(
-                          child: Text(
-                            'ID: $shortId...',
-                            overflow: TextOverflow.ellipsis,
-
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textSecondary,
-                              fontFamily: 'monospace',
-                            ),
+                        Text(
+                          'ID: $shortId...',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textSecondary,
+                            fontFamily: 'monospace',
                           ),
                         ),
-
-                        const SizedBox(width: 5),
-
+                        const SizedBox(width: 4),
                         InkWell(
-                          onTap: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: userId),
-                            );
-
-                            if (!context.mounted) return;
-
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Applicant ID copied successfully.',
-                                ),
-                                backgroundColor: Color(0xFF10B981),
-                                duration: Duration(seconds: 2),
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: userId));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Applicant ID copied: $userId'),
+                                backgroundColor: const Color(0xFF10B981),
+                                duration: const Duration(seconds: 2),
                               ),
                             );
                           },
-
                           child: Padding(
-                            padding: const EdgeInsets.all(3),
-
+                            padding: const EdgeInsets.all(2),
                             child: Icon(
                               Icons.copy_rounded,
-                              size: 14,
+                              size: 12,
                               color: colors.primary,
                             ),
                           ),
@@ -2812,198 +2489,211 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // =====================================================
-// RECRUITMENT PIPELINE STEPPER
-// =====================================================
-
-  Widget _buildApplicationPipeline(
-      String status,
-      _AdminColors colors,
-      ) {
+  // RECRUITMENT PIPELINE STEPPER
+  Widget _buildApplicationPipeline(String status, _AdminColors colors) {
     int currentStep = 1;
     bool isRejected = false;
-
-    final lower = status.trim().toLowerCase();
+    final lower = status.toLowerCase();
 
     if (lower == 'under review') {
       currentStep = 2;
-    } else if (
-    lower == 'shortlisted' ||
-        lower.contains('interview')) {
+    } else if (lower == 'shortlisted' || lower.contains('interview')) {
       currentStep = 3;
-    } else if (
-    lower == 'hired' ||
-        lower == 'accepted') {
+    } else if (lower == 'hired' || lower == 'accepted') {
       currentStep = 4;
     } else if (lower == 'rejected') {
       currentStep = 4;
       isRejected = true;
     }
 
-    final steps = [
-      'Applied',
-      'Review',
-      'Interview',
-      isRejected ? 'Rejected' : 'Hired',
-    ];
+    final steps = ['Applied', 'Review', 'Interview', isRejected ? 'Rejected' : 'Hired'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: colors.isDark ? const Color(0xFF0C1712) : const Color(0xFFF4F9F5),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(
+          color: colors.cardBorder,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: List.generate(steps.length * 2 - 1, (index) {
+          if (index.isOdd) {
+            final stepBefore = (index ~/ 2) + 1;
+            final isPassed = currentStep > stepBefore;
+            return Expanded(
+              child: Container(
+                height: 2,
+                color: isPassed
+                    ? (isRejected ? Colors.redAccent : colors.primary)
+                    : (colors.isDark ? const Color(0xFF1F382B) : const Color(0xFFD8EBE0)),
+              ),
+            );
+          }
+
+          final stepIndex = index ~/ 2;
+          final stepNum = stepIndex + 1;
+          final isDone = currentStep >= stepNum;
+          final isCurrent = currentStep == stepNum;
+
+          Color stepColor;
+          if (isCurrent && isRejected) {
+            stepColor = Colors.redAccent;
+          } else if (isDone) {
+            stepColor = colors.primary;
+          } else {
+            stepColor = colors.isDark ? const Color(0xFF274435) : const Color(0xFFCBD5E1);
+          }
+
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: isDone ? stepColor : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: stepColor, width: 1.8),
+                ),
+                child: Center(
+                  child: isDone
+                      ? Icon(
+                    (isCurrent && isRejected)
+                        ? Icons.close_rounded
+                        : Icons.check_rounded,
+                    size: 10,
+                    color: Colors.white,
+                  )
+                      : Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: stepColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                steps[stepIndex],
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                  color: isCurrent
+                      ? (isRejected ? Colors.redAccent : colors.primary)
+                      : (isDone ? colors.textPrimary : colors.textSecondary),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+  // STATUS CHIP (GLOWING STATUS DOT & MODERN BADGE)
+  Widget _statusChip(String status, _AdminColors colors) {
+    Color color = Colors.blue;
+    IconData icon = Icons.schedule_rounded;
+
+    switch (status.toLowerCase()) {
+      case 'under review':
+        color = const Color(0xFFF59E0B);
+        icon = Icons.visibility_outlined;
+        break;
+
+      case 'shortlisted':
+        color = const Color(0xFF8B5CF6);
+        icon = Icons.star_outline_rounded;
+        break;
+
+      case 'interview':
+      case 'interviewed':
+        color = const Color(0xFF06B6D4);
+        icon = Icons.groups_outlined;
+        break;
+
+      case 'accepted':
+      case 'hired':
+        color = const Color(0xFF10B981);
+        icon = Icons.check_circle_outline_rounded;
+        break;
+
+      case 'rejected':
+        color = const Color(0xFFEF4444);
+        icon = Icons.cancel_outlined;
+        break;
+
+      case 'applied':
+      default:
+        color = const Color(0xFF3B82F6);
+        icon = Icons.schedule_rounded;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 12,
+        horizontal: 10,
+        vertical: 5,
       ),
-
       decoration: BoxDecoration(
-        color: colors.primary.withValues(
-          alpha: colors.isDark ? 0.05 : 0.03,
-        ),
-        borderRadius: BorderRadius.circular(14),
+        color: color.withValues(alpha: colors.isDark ? 0.22 : 0.12),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colors.cardBorder,
+          color: color.withValues(alpha: colors.isDark ? 0.45 : 0.3),
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'Recruitment Pipeline',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.6),
+                  blurRadius: 3,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
           ),
-
-          const SizedBox(height: 14),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-
-            children: List.generate(
-              steps.length,
-                  (index) {
-                final stepNumber = index + 1;
-
-                final isCompleted =
-                    stepNumber < currentStep;
-
-                final isCurrent =
-                    stepNumber == currentStep;
-
-                final rejectedStep =
-                    isRejected && stepNumber == 4;
-
-                final stepColor = rejectedStep
-                    ? Colors.redAccent
-                    : (isCompleted || isCurrent)
-                    ? colors.primary
-                    : colors.textMuted;
-
-                return Expanded(
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: index == 0
-                                  ? Colors.transparent
-                                  : isCompleted || isCurrent
-                                  ? colors.primary
-                                  : colors.divider,
-                            ),
-                          ),
-
-                          Container(
-                            width: 28,
-                            height: 28,
-
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-
-                              color: isCompleted || isCurrent
-                                  ? stepColor
-                                  : colors.cardBg,
-
-                              border: Border.all(
-                                color: stepColor,
-                                width: 1.5,
-                              ),
-                            ),
-
-                            child: Center(
-                              child: rejectedStep
-                                  ? const Icon(
-                                Icons.close_rounded,
-                                size: 15,
-                                color: Colors.white,
-                              )
-                                  : isCompleted
-                                  ? const Icon(
-                                Icons.check_rounded,
-                                size: 15,
-                                color: Colors.white,
-                              )
-                                  : Text(
-                                '$stepNumber',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight:
-                                  FontWeight.bold,
-                                  color: isCurrent
-                                      ? Colors.white
-                                      : stepColor,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          Expanded(
-                            child: Container(
-                              height: 2,
-                              color: index == steps.length - 1
-                                  ? Colors.transparent
-                                  : isCompleted
-                                  ? colors.primary
-                                  : colors.divider,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 7),
-
-                      Text(
-                        steps[index],
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: isCurrent
-                              ? FontWeight.bold
-                              : FontWeight.w500,
-                          color: stepColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+          const SizedBox(width: 5),
+          Icon(
+            icon,
+            size: 13,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            status,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+              letterSpacing: 0.2,
             ),
           ),
         ],
       ),
     );
   }
-  // =====================================================
-// UPDATE APPLICATION STATUS DIALOG
-// =====================================================
-
+  // STATUS DIALOG
   void _showStatusDialog(
       BuildContext context,
       String applicationId,
@@ -3018,10 +2708,6 @@ class _AdminDashboardScreenState
       'Hired',
       'Rejected',
     ];
-
-    if (currentStatus.trim().toLowerCase() == 'cancelled') {
-      return;
-    }
 
     String initialStatus = currentStatus;
 
@@ -3039,202 +2725,140 @@ class _AdminDashboardScreenState
 
     showDialog(
       context: context,
-
       builder: (dialogContext) {
         String selectedStatus = initialStatus;
-        bool isSaving = false;
 
         return StatefulBuilder(
-          builder: (context, setDialogState) {
+          builder: (
+              context,
+              setState,
+              ) {
             return AlertDialog(
               backgroundColor: colors.cardBg,
-
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(22),
-                side: BorderSide(
-                  color: colors.cardBorder,
-                  width: 1.2,
-                ),
+                side: BorderSide(color: colors.cardBorder, width: 1.2),
               ),
-
               title: Text(
                 'Update Application Status',
                 style: TextStyle(
-                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: colors.textPrimary,
+                  fontSize: 18,
                 ),
               ),
-
               content: DropdownButtonFormField<String>(
                 initialValue: selectedStatus,
                 isExpanded: true,
                 dropdownColor: colors.cardBg,
-
                 style: TextStyle(
                   color: colors.textPrimary,
                   fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
-
                 decoration: InputDecoration(
                   labelText: 'Application Status',
-
-                  labelStyle: TextStyle(
-                    color: colors.textSecondary,
-                  ),
-
+                  labelStyle: TextStyle(color: colors.textSecondary),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: colors.cardBorder,
-                    ),
+                    borderSide: BorderSide(color: colors.cardBorder),
                   ),
-
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: colors.primary,
-                      width: 1.5,
-                    ),
+                    borderSide: BorderSide(color: colors.primary, width: 1.5),
                   ),
                 ),
-
-                items: statuses.map((status) {
-                  return DropdownMenuItem<String>(
-                    value: status,
-                    child: Text(status),
-                  );
-                }).toList(),
-
-                onChanged: isSaving
-                    ? null
-                    : (value) {
+                items: statuses.map(
+                      (status) {
+                    return DropdownMenuItem<String>(
+                      value: status,
+                      child: Text(status),
+                    );
+                  },
+                ).toList(),
+                onChanged: (value) {
                   if (value != null) {
-                    setDialogState(() {
+                    setState(() {
                       selectedStatus = value;
                     });
                   }
                 },
               ),
-
               actions: [
                 TextButton(
-                  onPressed: isSaving
-                      ? null
-                      : () => Navigator.pop(dialogContext),
-
+                  onPressed: () {
+                    Navigator.pop(
+                      dialogContext,
+                    );
+                  },
                   child: Text(
                     'Cancel',
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                    ),
+                    style: TextStyle(color: colors.textSecondary),
                   ),
                 ),
-
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.primary,
                     foregroundColor: Colors.white,
-                    elevation: 0,
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                    elevation: 0,
                   ),
-
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                    setDialogState(() {
-                      isSaving = true;
-                    });
-
+                  onPressed: () async {
                     try {
-                      final firestore =
-                          FirebaseFirestore.instance;
-
-                      final ref = firestore
+                      await FirebaseFirestore.instance
                           .collection('applications')
-                          .doc(applicationId);
+                          .doc(applicationId)
+                          .update({
+                        'status': selectedStatus,
+                        'updatedAt': FieldValue.serverTimestamp(),
+                      });
 
-                      await firestore.runTransaction(
-                            (transaction) async {
-                          final snapshot =
-                          await transaction.get(ref);
+                      if (!dialogContext.mounted) {
+                        return;
+                      }
 
-                          if (!snapshot.exists) {
-                            throw Exception(
-                              'Application not found.',
-                            );
-                          }
-
-                          final data = snapshot.data();
-
-                          final latestStatus =
-                          (data?['status'] ?? '')
-                              .toString()
-                              .trim()
-                              .toLowerCase();
-
-                          if (latestStatus == 'cancelled') {
-                            throw Exception(
-                              'Cancelled applications cannot be updated.',
-                            );
-                          }
-
-                          transaction.update(ref, {
-                            'status': selectedStatus,
-                            'updatedAt':
-                            FieldValue.serverTimestamp(),
-                          });
-                        },
+                      Navigator.pop(
+                        dialogContext,
                       );
 
-                      if (!dialogContext.mounted) return;
+                      if (!context.mounted) {
+                        return;
+                      }
 
-                      Navigator.pop(dialogContext);
-
-                      if (!this.context.mounted) return;
-
-                      ScaffoldMessenger.of(this.context)
-                          .showSnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
                             'Application status updated successfully.',
                           ),
-                          backgroundColor:
-                          Color(0xFF10B981),
+                          backgroundColor: Color(0xFF10B981),
                         ),
                       );
                     } catch (e) {
-                      if (!dialogContext.mounted) return;
+                      if (!dialogContext.mounted) {
+                        return;
+                      }
 
-                      setDialogState(() {
-                        isSaving = false;
-                      });
+                      Navigator.pop(
+                        dialogContext,
+                      );
 
-                      ScaffoldMessenger.of(dialogContext)
-                          .showSnackBar(
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Failed to update status: $e',
+                            'Failed to update status:\n$e',
                           ),
                           backgroundColor: Colors.redAccent,
                         ),
                       );
                     }
                   },
-
-                  child: isSaving
-                      ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                      : const Text('Update'),
+                  child: const Text('Update'),
                 ),
               ],
             );
@@ -3243,16 +2867,7 @@ class _AdminDashboardScreenState
       },
     );
   }
-  // DATE FORMAT
-  String _formatDate(Timestamp timestamp) {
-    final date = timestamp.toDate();
 
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final year = date.year;
-
-    return '$day/$month/$year';
-  }
   Widget _viewAllButton({
     required _AdminColors colors,
     required bool showAll,
@@ -3297,11 +2912,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-
-  // =====================================================
   // LOADING CARD
-  // =====================================================
-
   Widget _loadingCard(_AdminColors colors) {
     return Container(
       padding: const EdgeInsets.all(35),
@@ -3317,11 +2928,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-
-  // =====================================================
   // ERROR CARD
-  // =====================================================
-
   Widget _errorCard(String message, _AdminColors colors) {
     return Container(
       width: double.infinity,
@@ -3341,11 +2948,7 @@ class _AdminDashboardScreenState
       ),
     );
   }
-
-  // =====================================================
   // EMPTY CARD
-  // =====================================================
-
   Widget _emptyCard({
     required IconData icon,
     required String title,
@@ -3396,6 +2999,12 @@ class _AdminDashboardScreenState
       ),
     );
   }
+  // DATE FORMAT
+  String _formatDate(Timestamp timestamp) {
+    final date = timestamp.toDate();
 
-
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
 }
