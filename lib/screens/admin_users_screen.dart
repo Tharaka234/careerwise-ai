@@ -59,3 +59,114 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     super.dispose();
   }
 }
+
+// Step 5: Screen Scaffold, StreamBuilder & Real-time Metrics
+
+@override
+Widget build(BuildContext context) {
+  return ValueListenableBuilder<bool>(
+    valueListenable: AdminThemeManager.isDarkMode,
+    builder: (context, isDark, _) {
+      final colors = _UserColors(isDark: isDark);
+
+      return Scaffold(
+        backgroundColor: colors.pageBg,
+        body: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').snapshots(),
+          builder: (context, snapshot) {
+            final allDocs = snapshot.data?.docs ?? [];
+            final filteredDocs = _filterUsers(allDocs);
+
+            int totalUsers = allDocs.length;
+            int adminCount = 0;
+            int candidateCount = 0;
+
+            for (var doc in allDocs) {
+              final data = doc.data() as Map<String, dynamic>? ?? {};
+              final role = data['role']?.toString().toLowerCase() ?? '';
+              if (role == 'admin') {
+                adminCount++;
+              } else {
+                candidateCount++;
+              }
+            }
+
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _buildHeader(
+                    colors: colors,
+                    totalCount: totalUsers,
+                    adminCount: adminCount,
+                    candidateCount: candidateCount,
+                  ),
+                ),
+
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 36),
+                  sliver: SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 820),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Search & Role Filter Bar
+                            _buildSearchAndFilters(colors),
+
+                            const SizedBox(height: 20),
+
+                            // Content list
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting &&
+                                !snapshot.hasData)
+                              _loadingCard(colors)
+                            else if (snapshot.hasError)
+                              _errorCard(
+                                'Error loading users: ${snapshot.error}',
+                                colors,
+                              )
+                            else if (filteredDocs.isEmpty)
+                                _emptyCard(
+                                  title: _searchQuery.isEmpty
+                                      ? 'No users found'
+                                      : 'No matching users',
+                                  subtitle: _searchQuery.isEmpty
+                                      ? 'Registered platform candidates and admins will appear here.'
+                                      : 'Try searching with a different name or email.',
+                                  colors: colors,
+                                )
+                              else
+                                ListView.separated(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: filteredDocs.length,
+                                  separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 14),
+                                  itemBuilder: (context, index) {
+                                    final doc = filteredDocs[index];
+                                    final data =
+                                        doc.data() as Map<String, dynamic>? ??
+                                            {};
+                                    return _userCard(
+                                      uid: doc.id,
+                                      data: data,
+                                      colors: colors,
+                                    );
+                                  },
+                                ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    },
+  );
+}
