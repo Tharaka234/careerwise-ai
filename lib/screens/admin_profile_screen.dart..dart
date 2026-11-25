@@ -23,3 +23,27 @@ class AdminThemeManager {
     isDarkMode.value = value;
   }
 }
+
+// Step 3: Main Screen Widget Skeleton (AdminProfileScreen)
+
+
+/// Standalone Full-Screen Admin Profile Screen
+/// Beautiful and stylish, designed similar to the user profile with light/dark theme support.
+class AdminProfileScreen extends StatelessWidget {
+  final String? adminName;
+
+  const AdminProfileScreen({
+    super.key,
+    this.adminName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Text('Admin Profile Screen'),
+      ),
+    );
+  }
+}
+
