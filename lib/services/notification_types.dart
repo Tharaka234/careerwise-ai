@@ -42,3 +42,23 @@ class NotificationTypes {
   // ---- Everyone -----------------------------------------------------
   static const String announcement = 'announcement';
 }
+class NotificationTopics {
+  NotificationTopics._();
+
+  /// Every logged-in user (announcements).
+  static const String allUsers = 'all_users';
+
+  /// Admin accounts only (flagged posts, fallback for new applications).
+  static const String admins = 'admins';
+
+  /// FCM topic for a job category, e.g. "Data & AI" -> "jobs_data_ai".
+  /// Topic names may only contain [a-zA-Z0-9-_.~%].
+  static String forCategory(String category) {
+    final slug = category
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+
+    return 'jobs_$slug';
+  }
+}
