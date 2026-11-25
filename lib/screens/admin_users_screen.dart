@@ -775,3 +775,80 @@ Widget _userCard({
         ),
       ],
     ),
+        // Step 13: UID Box, Clipboard Copy & Join Date
+        const SizedBox(height: 14),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: colors.cardSurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.fingerprint_rounded,
+                size: 14,
+                color: colors.textMuted,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'UID: $uid',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                    color: colors.textMuted,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Copy User ID',
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+                icon: Icon(
+                  Icons.copy_rounded,
+                  size: 13,
+                  color: colors.primary,
+                ),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: uid));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: const Color(0xFF10B981),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      content: const Text('User ID copied to clipboard!'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              if (formattedDate.isNotEmpty) ...[
+                const SizedBox(width: 12),
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 12,
+                  color: colors.textMuted,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Joined $formattedDate',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
