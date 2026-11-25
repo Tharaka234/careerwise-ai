@@ -8,6 +8,7 @@ import 'add_job_screen.dart';
 import 'package:flutter/services.dart';
 import 'admin_broadcast_screen.dart';
 import 'notification_history_screen.dart';
+import '../widgets/cancel_request_banner.dart';
 
 
 class _AdminColors {
@@ -125,6 +126,149 @@ class _AdminDashboardScreenState
       return null;
     } catch (e) {
       return null;
+    }
+  }
+  // =====================================================
+// REMOVE CANCELLED APPLICATION
+// =====================================================
+
+  Future<void> _confirmRemoveCancelledApplication(
+      BuildContext context,
+      String applicationId,
+      String jobTitle,
+      _AdminColors colors,
+      ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.cardBg,
+
+        title: Text(
+          'Remove Cancelled Application?',
+          style: TextStyle(
+            color: colors.textPrimary,
+          ),
+        ),
+
+        content: Text(
+          'Remove the cancelled application for "$jobTitle" '
+              'from the Admin Dashboard?\n\n'
+              'The cancellation record will be preserved.',
+
+          style: TextStyle(
+            color: colors.textSecondary,
+          ),
+        ),
+
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(dialogContext, false),
+
+            child: const Text('Keep'),
+          ),
+
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+
+            onPressed: () =>
+                Navigator.pop(dialogContext, true),
+
+            icon: const Icon(Icons.delete_outline),
+
+            label: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      // Check authenticated admin
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      if (uid == null) {
+        throw StateError('Not signed in');
+      }
+
+      final adminDoc = await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(uid)
+          .get();
+
+      if (!adminDoc.exists ||
+          adminDoc.data()?['role'] != 'admin') {
+        throw StateError(
+          'Administrator access required',
+        );
+      }
+
+      // Get application document
+      final ref = FirebaseFirestore.instance
+          .collection('applications')
+          .doc(applicationId);
+
+      // Archive cancelled application safely
+      await FirebaseFirestore.instance.runTransaction(
+            (transaction) async {
+          final snapshot = await transaction.get(ref);
+
+          if (!snapshot.exists) {
+            throw StateError(
+              'Application no longer exists',
+            );
+          }
+
+          final data = snapshot.data()!;
+
+          final status = (data['status'] ?? '')
+              .toString()
+              .trim()
+              .toLowerCase();
+
+          if (status != 'cancelled') {
+            throw StateError(
+              'Only cancelled applications can be removed',
+            );
+          }
+
+          if (data['adminArchived'] == true) return;
+
+          transaction.update(ref, {
+            'adminArchived': true,
+            'adminArchivedAt':
+            FieldValue.serverTimestamp(),
+            'adminArchivedBy': uid,
+          });
+        },
+      );
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cancelled application removed from Admin Dashboard',
+          ),
+          backgroundColor: Color(0xFF059669),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to remove application: $e',
+          ),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
@@ -1993,7 +2137,13 @@ class _AdminDashboardScreenState
           );
         }
 
-        final applications = snapshot.data?.docs ?? [];
+        final applications = (snapshot.data?.docs ?? [])
+            .where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+
+          return data['adminArchived'] != true;
+        })
+            .toList();
 
         if (applications.isEmpty) {
           return _emptyCard(
@@ -2268,13 +2418,16 @@ class _AdminDashboardScreenState
 
                       const SizedBox(height: 12),
 
-                      // Recruitment Pipeline
-                      if (status.trim().toLowerCase() != 'cancelled')
-                        _buildApplicationPipeline(
-                          status,
-                          colors,
-                        ),
-
+                      // Recruitment Pipeline or Cancelled Notice
+                      status.trim().toLowerCase() == 'cancelled'
+                          ? CancelledApplicationNotice(
+                        isDark: colors.isDark,
+                        textColor: colors.textPrimary,
+                      )
+                          : _buildApplicationPipeline(
+                        status,
+                        colors,
+                      ),
                       const SizedBox(height: 12),
 
                       Divider(
@@ -2308,8 +2461,58 @@ class _AdminDashboardScreenState
                         ],
                       ),
                       const SizedBox(height: 14),
+                      // Applicant Cancellation Request
+                      CancelRequestBanner(
+                        applicationId: applicationId,
+                        data: data,
+                        isDark: colors.isDark,
+                        textColor: colors.textPrimary,
+                        mutedColor: colors.textSecondary,
+                      ),
 
-// UPDATE APPLICATION STATUS
+                      // REMOVE CANCELLED APPLICATION
+                      if (status.trim().toLowerCase() == 'cancelled') ...[
+                        const SizedBox(height: 12),
+
+                        Align(
+                          alignment: Alignment.centerRight,
+
+                          child: OutlinedButton.icon(
+                            onPressed: () =>
+                                _confirmRemoveCancelledApplication(
+                                  context,
+                                  applicationId,
+                                  jobTitle,
+                                  colors,
+                                ),
+
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 19,
+                            ),
+
+                            label: const Text('Remove'),
+
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.redAccent,
+
+                              side: BorderSide(
+                                color: Colors.redAccent.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 12),
+
+                      // UPDATE APPLICATION STATUS
                       if (status.trim().toLowerCase() != 'cancelled')
                         SizedBox(
                           width: double.infinity,
