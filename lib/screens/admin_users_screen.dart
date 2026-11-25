@@ -36,3 +36,13 @@ class _UserColors {
   // Icon Boxes & Badges
   Color get iconBoxBg => isDark ? const Color(0x3310B981) : const Color(0x1F059669);
 }
+
+// Step 3: Main Screen Widget Skeleton (StatefulWidget)
+
+
+class AdminUsersScreen extends StatefulWidget {
+  const AdminUsersScreen({super.key});
+
+  @override
+  State<AdminUsersScreen> createState() => _AdminUsersScreenState();
+}
