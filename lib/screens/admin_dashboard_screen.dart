@@ -6,6 +6,9 @@ import 'admin_users_screen.dart';
 import 'admin_recommendations_screen.dart';
 import 'add_job_screen.dart';
 import 'package:flutter/services.dart';
+import 'admin_broadcast_screen.dart';
+import 'notification_history_screen.dart';
+
 
 class _AdminColors {
   final bool isDark;
@@ -519,6 +522,86 @@ class _AdminDashboardScreenState
                 color: colors.primary,
                 size: 20,
               ),
+            ),
+          ),
+          // Notification History Button
+          Container(
+            margin: const EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 2,
+            ),
+
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(
+                alpha: colors.isDark ? 0.2 : 0.08,
+              ),
+              shape: BoxShape.circle,
+            ),
+
+            child: IconButton(
+              tooltip: 'Notification History',
+              padding: EdgeInsets.zero,
+
+              constraints: const BoxConstraints(
+                minWidth: 36,
+                minHeight: 36,
+              ),
+
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: colors.primary,
+                size: 21,
+              ),
+
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                    const NotificationHistoryScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Broadcast Announcement Button
+          Container(
+            margin: const EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: 2,
+            ),
+
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(
+                alpha: colors.isDark ? 0.2 : 0.08,
+              ),
+              shape: BoxShape.circle,
+            ),
+
+            child: IconButton(
+              tooltip: 'Send announcement',
+              padding: EdgeInsets.zero,
+
+              constraints: const BoxConstraints(
+                minWidth: 36,
+                minHeight: 36,
+              ),
+
+              icon: Icon(
+                Icons.campaign_outlined,
+                color: colors.primary,
+                size: 22,
+              ),
+
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                    const AdminBroadcastScreen(),
+                  ),
+                );
+              },
             ),
           ),
 
