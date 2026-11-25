@@ -533,3 +533,50 @@ Widget _buildSearchAndFilters(_UserColors colors) {
     ],
   );
 }
+
+// Step 10: Interactive Role Filter Chip Toggle
+
+
+Widget _filterChip(String label, _UserColors colors) {
+  final isSelected = _selectedRoleFilter == label;
+
+  return InkWell(
+    borderRadius: BorderRadius.circular(20),
+    onTap: () {
+      setState(() {
+        _selectedRoleFilter = label;
+      });
+    },
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? colors.primary
+            : (colors.isDark ? const Color(0xFF13231B) : Colors.white),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? colors.primary : colors.cardBorder,
+          width: 1.2,
+        ),
+        boxShadow: isSelected
+            ? [
+          BoxShadow(
+            color: colors.primary.withValues(alpha: 0.28),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ]
+            : null,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : colors.textSecondary,
+          fontSize: 12.5,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        ),
+      ),
+    ),
+  );
+}
