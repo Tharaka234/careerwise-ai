@@ -580,3 +580,150 @@ Widget _filterChip(String label, _UserColors colors) {
     ),
   );
 }
+
+// Step 11: User Card Widget - Avatar, Display Name & Role Badge
+Widget _userCard({
+  required String uid,
+  required Map<String, dynamic> data,
+  required _UserColors colors,
+}) {
+  final firstName = data['firstName']?.toString().trim() ?? '';
+  final lastName = data['lastName']?.toString().trim() ?? '';
+  final fullName = ('$firstName $lastName').trim();
+  final displayName = fullName.isNotEmpty ? fullName : 'Unnamed User';
+
+  final email = data['email']?.toString().trim() ?? 'No email provided';
+  final phone = data['phone']?.toString().trim() ?? '';
+  final role = data['role']?.toString().toLowerCase() ?? 'user';
+  final isAdmin = role == 'admin';
+
+  final String initial = displayName.isNotEmpty
+      ? displayName[0].toUpperCase()
+      : (email.isNotEmpty ? email[0].toUpperCase() : 'U');
+
+  String formattedDate = '';
+  final createdAt = data['createdAt'];
+  if (createdAt is Timestamp) {
+    final date = createdAt.toDate();
+    formattedDate = '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: colors.cardBg,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: colors.cardBorder, width: 1.2),
+      boxShadow: [
+        BoxShadow(
+          color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+              .withValues(alpha: colors.isDark ? 0.35 : 0.05),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+      Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Avatar
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isAdmin
+                  ? const [Color(0xFF8B5CF6), Color(0xFF6D28D9)]
+                  : (colors.isDark
+                  ? const [Color(0xFF047857), Color(0xFF059669)]
+                  : const [Color(0xFF059669), Color(0xFF10B981)]),
+            ),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Center(
+            child: Text(
+              initial,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 14),
+
+        // Name, Email, and Phone
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+          Row(
+          children: [
+          Expanded(
+          child: Text(
+            displayName,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+            ),
+          ),
+        ),
+        // Role Pill
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 9,
+            vertical: 4,
+          ),
+          decoration: BoxDecoration(
+            color: isAdmin
+                ? (colors.isDark
+                ? const Color(0x338B5CF6)
+                : const Color(0xFFF3E8FF))
+                : (colors.isDark
+                ? const Color(0x3310B981)
+                : const Color(0xFFECFDF5)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isAdmin
+                  ? const Color(0xFF8B5CF6).withValues(alpha: 0.3)
+                  : colors.primary.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isAdmin
+                    ? Icons.admin_panel_settings_outlined
+                    : Icons.person_outline_rounded,
+                size: 12,
+                color: isAdmin
+                    ? const Color(0xFF8B5CF6)
+                    : colors.primary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                isAdmin ? 'ADMIN' : 'CANDIDATE',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                  color: isAdmin
+                      ? const Color(0xFF8B5CF6)
+                      : colors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
