@@ -393,3 +393,120 @@ Widget _buildStatusBadges({
   );
 }
 
+// Step 10 & 11: Account Information Card Builder
+Widget _buildAccountInfoCard({
+  required BuildContext context,
+  required bool isDark,
+  required Color cardBg,
+  required Color borderColor,
+  required Color textPrimary,
+  required Color textSecondary,
+  required Color dividerColor,
+  required Color iconBoxBg,
+  required Color iconColor,
+  required Color primaryColor,
+  required String email,
+  required String uid,
+}) {
+  return Card(
+    elevation: isDark ? 4 : 3,
+    color: cardBg,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(color: borderColor),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Account Information',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Email Row
+          _buildInfoRow(
+            icon: Icons.email_outlined,
+            title: 'Admin Email',
+            value: email,
+            iconBg: iconBoxBg,
+            iconColor: iconColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            borderColor: borderColor,
+            trailing: IconButton(
+              icon: Icon(Icons.copy_rounded, size: 18, color: textSecondary),
+              tooltip: 'Copy Email',
+              onPressed: () => _copyToClipboard(context, email, 'Email'),
+            ),
+          ),
+          Divider(height: 30, color: dividerColor),
+          // Role Row
+          _buildInfoRow(
+            icon: Icons.security_outlined,
+            title: 'System Role',
+            value: 'Administrator',
+            iconBg: iconBoxBg,
+            iconColor: iconColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            borderColor: borderColor,
+            badge: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Full Access',
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Divider(height: 30, color: dividerColor),
+          // UID Row
+          _buildInfoRow(
+            icon: Icons.badge_outlined,
+            title: 'Admin ID',
+            value: uid,
+            iconBg: iconBoxBg,
+            iconColor: iconColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            borderColor: borderColor,
+            isMono: true,
+            trailing: IconButton(
+              icon: Icon(Icons.copy_rounded, size: 18, color: textSecondary),
+              tooltip: 'Copy Admin ID',
+              onPressed: () => _copyToClipboard(context, uid, 'Admin ID'),
+            ),
+          ),
+          Divider(height: 30, color: dividerColor),
+          // Status Row
+          _buildInfoRow(
+            icon: Icons.verified_user_outlined,
+            title: 'Account Status',
+            value: 'Active & Verified',
+            iconBg: iconBoxBg,
+            iconColor: const Color(0xFF10B981),
+            textPrimary: const Color(0xFF10B981),
+            textSecondary: textSecondary,
+            borderColor: borderColor,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
