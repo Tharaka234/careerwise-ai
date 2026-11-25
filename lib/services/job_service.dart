@@ -62,11 +62,62 @@ class JobService {
 // Career Keywords / Related Titles
 // ==========================================================
 
+  // ==========================================================
+// Career Keywords / Related Titles
+// ==========================================================
+
   List<String> _getCareerKeywords(String career) {
     final normalized = career.toLowerCase().trim();
 
     if (normalized.isEmpty) {
       return [];
+    }
+
+    // Software Engineering
+    if (normalized.contains('software engineer') ||
+        normalized.contains('software developer')) {
+      return [
+        'software engineer',
+        'software developer',
+        'software development',
+        'application developer',
+        'application engineer',
+        'programmer',
+        'developer',
+      ];
+    }
+
+    // Full Stack Development
+    if (normalized.contains('full stack')) {
+      return [
+        'full stack',
+        'full-stack',
+        'frontend',
+        'front end',
+        'backend',
+        'back end',
+        'web developer',
+        'web development',
+        'software developer',
+      ];
+    }
+
+    // Mobile Application Development
+    if (normalized.contains('mobile') ||
+        normalized.contains('flutter') ||
+        normalized.contains('android') ||
+        normalized.contains('ios')) {
+      return [
+        'mobile developer',
+        'mobile app developer',
+        'flutter developer',
+        'flutter',
+        'android developer',
+        'android',
+        'ios developer',
+        'ios',
+        'mobile application',
+      ];
     }
 
     // Generic fallback
