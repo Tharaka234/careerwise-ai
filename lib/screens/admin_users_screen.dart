@@ -46,3 +46,16 @@ class AdminUsersScreen extends StatefulWidget {
   @override
   State<AdminUsersScreen> createState() => _AdminUsersScreenState();
 }
+
+// Step 4: State Management, Search Controller & Role Filters
+class _AdminUsersScreenState extends State<AdminUsersScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedRoleFilter = 'All'; // 'All', 'Candidates', 'Admins'
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+}
