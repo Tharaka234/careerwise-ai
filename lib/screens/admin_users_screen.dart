@@ -170,3 +170,32 @@ Widget build(BuildContext context) {
     },
   );
 }
+
+// Step 6: Multi-Attribute Real-Time Filter Logic
+List<QueryDocumentSnapshot> _filterUsers(List<QueryDocumentSnapshot> docs) {
+  return docs.where((doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+
+    final firstName = data['firstName']?.toString().toLowerCase() ?? '';
+    final lastName = data['lastName']?.toString().toLowerCase() ?? '';
+    final email = data['email']?.toString().toLowerCase() ?? '';
+    final phone = data['phone']?.toString().toLowerCase() ?? '';
+    final role = data['role']?.toString().toLowerCase() ?? '';
+
+    final matchesQuery = _searchQuery.isEmpty ||
+        firstName.contains(_searchQuery) ||
+        lastName.contains(_searchQuery) ||
+        email.contains(_searchQuery) ||
+        phone.contains(_searchQuery);
+
+    if (!matchesQuery) return false;
+
+    if (_selectedRoleFilter == 'Admins') {
+      return role == 'admin';
+    } else if (_selectedRoleFilter == 'Candidates') {
+      return role != 'admin';
+    }
+
+    return true;
+  }).toList();
+}
