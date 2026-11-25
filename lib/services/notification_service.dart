@@ -1683,4 +1683,404 @@ class NotificationService {
       debugPrint('CANCELLATION NOTIFICATION ERROR: $e');
     }
   }
+  // =====================================================================
+// ADMIN ANNOUNCEMENTS
+// =====================================================================
+
+  Future<PushResult> broadcastAnnouncement({
+    required String title,
+    required String body,
+    required String topic,
+    String? category,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw StateError('Please login first.');
+    }
+
+    final admin = await _checkIsAdmin(user.uid);
+
+    if (!admin) {
+      throw StateError('Only admins can send announcements.');
+    }
+
+    final cleanTitle = title.trim();
+    final cleanBody = body.trim();
+    final cleanCategory = category?.trim();
+
+    if (cleanTitle.isEmpty || cleanBody.isEmpty) {
+      throw ArgumentError('Title and message are required.');
+    }
+
+    final isCategory =
+        cleanCategory != null && cleanCategory.isNotEmpty;
+
+    final isAdmins =
+        !isCategory && topic == NotificationTopics.admins;
+
+    if (isCategory && !JobCategories.all.contains(cleanCategory)) {
+      throw ArgumentError('Invalid job category.');
+    }
+
+    if (!isCategory &&
+        topic != NotificationTopics.admins &&
+        topic != NotificationTopics.allUsers) {
+      throw ArgumentError('Invalid notification topic.');
+    }
+
+    final audience = isCategory
+        ? HistoryAudience.category
+        : isAdmins
+        ? HistoryAudience.admins
+        : HistoryAudience.everyone;
+
+    final targetTopic = isCategory
+        ? NotificationTopics.forCategory(cleanCategory!)
+        : isAdmins
+        ? NotificationTopics.admins
+        : NotificationTopics.allUsers;
+
+    // Save announcement in Firestore.
+    await _saveHistory(
+      title: cleanTitle,
+      body: cleanBody,
+      type: NotificationTypes.announcement,
+      audience: audience,
+      category: isCategory ? cleanCategory : null,
+    );
+
+    debugPrint('ANNOUNCEMENT HISTORY SAVED');
+
+    // Admin-only announcements remain in protected history.
+    if (isAdmins) {
+      return PushResult.notConfigured;
+    }
+
+    // Remote push delivery when a trusted sender is configured.
+    final result = await sendToTopic(
+      topic: targetTopic,
+      title: cleanTitle,
+      body: cleanBody,
+      data: _data(
+        NotificationTypes.announcement,
+        {
+          if (isCategory) 'category': cleanCategory!,
+        },
+      ),
+    );
+
+    debugPrint(
+      'BROADCAST RESULT: $result, '
+          'AUDIENCE: $audience, '
+          'TOPIC: $targetTopic',
+    );
+
+    return result;
+  }
+  // =====================================================================
+// REAL-TIME NOTIFICATION HISTORY
+// =====================================================================
+
+  Stream<List<NotificationHistoryItem>> watchHistory({
+    int limit = 200,
+  }) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null || limit <= 0) {
+      return Stream.value(<NotificationHistoryItem>[]);
+    }
+
+    late StreamController<List<NotificationHistoryItem>>
+    controller;
+
+    final subscriptions =
+    <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+
+    final latest =
+    <String, List<NotificationHistoryItem>>{};
+
+    final expected = <String>{};
+
+    bool closed = false;
+
+    // Merge and sort notification history.
+    void emit() {
+      if (closed || latest.length != expected.length) return;
+
+      final merged = <String, NotificationHistoryItem>{};
+
+      for (final items in latest.values) {
+        for (final item in items) {
+          merged[item.id] = item;
+        }
+      }
+
+      final sorted = merged.values.toList()
+        ..sort((a, b) {
+          final at = a.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+
+          final bt = b.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+
+          return bt.compareTo(at);
+        });
+
+      controller.add(sorted.take(limit).toList());
+    }
+
+    // Listen to an individual Firestore query.
+    void listenTo(
+        String key,
+        Query<Map<String, dynamic>> query,
+        ) {
+      expected.add(key);
+
+      subscriptions.add(
+        query.snapshots().listen(
+              (snapshot) {
+            if (closed) return;
+
+            latest[key] = snapshot.docs
+                .map(
+                  (doc) => NotificationHistoryItem.fromMap(
+                doc.id,
+                doc.data(),
+              ),
+            )
+                .toList();
+
+            emit();
+          },
+          onError: (Object error, StackTrace stack) {
+            debugPrint(
+              '[NotificationHistory][$key] ERROR: $error',
+            );
+
+            if (error is FirebaseException) {
+              debugPrint('CODE: ${error.code}');
+              debugPrint('MESSAGE: ${error.message}');
+            }
+
+            if (!closed) {
+              controller.addError(error, stack);
+            }
+          },
+        ),
+      );
+    }
+
+    controller = StreamController<List<NotificationHistoryItem>>(
+      onListen: () {
+        Future<void>(() async {
+          try {
+            final admin = await _checkIsAdmin(uid);
+
+            final settings = await _db
+                .collection('notification_settings')
+                .doc(uid)
+                .get();
+
+            final saved = settings.data();
+
+            final categories = List<String>.from(
+              saved?['jobCategories'] ?? const <String>[],
+            );
+
+            final announcements =
+                saved?['announcements'] as bool? ?? true;
+
+            if (closed ||
+                FirebaseAuth.instance.currentUser?.uid != uid) {
+              return;
+            }
+
+            final history =
+            _db.collection(HistoryFields.collection);
+
+            Query<Map<String, dynamic>> forAudience(
+                String audience,
+                ) {
+              return history
+                  .where(
+                HistoryFields.audience,
+                isEqualTo: audience,
+              )
+                  .orderBy(
+                HistoryFields.createdAt,
+                descending: true,
+              )
+                  .limit(limit);
+            }
+
+            // Public announcements.
+            if (announcements || admin) {
+              listenTo(
+                'everyone',
+                forAudience(HistoryAudience.everyone),
+              );
+            }
+
+            // Notifications for selected job categories.
+            for (final category in categories.toSet()) {
+              listenTo(
+                'category_$category',
+                history
+                    .where(
+                  HistoryFields.audience,
+                  isEqualTo: HistoryAudience.category,
+                )
+                    .where(
+                  HistoryFields.category,
+                  isEqualTo: category,
+                )
+                    .orderBy(
+                  HistoryFields.createdAt,
+                  descending: true,
+                )
+                    .limit(limit),
+              );
+            }
+
+            // Admin-only notifications.
+            if (admin) {
+              listenTo(
+                'admins',
+                forAudience(HistoryAudience.admins),
+              );
+            }
+
+            // Personal notifications.
+            listenTo(
+              'user',
+              history
+                  .where(
+                HistoryFields.audience,
+                isEqualTo: HistoryAudience.user,
+              )
+                  .where(
+                HistoryFields.recipientUid,
+                isEqualTo: uid,
+              )
+                  .orderBy(
+                HistoryFields.createdAt,
+                descending: true,
+              )
+                  .limit(limit),
+            );
+          } catch (error, stack) {
+            debugPrint(
+              '[NotificationHistory] SETUP ERROR: $error',
+            );
+
+            if (!closed) {
+              controller.addError(error, stack);
+            }
+          }
+        });
+      },
+      onCancel: () async {
+        closed = true;
+
+        for (final subscription in subscriptions) {
+          await subscription.cancel();
+        }
+      },
+    );
+
+    return controller.stream;
+  }
+  // =====================================================================
+// WATCH DISMISSED NOTIFICATIONS
+// =====================================================================
+
+  Stream<Set<String>> watchDismissedHistory() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      return Stream.value(<String>{});
+    }
+
+    return _db
+        .collection('notification_settings')
+        .doc(uid)
+        .snapshots()
+        .map(
+          (doc) => List<String>.from(
+        doc.data()?[HistoryFields.dismissed] ??
+            const <String>[],
+      ).toSet(),
+    );
+  }
+  // =====================================================================
+// DISMISS NOTIFICATION HISTORY
+// =====================================================================
+
+  Future<void> dismissHistory(
+      Iterable<String> ids,
+      ) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    final list = ids.toSet().toList();
+
+    if (uid == null || list.isEmpty) return;
+
+    await _db
+        .collection('notification_settings')
+        .doc(uid)
+        .set({
+      HistoryFields.dismissed:
+      FieldValue.arrayUnion(list),
+    }, SetOptions(merge: true));
+  }
+  // =====================================================================
+// RESTORE NOTIFICATION HISTORY
+// =====================================================================
+
+  Future<void> restoreHistory(
+      Iterable<String> ids,
+      ) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    final list = ids.toSet().toList();
+
+    if (uid == null || list.isEmpty) return;
+
+    await _db
+        .collection('notification_settings')
+        .doc(uid)
+        .set({
+      HistoryFields.dismissed:
+      FieldValue.arrayRemove(list),
+    }, SetOptions(merge: true));
+  }
+  // =====================================================================
+// OPEN NOTIFICATION HISTORY ITEM
+// =====================================================================
+
+  Future<void> openHistoryItem(
+      NotificationHistoryItem item,
+      ) async {
+    if (FirebaseAuth.instance.currentUser == null) {
+      return;
+    }
+
+    final navigator = appNavigatorKey.currentState;
+
+    if (navigator == null) return;
+
+    await _route(
+      navigator,
+      {
+        'type': item.type,
+
+        if (item.jobId != null)
+          'jobId': item.jobId!,
+
+        if (item.applicationId != null)
+          'applicationId': item.applicationId!,
+      },
+    );
+  }
 }
