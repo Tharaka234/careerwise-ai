@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 
-import 'package:careerwise_sample/services/notification_service.dart';
-import 'package:careerwise_sample/services/notification_types.dart';
-import 'package:careerwise_sample/services/push_sender.dart';
+import 'package:careerwise-ai/services/notification_service.dart';
+import 'package:careerwise-ai/services/notification_types.dart';
+import 'package:careerwise-ai/services/push_sender.dart';
 import 'admin_profile_screen.dart';
 
 
@@ -52,3 +52,28 @@ class AdminBroadcastScreen extends StatefulWidget {
   @override
   State<AdminBroadcastScreen> createState() => _AdminBroadcastScreenState();
 }
+
+// Step 4: State Management, Form Key, Controllers & Lifecycle
+
+class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _titleController = TextEditingController();
+  final _bodyController = TextEditingController();
+
+  static const String _categoryPrefix = 'category:';
+
+  String _audience = NotificationTopics.allUsers;
+  bool _isSending = false;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+}
+
+
+
+
