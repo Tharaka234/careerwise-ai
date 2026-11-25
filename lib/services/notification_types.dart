@@ -1,20 +1,14 @@
-/// Central place for every constant used by the notification system.
-
 class NotificationChannels {
   NotificationChannels._();
 
   /// Must match the `default_notification_channel_id` value in
   /// android/app/src/main/AndroidManifest.xml
-
-  static const String highImportance =
-      'careerwise_high_importance';
-
-  static const String highImportanceName =
-      'CareerWise Notifications';
-
+  static const String highImportance = 'careerwise_high_importance';
+  static const String highImportanceName = 'CareerWise Notifications';
   static const String highImportanceDescription =
       'Application updates, job alerts, messages and announcements.';
 }
+
 class NotificationTypes {
   NotificationTypes._();
 
@@ -42,6 +36,7 @@ class NotificationTypes {
   // ---- Everyone -----------------------------------------------------
   static const String announcement = 'announcement';
 }
+
 class NotificationTopics {
   NotificationTopics._();
 
@@ -58,30 +53,30 @@ class NotificationTopics {
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
-
     return 'jobs_$slug';
   }
-  class JobCategories {
+}
+
+class JobCategories {
   JobCategories._();
 
   static const String fallback = 'Other';
 
   /// Used by the "Add Job" dropdown and by the job-alert chips.
   static const List<String> all = [
-  'Software Development',
-  'Mobile Development',
-  'Web Development',
-  'Data & AI',
-  'Cybersecurity',
-  'UI/UX Design',
-  'Networking & IT Support',
-  'Business & Management',
-  'Marketing & Sales',
-  'Finance & Accounting',
-  'Engineering',
-  'Healthcare',
-  'Education',
-  fallback,
+    'Software Development',
+    'Mobile Development',
+    'Web Development',
+    'Data & AI',
+    'Cybersecurity',
+    'UI/UX Design',
+    'Networking & IT Support',
+    'Business & Management',
+    'Marketing & Sales',
+    'Finance & Accounting',
+    'Engineering',
+    'Healthcare',
+    'Education',
+    fallback,
   ];
-  }
 }
