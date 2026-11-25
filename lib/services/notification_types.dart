@@ -61,4 +61,27 @@ class NotificationTopics {
 
     return 'jobs_$slug';
   }
+  class JobCategories {
+  JobCategories._();
+
+  static const String fallback = 'Other';
+
+  /// Used by the "Add Job" dropdown and by the job-alert chips.
+  static const List<String> all = [
+  'Software Development',
+  'Mobile Development',
+  'Web Development',
+  'Data & AI',
+  'Cybersecurity',
+  'UI/UX Design',
+  'Networking & IT Support',
+  'Business & Management',
+  'Marketing & Sales',
+  'Finance & Accounting',
+  'Engineering',
+  'Healthcare',
+  'Education',
+  fallback,
+  ];
+  }
 }
