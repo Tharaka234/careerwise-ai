@@ -11,6 +11,13 @@ import 'package:careerwise-ai/firebase_options.dart';
 
 import 'notification_types.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+import 'dart:async';
+
+import 'package:careerwise-ai/model/job.dart';
+import 'package:careerwise-ai/screens/job_details_screen.dart';
+import 'package:careerwise-ai/screens/my_applications_screen.dart';
+import 'package:careerwise-ai/screens/profile_screen.dart';
 // =======================================================================
 // GLOBALS
 // =======================================================================
@@ -245,6 +252,9 @@ class NotificationService {
     // Initialize local notifications.
     await _local.initialize(
       settings: _initSettings,
+      onDidReceiveNotificationResponse: (response) {
+        _handlePayloadString(response.payload);
+      },
     );
 
     // Create Android notification channel.
@@ -271,6 +281,28 @@ class NotificationService {
 
     // Foreground notification listener.
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+
+    // STATE 2: BACKGROUND
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      unawaited(_navigateWhenReady(message.data));
+    });
+
+// STATE 3: TERMINATED
+    final initialMessage = await messaging.getInitialMessage();
+
+    if (initialMessage != null) {
+      unawaited(_navigateWhenReady(initialMessage.data));
+    }
+
+// Handle application launch from a local notification.
+    final launchDetails =
+    await _local.getNotificationAppLaunchDetails();
+
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      _handlePayloadString(
+        launchDetails!.notificationResponse?.payload,
+      );
+    }
 
 
     // Token and topic subscriptions follow the logged-in user.
@@ -771,5 +803,170 @@ class NotificationService {
       notificationDetails: _details,
       payload: jsonEncode(message.data),
     );
+  }
+  // =====================================================================
+// NAVIGATION
+// =====================================================================
+
+  void _handlePayloadString(String? payload) {
+    if (payload == null || payload.isEmpty) return;
+
+    try {
+      final decoded = jsonDecode(payload);
+
+      if (decoded is Map<String, dynamic>) {
+        unawaited(_navigateWhenReady(decoded));
+      }
+    } catch (e) {
+      debugPrint('Bad notification payload: $e');
+    }
+  }
+
+// =====================================================================
+// WAIT FOR AUTHENTICATION AND NAVIGATOR
+// =====================================================================
+
+  Future<void> _navigateWhenReady(
+      Map<String, dynamic> data,
+      ) async {
+    try {
+      await FirebaseAuth.instance
+          .authStateChanges()
+          .first
+          .timeout(const Duration(seconds: 8));
+    } catch (_) {}
+
+    if (FirebaseAuth.instance.currentUser == null) return;
+
+    for (
+    var i = 0;
+    i < 60 && appNavigatorKey.currentState == null;
+    i++
+    ) {
+      await Future.delayed(
+        const Duration(milliseconds: 100),
+      );
+    }
+
+    final navigator = appNavigatorKey.currentState;
+
+    if (navigator == null) return;
+
+    // Allow AuthGate to build the home or dashboard screen.
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
+
+    await _route(navigator, data);
+  }
+
+// =====================================================================
+// NOTIFICATION SCREEN ROUTING
+// =====================================================================
+
+  Future<void> _route(
+      NavigatorState navigator,
+      Map<String, dynamic> data,
+      ) async {
+    final type = data['type']?.toString();
+
+    switch (type) {
+    // ---------------------------------------------------------------
+    // JOB SEEKER
+    // ---------------------------------------------------------------
+
+      case NotificationTypes.applicationSubmitted:
+      case NotificationTypes.applicationStatus:
+      case NotificationTypes.interviewReminder:
+
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => const MyApplicationsScreen(),
+          ),
+        );
+
+        break;
+
+      case NotificationTypes.profileIncomplete:
+
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => const ProfileScreen(),
+          ),
+        );
+
+        break;
+
+    // ---------------------------------------------------------------
+    // JOB DETAILS
+    // ---------------------------------------------------------------
+
+      case NotificationTypes.newJob:
+      case NotificationTypes.jobUpdated:
+
+        final jobId = data['jobId']?.toString() ?? '';
+
+        if (jobId.isEmpty) return;
+
+        final doc = await _db
+            .collection('jobs')
+            .doc(jobId)
+            .get();
+
+        final jobData = doc.data();
+
+        if (!doc.exists || jobData == null) return;
+
+        navigator.push(
+          MaterialPageRoute(
+            builder: (_) => JobDetailsScreen(
+              job: Job.fromFirestore(
+                doc.id,
+                jobData,
+              ),
+            ),
+          ),
+        );
+
+        break;
+
+    // ---------------------------------------------------------------
+    // EMPLOYER / ADMIN
+    // ---------------------------------------------------------------
+
+      case NotificationTypes.newApplication:
+      case NotificationTypes.cancelRequest:
+      case NotificationTypes.flaggedPost:
+      case NotificationTypes.jobApproved:
+      case NotificationTypes.jobRejected:
+
+        navigator.popUntil(
+              (route) => route.isFirst,
+        );
+
+        break;
+
+    // ---------------------------------------------------------------
+    // CHAT
+    // ---------------------------------------------------------------
+
+      case NotificationTypes.chatMessage:
+
+      // TODO: Integrate ChatScreen navigation using
+      // data['chatId'] and data['senderName'].
+
+        navigator.popUntil(
+              (route) => route.isFirst,
+        );
+
+        break;
+
+    // ---------------------------------------------------------------
+    // ANNOUNCEMENTS AND UNKNOWN TYPES
+    // ---------------------------------------------------------------
+
+      default:
+        break;
+    }
   }
 }
