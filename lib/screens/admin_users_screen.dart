@@ -451,3 +451,85 @@ Widget _headerIconButton({
     ),
   );
 }
+
+// Step 9: Search Input and Filter Row Component
+
+
+Widget _buildSearchAndFilters(_UserColors colors) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Search bar
+      TextField(
+        controller: _searchController,
+        onChanged: (val) {
+          setState(() {
+            _searchQuery = val.trim().toLowerCase();
+          });
+        },
+        style: TextStyle(
+          color: colors.textPrimary,
+          fontSize: 14.5,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search users by name, email, or phone...',
+          hintStyle: TextStyle(
+            color: colors.textMuted,
+            fontSize: 13.5,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: colors.primary,
+            size: 22,
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+            icon: Icon(
+              Icons.clear_rounded,
+              color: colors.textMuted,
+              size: 18,
+            ),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+          )
+              : null,
+          filled: true,
+          fillColor: colors.cardBg,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: colors.cardBorder, width: 1.2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: colors.cardBorder, width: 1.2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: colors.primary, width: 1.8),
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 12),
+
+      // Filter Pills
+      Row(
+        children: [
+          _filterChip('All', colors),
+          const SizedBox(width: 8),
+          _filterChip('Candidates', colors),
+          const SizedBox(width: 8),
+          _filterChip('Admins', colors),
+        ],
+      ),
+    ],
+  );
+}
