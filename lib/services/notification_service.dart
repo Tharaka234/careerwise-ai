@@ -18,6 +18,7 @@ import 'package:careerwise-ai/model/job.dart';
 import 'package:careerwise-ai/screens/job_details_screen.dart';
 import 'package:careerwise-ai/screens/my_applications_screen.dart';
 import 'package:careerwise-ai/screens/profile_screen.dart';
+import 'push_sender.dart';
 // =======================================================================
 // GLOBALS
 // =======================================================================
@@ -967,6 +968,272 @@ class NotificationService {
 
       default:
         break;
+    }
+  }
+  // =====================================================================
+// PUSH NOTIFICATION DELIVERY
+// =====================================================================
+
+  Future<void> sendToUser({
+    required String uid,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+  }) async {
+    if (uid.isEmpty ||
+        uid == FirebaseAuth.instance.currentUser?.uid) {
+      return;
+    }
+
+    // Remote FCM delivery requires a trusted server.
+    debugPrint(
+      'User push unavailable: trusted sender not configured.',
+    );
+  }
+
+  Future<PushResult> sendToTopic({
+    required String topic,
+    required String title,
+    required String body,
+    required Map<String, String> data,
+  }) async {
+    if (topic.trim().isEmpty) {
+      return PushResult.failed;
+    }
+
+    debugPrint(
+      'Topic push unavailable: trusted sender not configured.',
+    );
+
+    return PushResult.notConfigured;
+  }
+  // =====================================================================
+// APPLICATION SUBMISSION NOTIFICATION
+// =====================================================================
+
+  Future<void> notifyApplicationSubmitted({
+    required String applicationId,
+    required String jobId,
+    required String jobTitle,
+    required String company,
+    String? publisherId,
+  }) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) return;
+
+      // Local confirmation for the applicant.
+      await showLocal(
+        title: 'Application received',
+        body: 'Your application for $jobTitle at $company was submitted.',
+        data: {
+          'type': NotificationTypes.applicationSubmitted,
+          'applicationId': applicationId,
+          'jobId': jobId,
+        },
+      );
+
+      var ownerUid = publisherId ?? '';
+
+      if (ownerUid.isEmpty) {
+        final jobDoc = await _db
+            .collection('jobs')
+            .doc(jobId)
+            .get();
+
+        ownerUid =
+            jobDoc.data()?['publisherId']?.toString() ?? '';
+      }
+
+      final displayName = user.displayName?.trim() ?? '';
+
+      final applicantName = displayName.isNotEmpty
+          ? displayName
+          : user.email?.split('@').first ?? 'A candidate';
+
+      const title = 'New application received';
+
+      final body = '$applicantName applied for $jobTitle.';
+
+      // Save the notification for admin history.
+      await _db
+          .collection(HistoryFields.collection)
+          .doc('application_submitted_$applicationId')
+          .set({
+        HistoryFields.title: title,
+        HistoryFields.body: body,
+        HistoryFields.type: NotificationTypes.newApplication,
+        HistoryFields.audience: HistoryAudience.admins,
+        HistoryFields.applicationId: applicationId,
+        HistoryFields.jobId: jobId,
+        HistoryFields.senderUid: user.uid,
+        HistoryFields.createdAt: FieldValue.serverTimestamp(),
+      });
+
+      final data = <String, String>{
+        'type': NotificationTypes.newApplication,
+        'applicationId': applicationId,
+        'jobId': jobId,
+      };
+
+      if (ownerUid.isNotEmpty && ownerUid != user.uid) {
+        await sendToUser(
+          uid: ownerUid,
+          title: title,
+          body: body,
+          data: data,
+        );
+      } else {
+        await sendToTopic(
+          topic: NotificationTopics.admins,
+          title: title,
+          body: body,
+          data: data,
+        );
+      }
+
+    } catch (e) {
+      debugPrint('Application submission notification error: $e');
+    }
+  }
+  // =====================================================================
+// APPLICATION STATUS CHANGE NOTIFICATION
+// =====================================================================
+
+  Future<void> notifyApplicationStatusChanged({
+    required String applicationId,
+    required String applicantUid,
+    required String jobTitle,
+    required String company,
+    required String status,
+    DateTime? interviewAt,
+  }) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null || applicantUid.isEmpty) return;
+
+      final admin = await _checkIsAdmin(user.uid);
+
+      if (!admin) return;
+
+      final message = _statusMessage(
+        status,
+        jobTitle,
+        company,
+        interviewAt,
+      );
+
+      final title = message.$1;
+      final body = message.$2;
+
+      // Save notification history for the applicant.
+      await _db
+          .collection(HistoryFields.collection)
+          .add({
+        HistoryFields.title: title,
+        HistoryFields.body: body,
+        HistoryFields.type: NotificationTypes.applicationStatus,
+        HistoryFields.audience: HistoryAudience.user,
+        HistoryFields.recipientUid: applicantUid,
+        HistoryFields.senderUid: user.uid,
+        HistoryFields.applicationId: applicationId,
+        HistoryFields.createdAt: FieldValue.serverTimestamp(),
+
+        'status': status,
+
+        if (interviewAt != null)
+          'interviewAt': Timestamp.fromDate(interviewAt),
+      });
+
+      await sendToUser(
+        uid: applicantUid,
+        title: title,
+        body: body,
+        data: {
+          'type': NotificationTypes.applicationStatus,
+          'applicationId': applicationId,
+          'status': status,
+
+          if (interviewAt != null)
+            'interviewAt': interviewAt.toUtc().toIso8601String(),
+        },
+      );
+
+    } catch (e) {
+      debugPrint('Application status notification error: $e');
+    }
+  }
+  // =====================================================================
+// APPLICATION STATUS MESSAGE HELPER
+// =====================================================================
+
+  (String, String) _statusMessage(
+      String status,
+      String jobTitle,
+      String company,
+      DateTime? interviewAt,
+      ) {
+    switch (status.trim().toLowerCase()) {
+      case 'under review':
+        return (
+        'Application under review',
+        'Your application for $jobTitle at $company is under review.',
+        );
+
+      case 'shortlisted':
+        return (
+        'You have been shortlisted!',
+        'Your application for $jobTitle at $company was shortlisted.',
+        );
+
+      case 'interview scheduled':
+        final interviewTime = interviewAt == null
+            ? ''
+            : ' Interview: ${interviewAt.toLocal()}.';
+
+        return (
+        'Interview scheduled',
+        'Your interview for $jobTitle at $company has been scheduled.'
+            '$interviewTime',
+        );
+
+      case 'interviewed':
+        return (
+        'Interview completed',
+        'Your interview for $jobTitle at $company is completed.',
+        );
+
+      case 'hired':
+        return (
+        'Congratulations! You are hired!',
+        'You have been selected for $jobTitle at $company.',
+        );
+
+      case 'accepted':
+        return (
+        'Application accepted',
+        'Your application for $jobTitle at $company was accepted.',
+        );
+
+      case 'rejected':
+        return (
+        'Application update',
+        'Your application for $jobTitle at $company was not successful.',
+        );
+
+      case 'cancelled':
+        return (
+        'Application cancelled',
+        'Your application for $jobTitle at $company has been cancelled.',
+        );
+
+      default:
+        return (
+        'Application status updated',
+        'Your application for $jobTitle at $company is now $status.',
+        );
     }
   }
 }
