@@ -500,6 +500,134 @@ class NotificationService {
       debugPrint('Unsubscribe $topic failed: $e');
     }
   }
+  // =====================================================================
+// SETTINGS SCREEN HELPERS
+// =====================================================================
+
+  Future<NotificationPrefs> loadPrefs() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    bool announcements = true;
+    var categories = <String>{};
+
+    if (uid != null) {
+      final snapshot = await _db
+          .collection('notification_settings')
+          .doc(uid)
+          .get();
+
+      final data = snapshot.data();
+
+      announcements = data?['announcements'] as bool? ?? true;
+
+      categories = Set<String>.from(
+        data?['jobCategories'] ?? const <String>[],
+      );
+
+      if (!_isAdmin) {
+        _isAdmin = await _checkIsAdmin(uid);
+      }
+    }
+
+    return NotificationPrefs(
+      announcements: announcements,
+      categories: categories,
+      isAdmin: _isAdmin,
+    );
+  }
+
+// =====================================================================
+// ANNOUNCEMENT PREFERENCES
+// =====================================================================
+
+  Future<void> setAnnouncementsEnabled(bool enabled) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    await _db
+        .collection('notification_settings')
+        .doc(uid)
+        .set({
+      'announcements': enabled,
+    }, SetOptions(merge: true));
+
+    if (!isSupported) return;
+
+    if (enabled) {
+      await _subscribe(NotificationTopics.allUsers);
+    } else {
+      await _unsubscribe(NotificationTopics.allUsers);
+    }
+  }
+
+// =====================================================================
+// JOB CATEGORY SUBSCRIPTIONS
+// =====================================================================
+
+  Future<void> setCategorySubscribed(
+      String category,
+      bool subscribed,
+      ) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    await _db
+        .collection('notification_settings')
+        .doc(uid)
+        .set({
+      'jobCategories': subscribed
+          ? FieldValue.arrayUnion([category])
+          : FieldValue.arrayRemove([category]),
+    }, SetOptions(merge: true));
+
+    if (!isSupported) return;
+
+    final topic = NotificationTopics.forCategory(category);
+
+    if (subscribed) {
+      await _subscribe(topic);
+    } else {
+      await _unsubscribe(topic);
+    }
+  }
+
+// =====================================================================
+// NOTIFICATION PERMISSIONS
+// =====================================================================
+
+  Future<bool> areNotificationsAllowed() async {
+    if (!isSupported) return false;
+
+    final settings = await FirebaseMessaging.instance
+        .getNotificationSettings();
+
+    return settings.authorizationStatus ==
+        AuthorizationStatus.authorized ||
+        settings.authorizationStatus ==
+            AuthorizationStatus.provisional;
+  }
+
+  Future<void> requestPermission() async {
+    if (!isSupported) return;
+
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+// =====================================================================
+// DEVICE TOKEN
+// =====================================================================
+
+  Future<String?> getDeviceToken() async {
+    if (!isSupported) return null;
+
+    return FirebaseMessaging.instance.getToken();
+  }
 
   // =====================================================================
   // BACKGROUND NOTIFICATIONS
