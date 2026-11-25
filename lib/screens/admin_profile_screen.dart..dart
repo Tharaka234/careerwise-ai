@@ -578,4 +578,95 @@ Widget _buildAccountInfoCard({
     );
   }
 
+  // Step 13: Logout Button with Confirmation Dialog
+
+
+  Widget _buildLogoutButton({
+    required BuildContext context,
+    required Color cardBg,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.redAccent,
+          side: BorderSide(
+            color: Colors.redAccent.withValues(alpha: 0.5),
+          ),
+          backgroundColor: Colors.redAccent.withValues(alpha: isDark ? 0.08 : 0.04),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (dialogContext) {
+              return AlertDialog(
+                backgroundColor: cardBg,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  'Are you sure you want to logout from admin account?',
+                  style: TextStyle(color: textSecondary),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(color: textSecondary),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(dialogContext);
+                      await _logout(context);
+                    },
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+        icon: const Icon(
+          Icons.logout,
+        ),
+        label: const Text(
+          'Logout',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
 
