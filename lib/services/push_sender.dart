@@ -19,6 +19,46 @@ class PushSender {
   PushSender._();
 
   // --------------------------------------------------------------------
+// Public API
+// --------------------------------------------------------------------
+
+  static Future<PushResult> sendToToken({
+    required String token,
+    required String title,
+    required String body,
+    Map<String, String> data = const {},
+    bool dataOnly = false,
+  }) {
+    return _send(
+      _buildMessage(
+        token: token,
+        title: title,
+        body: body,
+        data: data,
+        dataOnly: dataOnly,
+      ),
+    );
+  }
+
+  static Future<PushResult> sendToTopic({
+    required String topic,
+    required String title,
+    required String body,
+    Map<String, String> data = const {},
+    bool dataOnly = false,
+  }) {
+    return _send(
+      _buildMessage(
+        topic: topic,
+        title: title,
+        body: body,
+        data: data,
+        dataOnly: dataOnly,
+      ),
+    );
+  }
+
+  // --------------------------------------------------------------------
 // FCM Message Payload
 // --------------------------------------------------------------------
 
@@ -60,5 +100,14 @@ class PushSender {
         },
       },
     };
+  }
+  // --------------------------------------------------------------------
+// Push Delivery
+// --------------------------------------------------------------------
+
+  static Future<PushResult> _send(
+      Map<String, dynamic> message,
+      ) async {
+    return PushResult.notConfigured;
   }
 }
