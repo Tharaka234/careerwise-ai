@@ -236,6 +236,8 @@ Widget build(BuildContext context) {
 }
 
 // Step 7: Profile Avatar Stack with Shield / Verified Badge Overlay
+
+
 Widget _buildAvatarSection({
   required bool isDark,
   required Color primaryColor,
@@ -314,5 +316,4 @@ Widget _buildAvatarSection({
     ],
   );
 }
-
 
