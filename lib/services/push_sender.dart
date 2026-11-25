@@ -1,3 +1,9 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:googleapis_auth/auth_io.dart';
+
 import 'notification_types.dart';
 /// Represents the result of a push notification request.
 enum PushResult {
@@ -17,6 +23,17 @@ enum PushResult {
 /// Handles push notification delivery for CareerWise.
 class PushSender {
   PushSender._();
+
+  static const String _assetPath =
+      'assets/config/service_account.json';
+
+  static const List<String> _scopes = [
+    'https://www.googleapis.com/auth/firebase.messaging',
+  ];
+
+  static AutoRefreshingAuthClient? _client;
+  static String? _projectId;
+  static bool _setupFailed = false;
 
   // --------------------------------------------------------------------
 // Public API
@@ -100,6 +117,42 @@ class PushSender {
         },
       },
     };
+  }
+  // --------------------------------------------------------------------
+// FCM Configuration Check
+// --------------------------------------------------------------------
+
+  static Future<bool> _ensureReady() async {
+    if (_client != null && _projectId != null) {
+      return true;
+    }
+
+    if (_setupFailed) {
+      return false;
+    }
+
+    try {
+      final raw = await rootBundle.loadString(_assetPath);
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+
+      _projectId = json['project_id']?.toString();
+
+      if (_projectId == null || _projectId!.trim().isEmpty) {
+        debugPrint('PushSender: Firebase project ID is missing.');
+        _setupFailed = true;
+        return false;
+      }
+
+      debugPrint(
+        'PushSender: Trusted server authentication is required.',
+      );
+
+      return false;
+    } catch (e) {
+      debugPrint('PushSender setup error: $e');
+      _setupFailed = true;
+      return false;
+    }
   }
   // --------------------------------------------------------------------
 // Push Delivery
