@@ -1071,7 +1071,6 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
     );
   }
 }
-
 // Step 14: Data Formatting & Score Clamping Helper Functions
 int _score(dynamic value) {
   final number = value is num
