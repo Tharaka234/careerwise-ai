@@ -65,3 +65,23 @@ Future<void> _logout(BuildContext context) async {
   );
 }
 
+// Step 5: Clipboard Copy Helper with Floating SnackBar
+void _copyToClipboard(BuildContext context, String text, String label) {
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Text('$label copied to clipboard'),
+        ],
+      ),
+      backgroundColor: const Color(0xFF10B981),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
+
