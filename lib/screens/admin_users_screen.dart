@@ -390,3 +390,64 @@ Widget _buildHeader({
     ),
   );
 }
+
+// Step 8: Metric Stat Pills & Header Navigation Button
+Widget _headerStatPill({
+  required IconData icon,
+  required String label,
+  required Color color,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.14),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 14),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11.5,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _headerIconButton({
+  required IconData icon,
+  required VoidCallback onTap,
+}) {
+  return Material(
+    color: Colors.white.withValues(alpha: 0.16),
+    borderRadius: BorderRadius.circular(14),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 42,
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.22),
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 19,
+        ),
+      ),
+    ),
+  );
+}
