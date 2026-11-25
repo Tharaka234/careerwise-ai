@@ -508,5 +508,74 @@ Widget _buildAccountInfoCard({
       ),
     ),
   );
-}
+
+  // Step 12: Administrative Privileges Card Builder
+
+
+  Widget _buildPrivilegesCard({
+  required bool isDark,
+  required Color cardBg,
+  required Color borderColor,
+  required Color textPrimary,
+  required Color textSecondary,
+  required Color dividerColor,
+  }) {
+    return Card(
+      elevation: isDark ? 4 : 3,
+      color: cardBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Administrative Privileges',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            _buildPrivilegeRow(
+              icon: Icons.work_outline_rounded,
+              title: 'Job Management',
+              description: 'Create, update, and manage job vacancies',
+              color: const Color(0xFF3B82F6),
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+            Divider(height: 24, color: dividerColor),
+            _buildPrivilegeRow(
+              icon: Icons.assignment_turned_in_outlined,
+              title: 'Application Review',
+              description: 'Review applicants and update candidate status',
+              color: const Color(0xFF10B981),
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+            Divider(height: 24, color: dividerColor),
+            _buildPrivilegeRow(
+              icon: Icons.campaign_outlined,
+              title: 'Broadcast Alerts',
+              description: 'Send push notifications to all users',
+              color: const Color(0xFF8B5CF6),
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
