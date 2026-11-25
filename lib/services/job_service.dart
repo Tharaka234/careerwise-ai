@@ -119,6 +119,57 @@ class JobService {
         'mobile application',
       ];
     }
+    // Data Analysis
+    if (normalized.contains('data analyst') ||
+        normalized.contains('data analysis')) {
+      return [
+        'data analyst',
+        'data analysis',
+        'data analytics',
+        'business analyst',
+        'sql',
+        'python',
+        'power bi',
+        'tableau',
+      ];
+    }
+    // Data Science and Machine Learning
+    if (normalized.contains('data scientist') ||
+        normalized.contains('machine learning')) {
+      return [
+        'data scientist',
+        'machine learning',
+        'ml engineer',
+        'artificial intelligence',
+        'ai engineer',
+        'data science',
+        'python',
+      ];
+    }
+    // Artificial Intelligence
+    if (normalized.contains('ai') ||
+        normalized.contains('artificial intelligence')) {
+      return [
+        'ai engineer',
+        'artificial intelligence',
+        'machine learning',
+        'machine learning engineer',
+        'data scientist',
+        'ai developer',
+      ];
+    }
+    // Cybersecurity
+    if (normalized.contains('cybersecurity') ||
+        normalized.contains('cyber security')) {
+      return [
+        'cybersecurity',
+        'cyber security',
+        'security analyst',
+        'security engineer',
+        'information security',
+        'soc analyst',
+      ];
+    }
 
     // Generic fallback
     return [
