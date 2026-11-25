@@ -727,3 +727,51 @@ Widget _userCard({
         ),
       ],
     ),
+              // Step 12: User Contact Details (Email & Phone)
+              const SizedBox(height: 4),
+
+              Row(
+                children: [
+                  Icon(
+                    Icons.email_outlined,
+                    size: 14,
+                    color: colors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      email,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              if (phone.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.phone_outlined,
+                      size: 14,
+                      color: colors.textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      phone,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
