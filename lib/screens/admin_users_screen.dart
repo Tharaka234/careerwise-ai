@@ -852,3 +852,82 @@ Widget _userCard({
     ),
   );
 }
+
+// Step 14: Loading, Error, and Empty Feedback State Cards
+
+
+Widget _loadingCard(_UserColors colors) {
+  return Container(
+    padding: const EdgeInsets.all(40),
+    decoration: BoxDecoration(
+      color: colors.cardBg,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: colors.cardBorder),
+    ),
+    child: Center(
+      child: CircularProgressIndicator(color: colors.primary),
+    ),
+  );
+}
+
+Widget _errorCard(String error, _UserColors colors) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.red.withValues(alpha: colors.isDark ? 0.15 : 0.05),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+    ),
+    child: Text(
+      error,
+      style: const TextStyle(color: Colors.redAccent),
+    ),
+  );
+}
+
+Widget _emptyCard({
+  required String title,
+  required String subtitle,
+  required _UserColors colors,
+}) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(36),
+    decoration: BoxDecoration(
+      color: colors.cardBg,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: colors.cardBorder),
+    ),
+    child: Column(
+      children: [
+        Icon(
+          Icons.people_outline_rounded,
+          size: 48,
+          color: colors.isDark
+              ? const Color(0xFF335242)
+              : const Color(0xFFA7C1B3),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 13,
+            color: colors.textSecondary,
+          ),
+        ),
+      ],
+    ),
+  );
+ }
+}
