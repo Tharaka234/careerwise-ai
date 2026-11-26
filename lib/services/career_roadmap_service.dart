@@ -44,4 +44,53 @@ class CareerRoadmapService {
         .collection('career_roadmaps')
         .doc(interviewId);
   }
+  static Future<Map<String, dynamic>> generateRoadmap({
+    required String interviewId,
+  }) async {
+    final uid = _uid;
+    final ref = _roadmapRef(interviewId);
+
+    // Reuse an existing roadmap.
+    final existing = await ref.get();
+
+    if (existing.exists) {
+      return {
+        'id': existing.id,
+        ...existing.data()!,
+      };
+    }
+
+    // Read the original mock interview.
+    final interviewDoc = await _db
+        .collection('mock_interviews')
+        .doc(interviewId)
+        .get();
+
+    // Validate interview existence.
+    if (!interviewDoc.exists) {
+      throw Exception('Interview not found.');
+    }
+
+    final interview = interviewDoc.data()!;
+
+    // Validate interview ownership.
+    if (interview['userId'] != uid) {
+      throw Exception('Access denied.');
+    }
+
+    // Validate interview feedback.
+    final feedback = interview['feedback'];
+
+    if (feedback is! Map) {
+      throw Exception('Interview feedback is missing.');
+    }
+
+    // Validate Gemini API configuration.
+    if (_apiKey.isEmpty) {
+      throw Exception('Gemini API key is missing.');
+    }
+
+    // AI generation will be implemented in the next parts.
+    throw UnimplementedError('AI roadmap generation is not implemented yet.');
+  }
 }
