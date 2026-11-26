@@ -43,3 +43,23 @@ class _AddJobColors {
   // Icon Boxes & Badges
   Color get iconBoxBg => isDark ? const Color(0x3310B981) : const Color(0x1F059669);
 }
+
+// Step 3: Main Screen Widget Skeleton (StatefulWidget)
+
+
+class AddJobScreen extends StatefulWidget {
+  final String? jobId;
+  final Map<String, dynamic>? existingJob;
+
+  const AddJobScreen({
+    super.key,
+    this.jobId,
+    this.existingJob,
+  });
+
+  bool get isEditMode => jobId != null && existingJob != null;
+
+  @override
+  State<AddJobScreen> createState() => _AddJobScreenState();
+}
+
