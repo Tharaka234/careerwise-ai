@@ -162,4 +162,33 @@ colors: colors,
 );
 }
 
+// Step 6: Client-Side Real-Time Search Filter Logic
+
+
+List<QueryDocumentSnapshot> _filterRecommendations(
+List<QueryDocumentSnapshot> docs) {
+if (_searchQuery.isEmpty) return docs;
+
+return docs.where((doc) {
+final data = doc.data() as Map<String, dynamic>? ?? {};
+
+final careerGoal = data['careerGoal']?.toString().toLowerCase() ?? '';
+final skills = data['skills']?.toString().toLowerCase() ?? '';
+final education = data['education']?.toString().toLowerCase() ?? '';
+final interests = data['interests']?.toString().toLowerCase() ?? '';
+final recommendation =
+data['recommendation']?.toString().toLowerCase() ?? '';
+
+return careerGoal.contains(_searchQuery) ||
+skills.contains(_searchQuery) ||
+education.contains(_searchQuery) ||
+interests.contains(_searchQuery) ||
+recommendation.contains(_searchQuery);
+}).toList();
+}
+
+
+
+
+
 
