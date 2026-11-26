@@ -19,4 +19,29 @@ class CareerRoadmapService {
 
   // Gemini model used for roadmap generation.
   static const _model = 'gemini-3.5-flash-lite';
+
+  static String get _uid {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception('Please sign in first.');
+    }
+
+    return user.uid;
+  }
+
+  static DocumentReference<Map<String, dynamic>> _roadmapRef(
+      String interviewId,
+      ) {
+    if (interviewId.trim().isEmpty ||
+        interviewId.contains('/')) {
+      throw Exception('Invalid interview ID.');
+    }
+
+    return _db
+        .collection('users')
+        .doc(_uid)
+        .collection('career_roadmaps')
+        .doc(interviewId);
+  }
 }
