@@ -435,3 +435,132 @@ const SizedBox(height: 22),
 );
 }
 
+// Step 9: Screen Scaffold, Custom AppBar & Theme-Reactive Builder
+
+
+@override
+Widget build(BuildContext context) {
+final bool isEdit = widget.isEditMode;
+
+return ValueListenableBuilder<bool>(
+valueListenable: AdminThemeManager.isDarkMode,
+builder: (context, isDark, _) {
+final colors = _AddJobColors(isDark: isDark);
+
+return Scaffold(
+backgroundColor: colors.pageBg,
+appBar: AppBar(
+elevation: 0,
+backgroundColor: colors.appBarBg,
+foregroundColor: colors.textPrimary,
+centerTitle: false,
+bottom: PreferredSize(
+preferredSize: const Size.fromHeight(1),
+child: Container(
+color: colors.appBarBorder,
+height: 1,
+),
+),
+title: Row(
+children: [
+Container(
+width: 38,
+height: 38,
+decoration: BoxDecoration(
+gradient: LinearGradient(
+colors: colors.isDark
+? const [Color(0xFF047857), Color(0xFF059669)]
+: const [Color(0xFF059669), Color(0xFF10B981)],
+),
+borderRadius: BorderRadius.circular(11),
+boxShadow: [
+BoxShadow(
+color: colors.primary.withValues(alpha: 0.3),
+blurRadius: 8,
+offset: const Offset(0, 2),
+),
+],
+),
+child: Icon(
+isEdit
+? Icons.edit_rounded
+: Icons.add_business_rounded,
+color: Colors.white,
+size: 20,
+),
+),
+const SizedBox(width: 12),
+Text(
+isEdit ? 'Edit Job' : 'Add New Job',
+style: TextStyle(
+fontSize: 19,
+fontWeight: FontWeight.bold,
+color: colors.textPrimary,
+letterSpacing: -0.3,
+),
+),
+],
+),
+),
+body: SingleChildScrollView(
+padding: const EdgeInsets.fromLTRB(
+18,
+20,
+18,
+35,
+),
+child: Center(
+child: ConstrainedBox(
+constraints: const BoxConstraints(
+maxWidth: 850,
+),
+child: Form(
+key: _formKey,
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+// Step 10: Hero Header Banner
+_buildHeaderBanner(isEdit, colors),
+
+const SizedBox(height: 22),
+
+// Step 11: Basic Information Section Card
+_buildBasicInfoSection(colors),
+
+const SizedBox(height: 20),
+
+// Step 12: Job Details Section Card
+_buildJobDetailsSection(colors),
+
+const SizedBox(height: 20),
+
+// Step 13: Job Description Section Card
+_buildDescriptionSection(colors),
+
+const SizedBox(height: 26),
+
+// Step 14: Submit / Update Button & Required Legend
+_buildSubmitButton(isEdit, colors),
+
+const SizedBox(height: 14),
+
+Center(
+child: Text(
+'All fields marked with * are required',
+style: TextStyle(
+color: colors.textMuted,
+fontSize: 12,
+),
+),
+),
+],
+),
+),
+),
+),
+),
+);
+},
+);
+}
+
