@@ -89,6 +89,54 @@ class CareerRoadmapService {
     if (_apiKey.isEmpty) {
       throw Exception('Gemini API key is missing.');
     }
+    final prompt = '''
+You are an AI career development coach for CareerWise.
+
+Create a personalized 4-week learning roadmap based on
+the applicant's mock interview feedback.
+
+JOB INFORMATION:
+Job: ${interview['jobTitle']}
+Company: ${interview['company']}
+
+INTERVIEW SCORE:
+${interview['score']}
+
+INTERVIEW FEEDBACK:
+${jsonEncode(feedback)}
+
+Return ONLY valid JSON with this structure:
+
+{
+  "title": "Personalized Career Development Roadmap",
+  "overview": "Short personalized overview",
+  "targetSkills": ["Skill 1", "Skill 2", "Skill 3"],
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Learning focus",
+      "description": "What to improve this week",
+      "tasks": [
+        {
+          "title": "Specific learning task",
+          "description": "How to complete the task"
+        }
+      ]
+    }
+  ]
+}
+
+RULES:
+- Generate exactly 4 weeks.
+- Generate exactly 3 tasks per week.
+- Use the actual interview weaknesses and strengths.
+- Make tasks realistic for university students.
+- Include role-specific practical learning activities.
+- Tasks should be achievable and measurable.
+- Do not invent completed qualifications or experience.
+- Do not treat the interview score as a hiring prediction.
+- Do not include external URLs.
+''';
 
     // AI generation will be implemented in the next parts.
     throw UnimplementedError('AI roadmap generation is not implemented yet.');
