@@ -349,3 +349,89 @@ fontWeight: FontWeight.bold,
 );
 }
 
+// Step 8: Reusable Section Card Container
+
+
+Widget sectionCard({
+required String title,
+required String subtitle,
+required IconData icon,
+required List<Widget> children,
+required _AddJobColors colors,
+}) {
+return Container(
+width: double.infinity,
+padding: const EdgeInsets.all(22),
+decoration: BoxDecoration(
+color: colors.cardBg,
+borderRadius: BorderRadius.circular(22),
+border: Border.all(
+color: colors.cardBorder,
+width: 1.2,
+),
+boxShadow: [
+BoxShadow(
+color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+.withValues(alpha: colors.isDark ? 0.35 : 0.05),
+blurRadius: 16,
+offset: const Offset(0, 6),
+),
+],
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Container(
+width: 46,
+height: 46,
+decoration: BoxDecoration(
+color: colors.iconBoxBg,
+borderRadius: BorderRadius.circular(14),
+border: Border.all(
+color: colors.primary.withValues(alpha: 0.3),
+width: 1,
+),
+),
+child: Icon(
+icon,
+color: colors.primary,
+size: 24,
+),
+),
+const SizedBox(width: 14),
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+title,
+style: TextStyle(
+fontSize: 18,
+fontWeight: FontWeight.bold,
+color: colors.textPrimary,
+letterSpacing: -0.3,
+),
+),
+const SizedBox(height: 3),
+Text(
+subtitle,
+style: TextStyle(
+fontSize: 13,
+color: colors.textSecondary,
+),
+),
+],
+),
+),
+],
+),
+const SizedBox(height: 22),
+...children,
+],
+),
+);
+}
+
