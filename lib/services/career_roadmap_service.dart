@@ -138,7 +138,68 @@ RULES:
 - Do not include external URLs.
 ''';
 
-    // AI generation will be implemented in the next parts.
-    throw UnimplementedError('AI roadmap generation is not implemented yet.');
+    final uri = Uri.https(
+      'generativelanguage.googleapis.com',
+      '/v1beta/models/$_model:generateContent',
+    );
+
+    final response = await http.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': _apiKey,
+      },
+      body: jsonEncode({
+        'contents': [
+          {
+            'role': 'user',
+            'parts': [
+              {'text': prompt}
+            ]
+          }
+        ],
+        'generationConfig': {
+          'responseMimeType': 'application/json',
+          'temperature': 0.4,
+          'maxOutputTokens': 4096,
+        }
+      }),
+    ).timeout(const Duration(seconds: 120));
+
+    if (response.statusCode != 200) {
+      String errorMessage = 'Unknown Gemini API error';
+
+      try {
+        final errorData = jsonDecode(response.body);
+
+        if (errorData is Map) {
+          final error = errorData['error'];
+
+          if (error is Map) {
+            errorMessage =
+                error['message']?.toString() ?? errorMessage;
+          }
+        }
+      } catch (_) {
+        errorMessage = 'Unable to read Gemini error response.';
+      }
+
+      debugPrint(
+        'Gemini HTTP Status: ${response.statusCode}',
+      );
+
+      debugPrint('Gemini Error: $errorMessage');
+
+      throw Exception(
+        'Gemini API Error (${response.statusCode}): '
+            '$errorMessage',
+      );
+    }
+
+// Temporary code until Part 6.
+    throw UnimplementedError(
+      'AI response parsing is not implemented yet.',
+    );
   }
+
 }
