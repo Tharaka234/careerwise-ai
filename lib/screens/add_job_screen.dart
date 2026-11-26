@@ -836,3 +836,42 @@ return null;
 );
 }
 
+// Step 13: Job Description Section Form Card
+
+
+Widget _buildDescriptionSection(_AddJobColors colors) {
+return sectionCard(
+title: 'Job Description',
+subtitle: 'Describe the role, responsibilities and requirements.',
+icon: Icons.description_outlined,
+colors: colors,
+children: [
+fieldLabel('Description', colors),
+TextFormField(
+controller: descriptionController,
+maxLines: 7,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+height: 1.5,
+fontWeight: FontWeight.w400,
+),
+decoration: inputDecoration(
+hint:
+'Enter job description, responsibilities, requirements and skills...',
+icon: Icons.article_outlined,
+colors: colors,
+).copyWith(
+alignLabelWithHint: true,
+),
+validator: (value) {
+if (value == null || value.trim().isEmpty) {
+return 'Please enter job description';
+}
+return null;
+},
+),
+],
+);
+}
+
