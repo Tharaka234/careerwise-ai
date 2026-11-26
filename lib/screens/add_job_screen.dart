@@ -122,3 +122,133 @@ salaryController.dispose();
 super.dispose();
 }
 
+// Step 5: Save & Update Job Persistence with Push Notifications
+
+
+Future<void> saveJob() async {
+if (!_formKey.currentState!.validate()) {
+return;
+}
+
+setState(() {
+isLoading = true;
+});
+
+try {
+final jobData = {
+'title': titleController.text.trim(),
+'company': companyController.text.trim(),
+'location': locationController.text.trim(),
+'description': descriptionController.text.trim(),
+'salary': salaryController.text.trim(),
+'jobType': selectedJobType,
+'category': selectedCategory,
+};
+
+if (widget.isEditMode) {
+await FirebaseFirestore.instance
+.collection('jobs')
+.doc(widget.jobId)
+.update({
+...jobData,
+'updatedAt': FieldValue.serverTimestamp(),
+});
+
+// NOTIFICATIONS: tell subscribers this job was edited.
+unawaited(
+NotificationService.instance.notifyJobUpdated(
+jobId: widget.jobId!,
+title: titleController.text.trim(),
+company: companyController.text.trim(),
+category: selectedCategory,
+),
+);
+} else {
+final newJob = await FirebaseFirestore.instance
+.collection('jobs')
+.add({
+...jobData,
+'publisherId': FirebaseAuth.instance.currentUser?.uid ?? '',
+'createdAt': FieldValue.serverTimestamp(),
+});
+
+// NOTIFICATIONS: tell everyone subscribed to this category.
+unawaited(
+NotificationService.instance.notifyNewJobPosted(
+jobId: newJob.id,
+title: titleController.text.trim(),
+company: companyController.text.trim(),
+category: selectedCategory,
+),
+);
+}
+
+if (!mounted) return;
+
+ScaffoldMessenger.of(context).showSnackBar(
+SnackBar(
+behavior: SnackBarBehavior.floating,
+backgroundColor: const Color(0xFF10B981),
+margin: const EdgeInsets.all(16),
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(14),
+),
+content: Row(
+children: [
+const Icon(
+Icons.check_circle_outline,
+color: Colors.white,
+),
+const SizedBox(width: 12),
+Expanded(
+child: Text(
+widget.isEditMode
+? 'Job updated successfully!'
+: 'Job added successfully!',
+),
+),
+],
+),
+),
+);
+
+Navigator.pop(context);
+} catch (e) {
+if (!mounted) return;
+
+ScaffoldMessenger.of(context).showSnackBar(
+SnackBar(
+behavior: SnackBarBehavior.floating,
+backgroundColor: Colors.red.shade700,
+margin: const EdgeInsets.all(16),
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(14),
+),
+content: Row(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+const Icon(
+Icons.error_outline,
+color: Colors.white,
+),
+const SizedBox(width: 12),
+Expanded(
+child: Text(
+widget.isEditMode
+? 'Failed to update job:\n$e'
+: 'Failed to add job:\n$e',
+),
+),
+],
+),
+),
+);
+} finally {
+if (mounted) {
+setState(() {
+isLoading = false;
+});
+}
+}
+}
+
