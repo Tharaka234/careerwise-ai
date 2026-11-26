@@ -875,3 +875,84 @@ return null;
 );
 }
 
+// Step 14: Emerald Gradient Submit / Update Button
+
+
+Widget _buildSubmitButton(bool isEdit, _AddJobColors colors) {
+return Container(
+width: double.infinity,
+height: 56,
+decoration: BoxDecoration(
+gradient: LinearGradient(
+colors: colors.isDark
+? const [Color(0xFF059669), Color(0xFF047857)]
+: const [Color(0xFF059669), Color(0xFF10B981)],
+),
+borderRadius: BorderRadius.circular(16),
+boxShadow: [
+BoxShadow(
+color: colors.primary.withValues(
+alpha: colors.isDark ? 0.35 : 0.3,
+),
+blurRadius: 14,
+offset: const Offset(0, 5),
+),
+],
+),
+child: Material(
+color: Colors.transparent,
+child: InkWell(
+borderRadius: BorderRadius.circular(16),
+onTap: isLoading ? null : saveJob,
+child: Center(
+child: isLoading
+? const Row(
+mainAxisAlignment: MainAxisAlignment.center,
+children: [
+SizedBox(
+width: 22,
+height: 22,
+child: CircularProgressIndicator(
+strokeWidth: 2.5,
+color: Colors.white,
+),
+),
+SizedBox(width: 12),
+Text(
+'Saving...',
+style: TextStyle(
+fontSize: 16,
+fontWeight: FontWeight.bold,
+color: Colors.white,
+),
+),
+],
+)
+: Row(
+mainAxisAlignment: MainAxisAlignment.center,
+children: [
+Icon(
+isEdit
+? Icons.save_rounded
+: Icons.add_circle_outline_rounded,
+size: 22,
+color: Colors.white,
+),
+const SizedBox(width: 10),
+Text(
+isEdit ? 'Update Job' : 'Add Job',
+style: const TextStyle(
+fontSize: 16,
+fontWeight: FontWeight.bold,
+color: Colors.white,
+letterSpacing: 0.3,
+),
+),
+],
+),
+),
+),
+),
+);
+}
+
