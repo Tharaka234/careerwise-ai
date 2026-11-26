@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
 import 'package:careerwise-ai/firebase_options.dart';
 
@@ -286,8 +287,9 @@ class NotificationService {
     // STATE 2: BACKGROUND
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       unawaited(_navigateWhenReady(message.data));
-    });
 
+      unawaited(syncInterviewReminders());
+    });
 // STATE 3: TERMINATED
     final initialMessage = await messaging.getInitialMessage();
 
@@ -312,6 +314,9 @@ class NotificationService {
     FirebaseAuth.instance.authStateChanges().listen(
       _onAuthChanged,
     );
+    WidgetsBinding.instance.addObserver(
+      _ResumeObserver(_onAppResumed),
+    );
 
     _initialized = true;
   }
@@ -324,6 +329,7 @@ class NotificationService {
       _currentUid = null;
       _isAdmin = false;
       _adminCheckedUid = null;
+      _lastInterviewSync = null;
       return;
     }
 
@@ -403,6 +409,7 @@ class NotificationService {
         await _unsubscribe(NotificationTopics.allUsers);
       }
 
+
       for (final category in JobCategories.all) {
         if (categories.contains(category)) {
           await _subscribe(
@@ -413,6 +420,9 @@ class NotificationService {
             NotificationTopics.forCategory(category),
           );
         }
+        await syncInterviewReminders();
+        await checkProfileCompleteness();
+
       }
     }
   }
@@ -729,6 +739,8 @@ class NotificationService {
   void _onForegroundMessage(RemoteMessage message) {
     debugPrint(
       'USER FCM RECEIVED: ${message.notification?.title}',
+
+
     );
 
     final title =
@@ -748,6 +760,10 @@ class NotificationService {
         body: body ?? '',
         data: message.data,
       );
+    }
+    if (message.data['type'] ==
+        NotificationTypes.applicationStatus) {
+      unawaited(syncInterviewReminders());
     }
   }
 
@@ -2082,5 +2098,365 @@ class NotificationService {
           'applicationId': item.applicationId!,
       },
     );
+  }
+  // =====================================================================
+// LOCAL SCHEDULED NOTIFICATIONS
+// =====================================================================
+
+  Future<void> scheduleInterviewReminders({
+    required String applicationId,
+    required String jobTitle,
+    required String company,
+    required DateTime interviewAt,
+  }) async {
+    if (!isSupported) return;
+
+    await cancelInterviewReminders(applicationId);
+
+    final now = DateTime.now();
+
+    final slots = <({
+    String key,
+    Duration before,
+    String title,
+    })>[
+      (
+      key: 'day',
+      before: const Duration(days: 1),
+      title: 'Interview tomorrow',
+      ),
+      (
+      key: 'hour',
+      before: const Duration(hours: 1),
+      title: 'Interview in 1 hour',
+      ),
+    ];
+
+    for (final slot in slots) {
+      final when = interviewAt.subtract(slot.before);
+
+      if (!when.isAfter(now)) continue;
+
+      try {
+        await _local.zonedSchedule(
+          id: _stableId(
+            'interview_${slot.key}_$applicationId',
+          ),
+          title: slot.title,
+          body: '$jobTitle at $company - '
+              '${_formatDateTime(interviewAt)}',
+
+          scheduledDate: tz.TZDateTime.from(
+            when,
+            tz.UTC,
+          ),
+
+          notificationDetails: _details,
+
+          androidScheduleMode:
+          AndroidScheduleMode.inexactAllowWhileIdle,
+
+          payload: jsonEncode(
+            _data(
+              NotificationTypes.interviewReminder,
+              {
+                'applicationId': applicationId,
+              },
+            ),
+          ),
+        );
+
+        debugPrint(
+          'INTERVIEW REMINDER SCHEDULED: $when',
+        );
+
+      } catch (e) {
+        debugPrint(
+          'Interview reminder schedule error: $e',
+        );
+      }
+    }
+  }
+  Future<void> cancelInterviewReminders(
+      String applicationId,
+      ) async {
+    if (!isSupported) return;
+
+    await _local.cancel(
+      id: _stableId(
+        'interview_day_$applicationId',
+      ),
+    );
+
+    await _local.cancel(
+      id: _stableId(
+        'interview_hour_$applicationId',
+      ),
+    );
+  }
+  // =====================================================================
+// SYNCHRONIZE INTERVIEW REMINDERS
+// =====================================================================
+
+  Future<void> syncInterviewReminders() async {
+    if (!isSupported || _isAdmin) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    try {
+      final query = await _db
+          .collection('applications')
+          .where('userId', isEqualTo: uid)
+          .where(
+        'status',
+        isEqualTo: 'Interview Scheduled',
+      )
+          .get();
+
+      if (FirebaseAuth.instance.currentUser?.uid != uid) {
+        return;
+      }
+
+      final activeIds = <String>{};
+
+      for (final doc in query.docs) {
+        final data = doc.data();
+
+        final interviewAt = data['interviewAt'];
+
+        if (interviewAt is! Timestamp) continue;
+
+        if (!interviewAt.toDate().isAfter(DateTime.now())) {
+          continue;
+        }
+
+        activeIds.add(doc.id);
+
+        await scheduleInterviewReminders(
+          applicationId: doc.id,
+
+          jobTitle:
+          data['jobTitle']?.toString() ??
+              'your interview',
+
+          company:
+          data['company']?.toString() ?? '',
+
+          interviewAt: interviewAt.toDate(),
+        );
+      }
+
+      // Remove outdated or cancelled interview reminders.
+      final pending =
+      await _local.pendingNotificationRequests();
+
+      for (final request in pending) {
+        final payload = request.payload;
+
+        if (payload == null) continue;
+
+        try {
+          final map = jsonDecode(payload);
+
+          if (map is Map &&
+              map['type'] ==
+                  NotificationTypes.interviewReminder &&
+              !activeIds.contains(map['applicationId'])) {
+
+            await _local.cancel(id: request.id);
+          }
+
+        } catch (_) {
+          // Ignore invalid notification payloads.
+        }
+      }
+
+      _lastInterviewSync = DateTime.now();
+
+      debugPrint('INTERVIEW REMINDERS SYNCHRONIZED');
+
+    } catch (e) {
+      debugPrint('Interview sync error: $e');
+    }
+  }
+  // =====================================================================
+// PROFILE COMPLETENESS REMINDER
+// =====================================================================
+
+  Future<void> checkProfileCompleteness() async {
+    if (!isSupported || _isAdmin) return;
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) return;
+
+    try {
+      final doc = await _db
+          .collection('users')
+          .doc(uid)
+          .get();
+
+      if (FirebaseAuth.instance.currentUser?.uid != uid) {
+        return;
+      }
+
+      final data = doc.data() ?? <String, dynamic>{};
+
+      final incomplete = _requiredProfileFields.any(
+            (field) =>
+        (data[field]?.toString().trim() ?? '')
+            .isEmpty,
+      );
+
+      // Profile is complete.
+      if (!incomplete) {
+        await _local.cancel(id: _profileReminderId);
+
+        debugPrint('PROFILE IS COMPLETE');
+
+        return;
+      }
+
+      final pending =
+      await _local.pendingNotificationRequests();
+
+      // Prevent duplicate profile reminders.
+      if (pending.any(
+            (p) => p.id == _profileReminderId,
+      )) {
+        return;
+      }
+
+      await _local.zonedSchedule(
+        id: _profileReminderId,
+
+        title: 'Complete your profile',
+
+        body:
+        'Finish your profile to get better job matches.',
+
+        scheduledDate: tz.TZDateTime.from(
+          DateTime.now().add(_profileReminderDelay),
+          tz.UTC,
+        ),
+
+        notificationDetails: _details,
+
+        androidScheduleMode:
+        AndroidScheduleMode.inexactAllowWhileIdle,
+
+        payload: jsonEncode(
+          _data(NotificationTypes.profileIncomplete),
+        ),
+      );
+
+      debugPrint('PROFILE REMINDER SCHEDULED');
+
+    } catch (e) {
+      debugPrint('Profile reminder error: $e');
+    }
+  }
+  // =====================================================================
+// APP RESUME SYNCHRONIZATION
+// =====================================================================
+
+  void _onAppResumed() {
+    if (_currentUid == null || _isAdmin) return;
+
+    unawaited(checkProfileCompleteness());
+
+    final last = _lastInterviewSync;
+
+    if (last != null &&
+        DateTime.now().difference(last) <
+            const Duration(minutes: 10)) {
+      return;
+    }
+
+    unawaited(syncInterviewReminders());
+  }
+  String _formatDateTime(DateTime value) {
+    const weekdays = [
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ];
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    final local = value.toLocal();
+
+    final hour =
+    local.hour % 12 == 0 ? 12 : local.hour % 12;
+
+    final minute =
+    local.minute.toString().padLeft(2, '0');
+
+    final suffix = local.hour >= 12 ? 'PM' : 'AM';
+
+    return '${weekdays[local.weekday - 1]}, '
+        '${local.day} '
+        '${months[local.month - 1]} '
+        '${local.year} at $hour:$minute $suffix';
+  }
+  int _stableId(String text) {
+    var hash = 0x811c9dc5;
+
+    for (final unit in text.codeUnits) {
+      hash ^= unit;
+
+      hash = (hash * 0x01000193) & 0x7fffffff;
+    }
+
+    return hash;
+  }
+
+    final local = value.toLocal();
+
+    final hour =
+    local.hour % 12 == 0 ? 12 : local.hour % 12;
+
+    final minute =
+    local.minute.toString().padLeft(2, '0');
+
+    final suffix = local.hour >= 12 ? 'PM' : 'AM';
+
+    return '${weekdays[local.weekday - 1]}, '
+        '${local.day} '
+        '${months[local.month - 1]} '
+        '${local.year} at $hour:$minute $suffix';
+  }
+}
+class _ResumeObserver with WidgetsBindingObserver {
+  _ResumeObserver(this.onResumed);
+
+  final VoidCallback onResumed;
+
+  @override
+  void didChangeAppLifecycleState(
+      AppLifecycleState state,
+      ) {
+    if (state == AppLifecycleState.resumed) {
+      onResumed();
+    }
   }
 }
