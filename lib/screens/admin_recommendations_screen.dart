@@ -673,6 +673,75 @@ _bullet(actionPlan[i], colors, number: i + 1),
 );
 }
 
+// Step 11: Individual Recommended Career Block Builder
+
+
+Widget _careerBlock(int index, Map<String, dynamic> c, _RecColors colors) {
+final why = (c['whySuitable'] ?? '').toString().trim();
+
+return Container(
+width: double.infinity,
+margin: const EdgeInsets.only(bottom: 10),
+padding: const EdgeInsets.all(12),
+decoration: BoxDecoration(
+color: colors.cardBg,
+borderRadius: BorderRadius.circular(12),
+border: Border.all(color: colors.cardBorder),
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+children: [
+Container(
+width: 24,
+height: 24,
+alignment: Alignment.center,
+decoration: BoxDecoration(
+color: colors.iconBoxBg,
+borderRadius: BorderRadius.circular(8),
+),
+child: Text(
+'$index',
+style: TextStyle(
+fontSize: 12,
+fontWeight: FontWeight.w800,
+color: colors.primary,
+),
+),
+),
+const SizedBox(width: 10),
+Expanded(
+child: Text(
+(c['title'] ?? '').toString(),
+style: TextStyle(
+fontSize: 14,
+fontWeight: FontWeight.w800,
+color: colors.textPrimary,
+),
+),
+),
+],
+),
+if (why.isNotEmpty) ...[
+const SizedBox(height: 8),
+Text(
+why,
+style: TextStyle(
+fontSize: 12.5,
+height: 1.45,
+color: colors.textSecondary,
+),
+),
+],
+_labeledChips('Skills to develop', _stringList(c['skillsToDevelop']), colors),
+_labeledChips('Learning areas', _stringList(c['learningAreas']), colors),
+_labeledChips('Technologies', _stringList(c['technologies']), colors),
+],
+),
+);
+}
+
 
 
 
