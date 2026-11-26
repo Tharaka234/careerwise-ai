@@ -196,10 +196,83 @@ RULES:
       );
     }
 
-// Temporary code until Part 6.
-    throw UnimplementedError(
-      'AI response parsing is not implemented yet.',
-    );
+    final apiData =
+    jsonDecode(response.body) as Map<String, dynamic>;
+
+    final candidates = apiData['candidates'] as List?;
+
+    if (candidates == null || candidates.isEmpty) {
+      throw Exception('AI returned no roadmap.');
+    }
+
+    final parts =
+    candidates.first['content']['parts'] as List;
+
+    final responseText = parts
+        .map((part) => part['text']?.toString() ?? '')
+        .join()
+        .trim();
+
+    final roadmap =
+    jsonDecode(responseText) as Map<String, dynamic>;
+
+    final rawWeeks = roadmap['weeks'];
+
+    if (rawWeeks is! List || rawWeeks.length != 4) {
+      throw Exception('AI must generate exactly 4 weeks.');
+    }
+
+    final weeks = <Map<String, dynamic>>[];
+
+    for (var i = 0; i < rawWeeks.length; i++) {
+      final week = Map<String, dynamic>.from(rawWeeks[i]);
+      final rawTasks = week['tasks'];
+
+      if (rawTasks is! List || rawTasks.length != 3) {
+        throw Exception('Each week must have exactly 3 tasks.');
+      }
+
+      final tasks = <Map<String, dynamic>>[];
+
+      for (var j = 0; j < rawTasks.length; j++) {
+        final task = Map<String, dynamic>.from(rawTasks[j]);
+
+        final title =
+            task['title']?.toString().trim() ?? '';
+
+        final description =
+            task['description']?.toString().trim() ?? '';
+
+        if (title.isEmpty || description.isEmpty) {
+          throw Exception('AI generated an incomplete task.');
+        }
+
+        tasks.add({
+          'id': 'week_${i + 1}_task_${j + 1}',
+          'title': title,
+          'description': description,
+          'completed': false,
+        });
+      }
+      final targetSkills = roadmap['targetSkills'];
+
+      if (targetSkills is! List) {
+        throw Exception('Invalid target skills.');
+      }
+
+// Temporary code until Part 7.
+      throw UnimplementedError(
+        'Roadmap storage is not implemented yet.',
+      );
+
+      weeks.add({
+        'week': i + 1,
+        'title': week['title']?.toString() ?? '',
+        'description':
+        week['description']?.toString() ?? '',
+        'tasks': tasks,
+      });
+    }
   }
 
 }
