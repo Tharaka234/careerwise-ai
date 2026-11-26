@@ -48,4 +48,21 @@ class AdminRecommendationsScreen extends StatefulWidget {
       _AdminRecommendationsScreenState();
 }
 
+// Step 4: State Management, Search Controller & Document Expansion
+
+
+class _AdminRecommendationsScreenState
+    extends State<AdminRecommendationsScreen> {
+final TextEditingController _searchController = TextEditingController();
+String _searchQuery = '';
+final Set<String> _expandedDocIds = {};
+
+@override
+void dispose() {
+_searchController.dispose();
+super.dispose();
+}
+
+
+
 
