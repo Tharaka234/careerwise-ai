@@ -862,6 +862,287 @@ color: colors.textPrimary,
 );
 }
 
+// Step 13: Full Recommendation Card with Expansion & Clipboard Copy
+
+
+Widget _recommendationCard({
+required String docId,
+required Map<String, dynamic> data,
+required _RecColors colors,
+}) {
+final careerGoal = data['careerGoal']?.toString().trim() ?? 'Career Guidance';
+final education = data['education']?.toString().trim() ?? 'Not specified';
+final skills = data['skills']?.toString().trim() ?? 'Not specified';
+final interests = data['interests']?.toString().trim() ?? '';
+final recommendation = data['recommendation']?.toString().trim() ?? '';
+final userId = data['userId']?.toString().trim() ?? '';
+
+final isExpanded = _expandedDocIds.contains(docId);
+
+String formattedDate = '';
+final createdAt = data['createdAt'];
+if (createdAt is Timestamp) {
+final date = createdAt.toDate();
+formattedDate = '${date.day.toString().padLeft(2, '0')}/'
+'${date.month.toString().padLeft(2, '0')}/'
+'${date.year}';
+}
+
+return Container(
+width: double.infinity,
+padding: const EdgeInsets.all(18),
+decoration: BoxDecoration(
+color: colors.cardBg,
+borderRadius: BorderRadius.circular(20),
+border: Border.all(color: colors.cardBorder, width: 1.2),
+boxShadow: [
+BoxShadow(
+color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+.withValues(alpha: colors.isDark ? 0.35 : 0.05),
+blurRadius: 14,
+offset: const Offset(0, 5),
+),
+],
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+// Header Row
+Row(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Container(
+width: 46,
+height: 46,
+decoration: BoxDecoration(
+gradient: const LinearGradient(
+colors: [Color(0xFF9333EA), Color(0xFF7C3AED)],
+),
+borderRadius: BorderRadius.circular(14),
+),
+child: const Icon(
+Icons.psychology_outlined,
+color: Colors.white,
+size: 26,
+),
+),
+const SizedBox(width: 14),
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+careerGoal,
+style: TextStyle(
+fontSize: 16.5,
+fontWeight: FontWeight.bold,
+color: colors.textPrimary,
+letterSpacing: -0.2,
+),
+),
+const SizedBox(height: 3),
+Row(
+children: [
+Icon(
+Icons.school_outlined,
+size: 13,
+color: colors.textSecondary,
+),
+const SizedBox(width: 5),
+Expanded(
+child: Text(
+education,
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
+style: TextStyle(
+fontSize: 12.5,
+color: colors.textSecondary,
+),
+),
+),
+],
+),
+],
+),
+),
+if (formattedDate.isNotEmpty)
+Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 9,
+vertical: 4,
+),
+decoration: BoxDecoration(
+color: colors.cardSurface,
+borderRadius: BorderRadius.circular(10),
+border: Border.all(color: colors.cardBorder),
+),
+child: Text(
+formattedDate,
+style: TextStyle(
+fontSize: 11,
+color: colors.textMuted,
+fontWeight: FontWeight.w600,
+),
+),
+),
+],
+),
+
+const SizedBox(height: 14),
+
+// Skills & Interests pills
+Column(
+crossAxisAlignment: CrossAxisAlignment.stretch,
+children: [
+_infoPill(
+icon: Icons.code_rounded,
+label: 'Skills: $skills',
+color: colors.primary,
+colors: colors,
+),
+if (interests.isNotEmpty) ...[
+const SizedBox(height: 8),
+_infoPill(
+icon: Icons.favorite_border_rounded,
+label: 'Interests: $interests',
+color: const Color(0xFF8B5CF6),
+colors: colors,
+),
+],
+],
+),
+
+const SizedBox(height: 14),
+
+// Recommendation text box
+Container(
+width: double.infinity,
+padding: const EdgeInsets.all(14),
+decoration: BoxDecoration(
+color: colors.cardSurface,
+borderRadius: BorderRadius.circular(14),
+border: Border.all(color: colors.cardBorder),
+),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+children: [
+Icon(
+Icons.auto_awesome_rounded,
+size: 14,
+color: colors.primary,
+),
+const SizedBox(width: 6),
+Text(
+'AI RECOMMENDATION ADVICE',
+style: TextStyle(
+fontSize: 10.5,
+fontWeight: FontWeight.w800,
+letterSpacing: 0.6,
+color: colors.primary,
+),
+),
+],
+),
+const SizedBox(height: 8),
+_recommendationBody(recommendation, isExpanded, colors),
+const SizedBox(height: 6),
+InkWell(
+onTap: () {
+setState(() {
+if (isExpanded) {
+_expandedDocIds.remove(docId);
+} else {
+_expandedDocIds.add(docId);
+}
+});
+},
+child: Padding(
+padding: const EdgeInsets.symmetric(vertical: 4),
+child: Row(
+mainAxisSize: MainAxisSize.min,
+children: [
+Text(
+isExpanded ? 'Show less' : 'Read full advice...',
+style: TextStyle(
+fontSize: 12,
+fontWeight: FontWeight.bold,
+color: colors.primary,
+),
+),
+Icon(
+isExpanded
+? Icons.keyboard_arrow_up_rounded
+: Icons.keyboard_arrow_down_rounded,
+size: 16,
+color: colors.primary,
+),
+],
+),
+),
+),
+],
+),
+),
+
+const SizedBox(height: 12),
+
+// Footer with user ID copy
+Row(
+children: [
+Icon(
+Icons.person_outline_rounded,
+size: 13,
+color: colors.textMuted,
+),
+const SizedBox(width: 4),
+Expanded(
+child: Text(
+'User: $userId',
+maxLines: 1,
+overflow: TextOverflow.ellipsis,
+style: TextStyle(
+fontSize: 11,
+fontFamily: 'monospace',
+color: colors.textMuted,
+),
+),
+),
+IconButton(
+tooltip: 'Copy Recommendation',
+constraints: const BoxConstraints(),
+padding: EdgeInsets.zero,
+icon: Icon(
+Icons.copy_rounded,
+size: 14,
+color: colors.primary,
+),
+onPressed: () {
+Clipboard.setData(
+ClipboardData(text: _plainRecommendation(recommendation)),
+);
+ScaffoldMessenger.of(context).showSnackBar(
+SnackBar(
+behavior: SnackBarBehavior.floating,
+backgroundColor: const Color(0xFF10B981),
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(12),
+),
+content: const Text(
+'AI Recommendation copied to clipboard!',
+),
+duration: const Duration(seconds: 2),
+),
+);
+},
+),
+],
+),
+],
+),
+);
+}
 
 
 
