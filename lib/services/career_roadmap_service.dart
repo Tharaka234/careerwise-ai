@@ -6,27 +6,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 
-/// Handles AI-powered personalized career development roadmaps.
 class CareerRoadmapService {
   CareerRoadmapService._();
 
-  // Firebase Firestore instance.
   static final _db = FirebaseFirestore.instance;
 
-  // Gemini API configuration.
   static const _apiKey =
   String.fromEnvironment('GEMINI_API_KEY');
 
-  // Gemini model used for roadmap generation.
+  // Use a model confirmed to work with your Gemini API key.
   static const _model = 'gemini-3.5-flash-lite';
 
   static String get _uid {
     final user = FirebaseAuth.instance.currentUser;
-
     if (user == null) {
       throw Exception('Please sign in first.');
     }
-
     return user.uid;
   }
 
@@ -44,6 +39,7 @@ class CareerRoadmapService {
         .collection('career_roadmaps')
         .doc(interviewId);
   }
+
   static Future<Map<String, dynamic>> generateRoadmap({
     required String interviewId,
   }) async {
@@ -52,43 +48,35 @@ class CareerRoadmapService {
 
     // Reuse an existing roadmap.
     final existing = await ref.get();
-
     if (existing.exists) {
-      return {
-        'id': existing.id,
-        ...existing.data()!,
-      };
+      return {'id': existing.id, ...existing.data()!};
     }
 
-    // Read the original mock interview.
+    // Read the original interview.
     final interviewDoc = await _db
         .collection('mock_interviews')
         .doc(interviewId)
         .get();
 
-    // Validate interview existence.
     if (!interviewDoc.exists) {
       throw Exception('Interview not found.');
     }
 
     final interview = interviewDoc.data()!;
 
-    // Validate interview ownership.
     if (interview['userId'] != uid) {
       throw Exception('Access denied.');
     }
 
-    // Validate interview feedback.
     final feedback = interview['feedback'];
-
     if (feedback is! Map) {
       throw Exception('Interview feedback is missing.');
     }
 
-    // Validate Gemini API configuration.
     if (_apiKey.isEmpty) {
       throw Exception('Gemini API key is missing.');
     }
+
     final prompt = '''
 You are an AI career development coach for CareerWise.
 
@@ -166,6 +154,7 @@ RULES:
       }),
     ).timeout(const Duration(seconds: 120));
 
+
     if (response.statusCode != 200) {
       String errorMessage = 'Unknown Gemini API error';
 
@@ -187,7 +176,6 @@ RULES:
       debugPrint(
         'Gemini HTTP Status: ${response.statusCode}',
       );
-
       debugPrint('Gemini Error: $errorMessage');
 
       throw Exception(
@@ -200,13 +188,11 @@ RULES:
     jsonDecode(response.body) as Map<String, dynamic>;
 
     final candidates = apiData['candidates'] as List?;
-
     if (candidates == null || candidates.isEmpty) {
       throw Exception('AI returned no roadmap.');
     }
 
-    final parts =
-    candidates.first['content']['parts'] as List;
+    final parts = candidates.first['content']['parts'] as List;
 
     final responseText = parts
         .map((part) => part['text']?.toString() ?? '')
@@ -237,9 +223,7 @@ RULES:
       for (var j = 0; j < rawTasks.length; j++) {
         final task = Map<String, dynamic>.from(rawTasks[j]);
 
-        final title =
-            task['title']?.toString().trim() ?? '';
-
+        final title = task['title']?.toString().trim() ?? '';
         final description =
             task['description']?.toString().trim() ?? '';
 
@@ -265,7 +249,6 @@ RULES:
     }
 
     final targetSkills = roadmap['targetSkills'];
-
     if (targetSkills is! List) {
       throw Exception('Invalid target skills.');
     }
@@ -290,26 +273,86 @@ RULES:
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    // Prevent overwriting an existing roadmap.
+    // Transaction prevents overwriting a roadmap created
+    // by another concurrent request.
     await _db.runTransaction((transaction) async {
       final snapshot = await transaction.get(ref);
-
       if (!snapshot.exists) {
         transaction.set(ref, result);
       }
     });
 
     final saved = await ref.get();
-
-    return {
-      'id': saved.id,
-      ...saved.data()!,
-    };
+    return {'id': saved.id, ...saved.data()!};
   }
 
-  // Step 5 — Real-time roadmap stream.
   static Stream<DocumentSnapshot<Map<String, dynamic>>>
   watchRoadmap(String interviewId) {
     return _roadmapRef(interviewId).snapshots();
+  }
+
+  static Future<void> updateTask({
+    required String interviewId,
+    required String taskId,
+    required bool completed,
+  }) async {
+    final ref = _roadmapRef(interviewId);
+
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(ref);
+
+      if (!snapshot.exists) {
+        throw Exception('Roadmap not found.');
+      }
+
+      final data = snapshot.data()!;
+      if (data['userId'] != _uid) {
+        throw Exception('Access denied.');
+      }
+
+      final weeks = (data['weeks'] as List)
+          .map((week) => Map<String, dynamic>.from(week))
+          .toList();
+
+      var found = false;
+      var completedCount = 0;
+      var totalCount = 0;
+
+      for (final week in weeks) {
+        final tasks = (week['tasks'] as List)
+            .map((task) => Map<String, dynamic>.from(task))
+            .toList();
+
+        for (final task in tasks) {
+          if (task['id'] == taskId) {
+            task['completed'] = completed;
+            found = true;
+          }
+
+          totalCount++;
+          if (task['completed'] == true) {
+            completedCount++;
+          }
+        }
+
+        week['tasks'] = tasks;
+      }
+
+      if (!found) {
+        throw Exception('Task not found.');
+      }
+
+      final progress = totalCount == 0
+          ? 0
+          : ((completedCount / totalCount) * 100).round();
+
+      transaction.update(ref, {
+        'weeks': weeks,
+        'completedTasks': completedCount,
+        'totalTasks': totalCount,
+        'progress': progress,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 }
