@@ -732,3 +732,107 @@ return null;
 );
 }
 
+// Step 12: Job Details Section Form Card
+
+
+Widget _buildJobDetailsSection(_AddJobColors colors) {
+return sectionCard(
+title: 'Job Details',
+subtitle: 'Set the employment type and salary.',
+icon: Icons.badge_outlined,
+colors: colors,
+children: [
+fieldLabel('Job Type', colors),
+DropdownButtonFormField<String>(
+initialValue: selectedJobType,
+dropdownColor: colors.cardBg,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+fontWeight: FontWeight.w500,
+),
+decoration: inputDecoration(
+hint: 'Select job type',
+icon: Icons.schedule_rounded,
+colors: colors,
+),
+borderRadius: BorderRadius.circular(14),
+items: [
+'Full Time',
+'Part Time',
+'Internship',
+'Contract',
+].map((type) {
+return DropdownMenuItem(
+value: type,
+child: Text(
+type,
+style: TextStyle(color: colors.textPrimary),
+),
+);
+}).toList(),
+onChanged: (value) {
+if (value == null) return;
+setState(() {
+selectedJobType = value;
+});
+},
+),
+const SizedBox(height: 18),
+fieldLabel('Job Category', colors),
+DropdownButtonFormField<String>(
+initialValue: selectedCategory,
+isExpanded: true,
+dropdownColor: colors.cardBg,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+fontWeight: FontWeight.w500,
+),
+decoration: inputDecoration(
+hint: 'Select job category',
+icon: Icons.category_outlined,
+colors: colors,
+),
+borderRadius: BorderRadius.circular(14),
+items: JobCategories.all.map((category) {
+return DropdownMenuItem<String>(
+value: category,
+child: Text(
+category,
+style: TextStyle(color: colors.textPrimary),
+),
+);
+}).toList(),
+onChanged: (value) {
+if (value == null) return;
+setState(() {
+selectedCategory = value;
+});
+},
+),
+const SizedBox(height: 18),
+fieldLabel('Salary', colors),
+TextFormField(
+controller: salaryController,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+fontWeight: FontWeight.w500,
+),
+decoration: inputDecoration(
+hint: 'e.g. Rs. 100,000 - 150,000',
+icon: Icons.payments_outlined,
+colors: colors,
+),
+validator: (value) {
+if (value == null || value.trim().isEmpty) {
+return 'Please enter salary';
+}
+return null;
+},
+),
+],
+);
+}
+
