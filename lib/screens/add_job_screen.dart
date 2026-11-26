@@ -63,3 +63,62 @@ class AddJobScreen extends StatefulWidget {
   State<AddJobScreen> createState() => _AddJobScreenState();
 }
 
+// Step 4: State Management, Form Controllers & Lifecycle
+
+
+class _AddJobScreenState extends State<AddJobScreen> {
+final _formKey = GlobalKey<FormState>();
+
+final titleController = TextEditingController();
+final companyController = TextEditingController();
+final locationController = TextEditingController();
+final descriptionController = TextEditingController();
+final salaryController = TextEditingController();
+
+String selectedJobType = 'Full Time';
+String selectedCategory = JobCategories.fallback;
+bool isLoading = false;
+
+@override
+void initState() {
+super.initState();
+
+if (widget.isEditMode) {
+final job = widget.existingJob!;
+
+titleController.text = job['title']?.toString() ?? '';
+companyController.text = job['company']?.toString() ?? '';
+locationController.text = job['location']?.toString() ?? '';
+descriptionController.text = job['description']?.toString() ?? '';
+salaryController.text = job['salary']?.toString() ?? '';
+
+final jobType = job['jobType']?.toString();
+
+if (jobType != null &&
+[
+'Full Time',
+'Part Time',
+'Internship',
+'Contract',
+].contains(jobType)) {
+selectedJobType = jobType;
+}
+
+final category = job['category']?.toString();
+
+if (category != null && JobCategories.all.contains(category)) {
+selectedCategory = category;
+}
+}
+}
+
+@override
+void dispose() {
+titleController.dispose();
+companyController.dispose();
+locationController.dispose();
+descriptionController.dispose();
+salaryController.dispose();
+super.dispose();
+}
+
