@@ -254,16 +254,6 @@ RULES:
           'completed': false,
         });
       }
-      final targetSkills = roadmap['targetSkills'];
-
-      if (targetSkills is! List) {
-        throw Exception('Invalid target skills.');
-      }
-
-// Temporary code until Part 7.
-      throw UnimplementedError(
-        'Roadmap storage is not implemented yet.',
-      );
 
       weeks.add({
         'week': i + 1,
@@ -273,6 +263,53 @@ RULES:
         'tasks': tasks,
       });
     }
+
+    final targetSkills = roadmap['targetSkills'];
+
+    if (targetSkills is! List) {
+      throw Exception('Invalid target skills.');
+    }
+
+    final result = <String, dynamic>{
+      'userId': uid,
+      'interviewId': interviewId,
+      'applicationId': interview['applicationId'] ?? '',
+      'jobTitle': interview['jobTitle'] ?? '',
+      'company': interview['company'] ?? '',
+      'interviewScore': interview['score'] ?? 0,
+      'title': roadmap['title']?.toString() ??
+          'Your Career Roadmap',
+      'overview': roadmap['overview']?.toString() ?? '',
+      'targetSkills':
+      targetSkills.map((e) => e.toString()).toList(),
+      'weeks': weeks,
+      'totalTasks': 12,
+      'completedTasks': 0,
+      'progress': 0,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    // Prevent overwriting an existing roadmap.
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(ref);
+
+      if (!snapshot.exists) {
+        transaction.set(ref, result);
+      }
+    });
+
+    final saved = await ref.get();
+
+    return {
+      'id': saved.id,
+      ...saved.data()!,
+    };
   }
 
+  // Step 5 — Real-time roadmap stream.
+  static Stream<DocumentSnapshot<Map<String, dynamic>>>
+  watchRoadmap(String interviewId) {
+    return _roadmapRef(interviewId).snapshots();
+  }
 }
