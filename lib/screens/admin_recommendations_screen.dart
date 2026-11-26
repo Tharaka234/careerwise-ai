@@ -533,6 +533,82 @@ fontWeight: FontWeight.bold,
 );
 }
 
+// Step 9: Recommendation JSON Parser & Plain Text Utilities
+
+
+Map<String, dynamic>? _parseRecommendation(String raw) {
+try {
+final decoded = jsonDecode(raw);
+if (decoded is Map<String, dynamic> &&
+(decoded['careers'] is List ||
+decoded['strengths'] is List ||
+decoded['actionPlan'] is List)) {
+return decoded;
+}
+} catch (_) {}
+return null;
+}
+
+List<String> _stringList(dynamic value) {
+if (value is! List) return const [];
+return value
+.map((e) => e.toString().trim())
+.where((e) => e.isNotEmpty)
+.toList();
+}
+
+List<Map<String, dynamic>> _mapList(dynamic value) {
+if (value is! List) return const [];
+return value
+.whereType<Map>()
+.map((e) => Map<String, dynamic>.from(e))
+.toList();
+}
+
+/// Readable plain text (used by the Copy button).
+String _plainRecommendation(String raw) {
+final data = _parseRecommendation(raw);
+if (data == null) return raw;
+
+final out = StringBuffer();
+final careers = _mapList(data['careers']);
+
+for (var i = 0; i < careers.length; i++) {
+final c = careers[i];
+out.writeln('${i + 1}. ${c['title'] ?? ''}');
+if ((c['whySuitable'] ?? '').toString().isNotEmpty) {
+out.writeln('   ${c['whySuitable']}');
+}
+for (final entry in {
+'Skills to develop': c['skillsToDevelop'],
+'Learning areas': c['learningAreas'],
+'Technologies': c['technologies'],
+}.entries) {
+final items = _stringList(entry.value);
+if (items.isNotEmpty) out.writeln('   ${entry.key}: ${items.join(', ')}');
+}
+out.writeln();
+}
+
+final strengths = _stringList(data['strengths']);
+if (strengths.isNotEmpty) {
+out.writeln('Strengths');
+for (final item in strengths) {
+out.writeln('- $item');
+}
+out.writeln();
+}
+
+final plan = _stringList(data['actionPlan']);
+if (plan.isNotEmpty) {
+out.writeln('Action plan');
+for (var i = 0; i < plan.length; i++) {
+out.writeln('${i + 1}. ${plan[i]}');
+}
+}
+
+return out.toString().trim();
+}
 
 
 
