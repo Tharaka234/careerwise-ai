@@ -948,6 +948,166 @@ Widget _card({
     child: child,
   );
 }
+// Step 12: Target Audience Selection Card
+Widget _audienceCard(_BroadcastColors colors) {
+  final audColor = _getAudienceColor(colors);
+  final audBg = _getAudienceBackground(colors);
+
+  return _card(
+    colors: colors,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: audBg,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: audColor.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Icon(
+                _audienceIcon,
+                color: audColor,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Target Audience',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Choose whether to alert all users, administrators, or users in a particular industry category.',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 18),
+
+        DropdownButtonFormField<String>(
+          initialValue: _audience,
+          isExpanded: true,
+          dropdownColor: colors.cardBg,
+          borderRadius: BorderRadius.circular(16),
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: _inputDecoration(
+            label: 'Selected Audience',
+            icon: Icons.people_alt_outlined,
+            colors: colors,
+          ),
+          selectedItemBuilder: (context) => [
+            'Everyone',
+            'Admins only',
+            ...JobCategories.all,
+          ].map((name) {
+            return Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+
+          items: [
+            const DropdownMenuItem<String>(
+              value: NotificationTopics.allUsers,
+              child: Text('Everyone (All registered users)'),
+            ),
+            const DropdownMenuItem<String>(
+              value: NotificationTopics.admins,
+              child: Text('Admins only'),
+            ),
+            ...JobCategories.all.map((category) {
+              return DropdownMenuItem<String>(
+                value: '$_categoryPrefix$category',
+                child: Text(
+                  category,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }),
+          ],
+          onChanged: _isSending
+              ? null
+              : (value) {
+            if (value == null) return;
+            setState(() {
+              _audience = value;
+            });
+          },
+        ),
+
+        const SizedBox(height: 14),
+
+        // Live pill status summary
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: audBg,
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(
+              color: audColor.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _audienceIcon,
+                color: audColor,
+                size: 17,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  _audienceDescription(),
+                  style: TextStyle(
+                    color: audColor,
+                    fontSize: 12,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
 
 
