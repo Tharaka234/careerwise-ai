@@ -403,6 +403,83 @@ Future<bool?> _showConfirmation(_BroadcastColors colors) {
     },
   );
 }
+// Step 8: Success and Error SnackBar Feedback Helpers
+
+
+void _showSuccessMessage() {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: const Color(0xFF10B981),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: const Row(
+          children: [
+            Icon(
+              Icons.check_circle_outline_rounded,
+              color: Colors.white,
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Announcement broadcast sent successfully!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+}
+
+void _showSnack(
+    String message, {
+      bool error = false,
+    }) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: error
+            ? const Color(0xFFDC2626)
+            : const Color(0xFF10B981),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        content: Row(
+          children: [
+            Icon(
+              error
+                  ? Icons.error_outline_rounded
+                  : Icons.info_outline_rounded,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+}
 
 
 
