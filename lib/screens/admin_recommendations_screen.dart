@@ -743,6 +743,125 @@ _labeledChips('Technologies', _stringList(c['technologies']), colors),
 }
 
 
+// Step 12: Skill Development Chips & Typography Formatting Helpers
+
+
+Widget _labeledChips(String label, List<String> items, _RecColors colors) {
+if (items.isEmpty) return const SizedBox.shrink();
+
+return Padding(
+padding: const EdgeInsets.only(top: 10),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+label,
+style: TextStyle(
+fontSize: 11,
+fontWeight: FontWeight.w700,
+color: colors.textMuted,
+),
+),
+const SizedBox(height: 5),
+Wrap(
+spacing: 6,
+runSpacing: 6,
+children: [for (final i in items) _miniChip(i, colors)],
+),
+],
+),
+);
+}
+
+Widget _miniChip(
+String text,
+_RecColors colors, {
+IconData? icon,
+bool strong = false,
+}) {
+if (text.isEmpty) return const SizedBox.shrink();
+
+return Container(
+padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+decoration: BoxDecoration(
+color: strong ? colors.iconBoxBg : colors.cardSurface,
+borderRadius: BorderRadius.circular(8),
+border: Border.all(
+color: strong ? colors.primary.withValues(alpha: 0.4) : colors.cardBorder,
+),
+),
+child: Row(
+mainAxisSize: MainAxisSize.min,
+children: [
+if (icon != null) ...[
+Icon(icon, size: 13, color: colors.primary),
+const SizedBox(width: 5),
+],
+Flexible(
+child: Text(
+text,
+style: TextStyle(
+fontSize: 11.5,
+fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
+color: strong ? colors.primary : colors.textPrimary,
+),
+),
+),
+],
+),
+);
+}
+
+Widget _sectionTitle(String text, IconData icon, _RecColors colors) {
+return Row(
+children: [
+Icon(icon, size: 14, color: colors.primary),
+const SizedBox(width: 6),
+Text(
+text,
+style: TextStyle(
+fontSize: 10.5,
+fontWeight: FontWeight.w800,
+letterSpacing: 0.6,
+color: colors.primary,
+),
+),
+],
+);
+}
+
+Widget _bullet(String text, _RecColors colors, {int? number}) {
+return Padding(
+padding: const EdgeInsets.only(bottom: 6),
+child: Row(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+SizedBox(
+width: 20,
+child: Text(
+number != null ? '$number.' : '•',
+style: TextStyle(
+fontSize: 12.5,
+fontWeight: FontWeight.w700,
+color: colors.primary,
+),
+),
+),
+Expanded(
+child: Text(
+text,
+style: TextStyle(
+fontSize: 12.5,
+height: 1.45,
+color: colors.textPrimary,
+),
+),
+),
+],
+),
+);
+}
+
 
 
 
