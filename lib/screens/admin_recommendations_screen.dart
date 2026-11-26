@@ -383,6 +383,156 @@ size: 19,
 );
 }
 
+// Step 8: Search Bar and Quick Launch Advisor Banner
+
+
+Widget _buildSearchAndAdvisorBanner(_RecColors colors) {
+return Column(
+children: [
+// Search bar
+TextField(
+controller: _searchController,
+onChanged: (val) {
+setState(() {
+_searchQuery = val.trim().toLowerCase();
+});
+},
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+),
+decoration: InputDecoration(
+hintText: 'Search assessments by goal, skills, or education...',
+hintStyle: TextStyle(
+color: colors.textMuted,
+fontSize: 13.5,
+),
+prefixIcon: Icon(
+Icons.search_rounded,
+color: colors.primary,
+size: 22,
+),
+suffixIcon: _searchQuery.isNotEmpty
+? IconButton(
+icon: Icon(
+Icons.clear_rounded,
+color: colors.textMuted,
+size: 18,
+),
+onPressed: () {
+_searchController.clear();
+setState(() {
+_searchQuery = '';
+});
+},
+)
+: null,
+filled: true,
+fillColor: colors.cardBg,
+contentPadding: const EdgeInsets.symmetric(
+horizontal: 18,
+vertical: 16,
+),
+border: OutlineInputBorder(
+borderRadius: BorderRadius.circular(16),
+borderSide: BorderSide(color: colors.cardBorder, width: 1.2),
+),
+enabledBorder: OutlineInputBorder(
+borderRadius: BorderRadius.circular(16),
+borderSide: BorderSide(color: colors.cardBorder, width: 1.2),
+),
+focusedBorder: OutlineInputBorder(
+borderRadius: BorderRadius.circular(16),
+borderSide: BorderSide(color: colors.primary, width: 1.8),
+),
+),
+),
+
+const SizedBox(height: 12),
+
+// Hero CTA to launch Career Advisor
+Container(
+width: double.infinity,
+padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+decoration: BoxDecoration(
+color: colors.cardBg,
+borderRadius: BorderRadius.circular(16),
+border: Border.all(color: colors.cardBorder, width: 1.2),
+),
+child: Row(
+children: [
+Container(
+width: 38,
+height: 38,
+decoration: BoxDecoration(
+color: const Color(0xFFC084FC).withValues(alpha: 0.16),
+borderRadius: BorderRadius.circular(11),
+),
+child: const Icon(
+Icons.auto_awesome_rounded,
+color: Color(0xFF9333EA),
+size: 20,
+),
+),
+const SizedBox(width: 12),
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+'AI Career Advisor Engine',
+style: TextStyle(
+fontSize: 13.5,
+fontWeight: FontWeight.bold,
+color: colors.textPrimary,
+),
+),
+Text(
+'Generate custom career roadmaps and skill assessments',
+style: TextStyle(
+fontSize: 11.5,
+color: colors.textSecondary,
+),
+),
+],
+),
+),
+const SizedBox(width: 8),
+ElevatedButton.icon(
+onPressed: () {
+Navigator.push(
+context,
+MaterialPageRoute(
+builder: (_) => const CareerAdvisorScreen(),
+),
+);
+},
+icon: const Icon(Icons.open_in_new_rounded, size: 14),
+label: const Text('Open Advisor'),
+style: ElevatedButton.styleFrom(
+backgroundColor: colors.primary,
+foregroundColor: Colors.white,
+elevation: 0,
+padding: const EdgeInsets.symmetric(
+horizontal: 12,
+vertical: 10,
+),
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(12),
+),
+textStyle: const TextStyle(
+fontSize: 12,
+fontWeight: FontWeight.bold,
+),
+),
+),
+],
+),
+),
+],
+);
+}
+
 
 
 
