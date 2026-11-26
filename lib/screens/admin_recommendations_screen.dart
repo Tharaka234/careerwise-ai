@@ -63,6 +63,103 @@ _searchController.dispose();
 super.dispose();
 }
 
+// Step 5: Screen Scaffold & Theme-Reactive StreamBuilder
 
+
+@override
+Widget build(BuildContext context) {
+return ValueListenableBuilder<bool>(
+valueListenable: AdminThemeManager.isDarkMode,
+builder: (context, isDark, _) {
+final colors = _RecColors(isDark: isDark);
+
+return Scaffold(
+backgroundColor: colors.pageBg,
+body: StreamBuilder<QuerySnapshot>(
+stream: FirebaseFirestore.instance
+.collection('career_recommendations')
+.orderBy('createdAt', descending: true)
+.snapshots(),
+builder: (context, snapshot) {
+final allDocs = snapshot.data?.docs ?? [];
+final filteredDocs = _filterRecommendations(allDocs);
+
+return CustomScrollView(
+physics: const BouncingScrollPhysics(),
+slivers: [
+SliverToBoxAdapter(
+child: _buildHeader(
+colors: colors,
+totalCount: allDocs.length,
+),
+),
+
+SliverPadding(
+padding: const EdgeInsets.fromLTRB(18, 20, 18, 36),
+sliver: SliverToBoxAdapter(
+child: Center(
+child: ConstrainedBox(
+constraints: const BoxConstraints(maxWidth: 820),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+// Search Bar & Launch Advisor Banner
+_buildSearchAndAdvisorBanner(colors),
+
+const SizedBox(height: 20),
+
+// Content list
+if (snapshot.connectionState ==
+ConnectionState.waiting &&
+!snapshot.hasData)
+_loadingCard(colors)
+else if (snapshot.hasError)
+_errorCard(
+'Error loading recommendations: ${snapshot.error}',
+colors,
+)
+else if (filteredDocs.isEmpty)
+_emptyCard(
+title: _searchQuery.isEmpty
+? 'No AI recommendations found'
+: 'No matching recommendations',
+subtitle: _searchQuery.isEmpty
+? 'AI career advice assessments will appear here as users explore.'
+: 'Try searching with a different career goal, skill or education.',
+colors: colors,
+)
+else
+ListView.separated(
+shrinkWrap: true,
+physics: const NeverScrollableScrollPhysics(),
+itemCount: filteredDocs.length,
+separatorBuilder: (context, index) =>
+const SizedBox(height: 16),
+itemBuilder: (context, index) {
+final doc = filteredDocs[index];
+final data =
+doc.data() as Map<String, dynamic>? ??
+{};
+return _recommendationCard(
+docId: doc.id,
+data: data,
+colors: colors,
+);
+},
+),
+],
+),
+),
+),
+),
+),
+],
+);
+},
+),
+);
+},
+);
+}
 
 
