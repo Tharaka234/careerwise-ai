@@ -656,3 +656,79 @@ height: 1.4,
 );
 }
 
+// Step 11: Basic Information Section Form Card
+
+
+Widget _buildBasicInfoSection(_AddJobColors colors) {
+return sectionCard(
+title: 'Basic Information',
+subtitle: 'Enter the main details about the job.',
+icon: Icons.info_outline_rounded,
+colors: colors,
+children: [
+fieldLabel('Job Title', colors),
+TextFormField(
+controller: titleController,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+fontWeight: FontWeight.w500,
+),
+decoration: inputDecoration(
+hint: 'e.g. Software Engineer',
+icon: Icons.work_outline_rounded,
+colors: colors,
+),
+validator: (value) {
+if (value == null || value.trim().isEmpty) {
+return 'Please enter job title';
+}
+return null;
+},
+),
+const SizedBox(height: 18),
+fieldLabel('Company', colors),
+TextFormField(
+controller: companyController,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+fontWeight: FontWeight.w500,
+),
+decoration: inputDecoration(
+hint: 'e.g. ABC Technologies',
+icon: Icons.business_rounded,
+colors: colors,
+),
+validator: (value) {
+if (value == null || value.trim().isEmpty) {
+return 'Please enter company name';
+}
+return null;
+},
+),
+const SizedBox(height: 18),
+fieldLabel('Location', colors),
+TextFormField(
+controller: locationController,
+style: TextStyle(
+color: colors.textPrimary,
+fontSize: 14.5,
+fontWeight: FontWeight.w500,
+),
+decoration: inputDecoration(
+hint: 'e.g. Colombo, Sri Lanka',
+icon: Icons.location_on_outlined,
+colors: colors,
+),
+validator: (value) {
+if (value == null || value.trim().isEmpty) {
+return 'Please enter location';
+}
+return null;
+},
+),
+],
+);
+}
+
