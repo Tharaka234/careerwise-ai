@@ -205,6 +205,204 @@ Future<void> _send(_BroadcastColors colors) async {
     }
   }
 }
+// Step 7: Pre-Send Confirmation Modal Bottom Sheet
+
+
+Future<bool?> _showConfirmation(_BroadcastColors colors) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) {
+      return SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(22, 14, 22, 24),
+          decoration: BoxDecoration(
+            color: colors.cardBg,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: colors.cardBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 28,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 44,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.cardBorder,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              // Icon badge
+              Container(
+                width: 66,
+                height: 66,
+                decoration: BoxDecoration(
+                  color: colors.iconBoxBg,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: colors.primary.withValues(alpha: 0.3),
+                    width: 1.2,
+                  ),
+                ),
+                child: Icon(
+                  Icons.campaign_rounded,
+                  color: colors.primary,
+                  size: 34,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(
+                'Send Announcement?',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              Text(
+                'This broadcast will be dispatched to $_audienceName.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 13,
+                  height: 1.45,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // Mini preview container
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: colors.cardSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colors.cardBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _titleController.text.trim(),
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _bodyController.text.trim(),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: colors.textSecondary,
+                        fontSize: 12.5,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 22),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.textPrimary,
+                        minimumSize: const Size(0, 50),
+                        side: BorderSide(color: colors.cardBorder, width: 1.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: colors.isDark
+                              ? const [Color(0xFF059669), Color(0xFF047857)]
+                              : const [Color(0xFF059669), Color(0xFF10B981)],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primary.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () => Navigator.pop(context, true),
+                          child: const Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.send_rounded,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Send Now',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
 
 
