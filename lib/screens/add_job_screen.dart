@@ -252,3 +252,66 @@ isLoading = false;
 }
 }
 
+// Step 6: Input Decoration Styling Utility
+
+
+InputDecoration inputDecoration({
+required String hint,
+required IconData icon,
+required _AddJobColors colors,
+}) {
+return InputDecoration(
+hintText: hint,
+hintStyle: TextStyle(
+color: colors.textMuted,
+fontSize: 14,
+),
+prefixIcon: Icon(
+icon,
+color: colors.primary,
+size: 20,
+),
+filled: true,
+fillColor: colors.inputBg,
+contentPadding: const EdgeInsets.symmetric(
+horizontal: 18,
+vertical: 16,
+),
+border: OutlineInputBorder(
+borderRadius: BorderRadius.circular(14),
+borderSide: BorderSide(
+color: colors.inputBorder,
+width: 1.2,
+),
+),
+enabledBorder: OutlineInputBorder(
+borderRadius: BorderRadius.circular(14),
+borderSide: BorderSide(
+color: colors.inputBorder,
+width: 1.2,
+),
+),
+focusedBorder: OutlineInputBorder(
+borderRadius: BorderRadius.circular(14),
+borderSide: BorderSide(
+color: colors.primary,
+width: 1.8,
+),
+),
+errorBorder: OutlineInputBorder(
+borderRadius: BorderRadius.circular(14),
+borderSide: const BorderSide(
+color: Colors.redAccent,
+width: 1.2,
+),
+),
+focusedErrorBorder: OutlineInputBorder(
+borderRadius: BorderRadius.circular(14),
+borderSide: const BorderSide(
+color: Colors.redAccent,
+width: 1.6,
+),
+),
+);
+}
+
