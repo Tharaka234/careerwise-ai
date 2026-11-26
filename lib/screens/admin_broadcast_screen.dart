@@ -135,6 +135,76 @@ String _audienceDescription() {
   }
   return 'Broadcast will be delivered to every active user across the platform.';
 }
+// Step 6: Announcement Broadcast Dispatch Logic
+
+
+Future<void> _send(_BroadcastColors colors) async {
+  FocusScope.of(context).unfocus();
+
+  if (!_formKey.currentState!.validate()) {
+    return;
+  }
+
+  final confirmed = await _showConfirmation(colors);
+
+  if (confirmed != true) {
+    return;
+  }
+
+  setState(() {
+    _isSending = true;
+  });
+
+  try {
+    final result =
+    await NotificationService.instance.broadcastAnnouncement(
+      title: _titleController.text.trim(),
+      body: _bodyController.text.trim(),
+      topic: _isCategoryAudience
+          ? NotificationTopics.allUsers
+          : _audience,
+      category: _isCategoryAudience ? _selectedCategory : null,
+    );
+
+    if (!mounted) return;
+
+    switch (result) {
+      case PushResult.sent:
+        _showSuccessMessage();
+        _titleController.clear();
+        _bodyController.clear();
+        setState(() {
+          _audience = NotificationTopics.allUsers;
+        });
+        break;
+
+      case PushResult.notConfigured:
+        _showSnack(
+          'Announcement saved to history, but push notification delivery is not configured.',
+          error: true,
+        );
+        break;
+
+      default:
+        _showSnack(
+          'Could not send the announcement. Please check the debug console.',
+          error: true,
+        );
+    }
+  } catch (e) {
+    if (!mounted) return;
+    _showSnack(
+      'Something went wrong while sending the announcement: $e',
+      error: true,
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isSending = false;
+      });
+    }
+  }
+}
 
 
 
