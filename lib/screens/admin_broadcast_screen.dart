@@ -1230,6 +1230,280 @@ Widget _messageCard(_BroadcastColors colors) {
     ),
   );
 }
+// Step 14: Mobile Push Notification Live Preview, Send Button & Icon Box
+
+
+Widget _previewCard(_BroadcastColors colors) {
+  final title = _titleController.text.trim().isEmpty
+      ? 'Your announcement title'
+      : _titleController.text.trim();
+
+  final body = _bodyController.text.trim().isEmpty
+      ? 'Your announcement message will appear here in the preview.'
+      : _bodyController.text.trim();
+
+  final audColor = _getAudienceColor(colors);
+  final audBg = _getAudienceBackground(colors);
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _sectionLabel(
+        'LIVE PREVIEW',
+        'Simulated appearance on user mobile devices',
+        colors,
+      ),
+      const SizedBox(height: 11),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: colors.cardBg,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: colors.cardBorder, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+                  .withValues(alpha: colors.isDark ? 0.35 : 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top preview row
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: colors.isDark
+                          ? const [Color(0xFF047857), Color(0xFF059669)]
+                          : const [Color(0xFF059669), Color(0xFF10B981)],
+                    ),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.campaign_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'CAREERWISE',
+                            style: TextStyle(
+                              color: colors.primary,
+                              fontSize: 10,
+                              letterSpacing: 0.9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 3,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: colors.textMuted,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'NOW',
+                            style: TextStyle(
+                              color: colors.textMuted,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 56),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    body,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: audBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: audColor.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Text(
+                      'Target: $_audienceName',
+                      style: TextStyle(
+                        color: audColor,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _sendButton(_BroadcastColors colors) {
+  return Container(
+    width: double.infinity,
+    height: 56,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: colors.isDark
+            ? const [Color(0xFF059669), Color(0xFF047857)]
+            : const [Color(0xFF059669), Color(0xFF10B981)],
+      ),
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: colors.primary.withValues(
+            alpha: colors.isDark ? 0.35 : 0.3,
+          ),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+        ),
+      ],
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: _isSending ? null : () => _send(colors),
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _isSending
+                ? const Row(
+              key: ValueKey('sending'),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Broadcasting announcement...',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            )
+                : const Row(
+              key: ValueKey('send'),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.send_rounded,
+                  size: 20,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 10),
+                Text(
+                  'Send Announcement',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+}
+
+
+// Small Icon Box Widget
+
+class _IconBox extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final Color background;
+
+  const _IconBox({
+    required this.icon,
+    required this.iconColor,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 46,
+      height: 46,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(
+        icon,
+        color: iconColor,
+        size: 24,
+      ),
+    );
+  }
+}
 
 
 
