@@ -610,6 +610,70 @@ out.writeln('${i + 1}. ${plan[i]}');
 return out.toString().trim();
 }
 
+// Step 10: Structured Recommendation Body & Collapsible View
+
+
+Widget _recommendationBody(
+String raw,
+bool expanded,
+_RecColors colors,
+) {
+final data = _parseRecommendation(raw);
+
+// Old / plain-text recommendation: show as before.
+if (data == null) {
+return Text(
+raw,
+maxLines: expanded ? 50 : 3,
+overflow: TextOverflow.ellipsis,
+style: TextStyle(fontSize: 13, color: colors.textPrimary, height: 1.5),
+);
+}
+
+final careers = _mapList(data['careers']);
+final strengths = _stringList(data['strengths']);
+final actionPlan = _stringList(data['actionPlan']);
+
+// Collapsed: just the recommended career titles.
+if (!expanded) {
+return Wrap(
+spacing: 6,
+runSpacing: 6,
+children: [
+for (final c in careers)
+_miniChip(
+(c['title'] ?? '').toString(),
+colors,
+icon: Icons.work_outline_rounded,
+strong: true,
+),
+],
+);
+}
+
+// Expanded: full, structured advice.
+return Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+for (var i = 0; i < careers.length; i++)
+_careerBlock(i + 1, careers[i], colors),
+if (strengths.isNotEmpty) ...[
+_sectionTitle('STRENGTHS', Icons.bolt_rounded, colors),
+const SizedBox(height: 6),
+for (final item in strengths) _bullet(item, colors),
+const SizedBox(height: 12),
+],
+if (actionPlan.isNotEmpty) ...[
+_sectionTitle('ACTION PLAN', Icons.checklist_rounded, colors),
+const SizedBox(height: 6),
+for (var i = 0; i < actionPlan.length; i++)
+_bullet(actionPlan[i], colors, number: i + 1),
+],
+],
+);
+}
+
+
 
 
 
