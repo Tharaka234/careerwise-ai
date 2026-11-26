@@ -37,4 +37,15 @@ class _RecColors {
   Color get iconBoxBg => isDark ? const Color(0x3310B981) : const Color(0x1F059669);
 }
 
+// Step 3: Main Screen Widget Skeleton (StatefulWidget)
+
+
+class AdminRecommendationsScreen extends StatefulWidget {
+  const AdminRecommendationsScreen({super.key});
+
+  @override
+  State<AdminRecommendationsScreen> createState() =>
+      _AdminRecommendationsScreenState();
+}
+
 
