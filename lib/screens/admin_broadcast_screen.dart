@@ -820,6 +820,134 @@ Widget _headerButton({
     ),
   );
 }
+// Step 11: Section Label, Input Decoration & Card Utilities
+
+
+Widget _sectionLabel(
+    String title,
+    String subtitle,
+    _BroadcastColors colors,
+    ) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 2),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: colors.primary,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          subtitle,
+          style: TextStyle(
+            color: colors.textSecondary,
+            fontSize: 12.5,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+InputDecoration _inputDecoration({
+  String? label,
+  String? hint,
+  required IconData icon,
+  bool alignLabelWithHint = false,
+  required _BroadcastColors colors,
+}) {
+  return InputDecoration(
+    labelText: label,
+    hintText: hint,
+    alignLabelWithHint: alignLabelWithHint,
+    labelStyle: TextStyle(
+      color: colors.textSecondary,
+      fontSize: 13,
+    ),
+    hintStyle: TextStyle(
+      color: colors.textMuted,
+      fontSize: 13.5,
+    ),
+    prefixIcon: Icon(
+      icon,
+      color: colors.primary,
+      size: 20,
+    ),
+    filled: true,
+    fillColor: colors.inputBg,
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 16,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(
+        color: colors.inputBorder,
+        width: 1.2,
+      ),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(
+        color: colors.inputBorder,
+        width: 1.2,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(
+        color: colors.primary,
+        width: 1.8,
+      ),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(
+        color: Colors.redAccent,
+      ),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(
+        color: Colors.redAccent,
+        width: 1.5,
+      ),
+    ),
+  );
+}
+
+Widget _card({
+  required Widget child,
+  required _BroadcastColors colors,
+}) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: colors.cardBg,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(
+        color: colors.cardBorder,
+        width: 1.2,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: (colors.isDark ? Colors.black : const Color(0xFF059669))
+              .withValues(alpha: colors.isDark ? 0.35 : 0.05),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: child,
+  );
+}
 
 
 
