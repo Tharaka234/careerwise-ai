@@ -1108,6 +1108,128 @@ Widget _audienceCard(_BroadcastColors colors) {
     ),
   );
 }
+// Step 13: Announcement Content Form Card
+Widget _messageCard(_BroadcastColors colors) {
+  return _card(
+    colors: colors,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _IconBox(
+              icon: Icons.edit_note_rounded,
+              iconColor: colors.primary,
+              background: colors.iconBoxBg,
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Announcement Content',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Keep your notification title and body engaging, accurate, and easy to read.',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        Text(
+          'Announcement Title *',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        TextFormField(
+          controller: _titleController,
+          maxLength: 60,
+          enabled: !_isSending,
+          textCapitalization: TextCapitalization.sentences,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14.5,
+            fontWeight: FontWeight.w500,
+          ),
+          decoration: _inputDecoration(
+            hint: 'e.g. CareerWise Tech Career Fair 2026',
+            icon: Icons.title_rounded,
+            colors: colors,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter an announcement title';
+            }
+            return null;
+          },
+          onChanged: (_) => setState(() {}),
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          'Announcement Message *',
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        TextFormField(
+          controller: _bodyController,
+          maxLength: 250,
+          maxLines: 5,
+          minLines: 4,
+          enabled: !_isSending,
+          textCapitalization: TextCapitalization.sentences,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 14.5,
+            height: 1.45,
+          ),
+          decoration: _inputDecoration(
+            hint:
+            'Write the announcement message details that users will read upon receiving...',
+            icon: Icons.notes_rounded,
+            alignLabelWithHint: true,
+            colors: colors,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter an announcement message';
+            }
+            return null;
+          },
+          onChanged: (_) => setState(() {}),
+        ),
+      ],
+    ),
+  );
+}
 
 
 
