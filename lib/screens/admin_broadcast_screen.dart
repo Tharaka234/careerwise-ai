@@ -480,6 +480,102 @@ void _showSnack(
       ),
     );
 }
+// Step 9: Screen Scaffold & Theme Reactive Build Method
+@override
+Widget build(BuildContext context) {
+  return ValueListenableBuilder<bool>(
+    valueListenable: AdminThemeManager.isDarkMode,
+    builder: (context, isDark, _) {
+      final colors = _BroadcastColors(isDark: isDark);
+
+      return Scaffold(
+        backgroundColor: colors.pageBg,
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: _buildHeader(colors),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(18, 22, 18, 40),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _sectionLabel(
+                            'AUDIENCE',
+                            'Choose who should receive this broadcast alert',
+                            colors,
+                          ),
+                          const SizedBox(height: 11),
+                          _audienceCard(colors),
+
+                          const SizedBox(height: 24),
+
+                          _sectionLabel(
+                            'MESSAGE DETAILS',
+                            'Write a clear, concise and impactful announcement',
+                            colors,
+                          ),
+                          const SizedBox(height: 11),
+                          _messageCard(colors),
+
+                          const SizedBox(height: 24),
+
+                          _previewCard(colors),
+
+                          const SizedBox(height: 26),
+
+                          _sendButton(colors),
+
+                          const SizedBox(height: 14),
+
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.shield_outlined,
+                                    size: 14,
+                                    color: colors.textMuted,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      'Only verified CareerWise administrators can send broadcast announcements',
+                                      textAlign: TextAlign.center,
+                                      softWrap: true,
+                                      style: TextStyle(
+                                        color: colors.textMuted,
+                                        fontSize: 11,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
 
 
