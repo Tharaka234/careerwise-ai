@@ -315,3 +315,37 @@ width: 1.6,
 );
 }
 
+// Step 7: Required Field Label Component
+
+
+Widget fieldLabel(
+String title,
+_AddJobColors colors, {
+bool required = true,
+}) {
+return Padding(
+padding: const EdgeInsets.only(bottom: 9),
+child: Row(
+children: [
+Text(
+title,
+style: TextStyle(
+fontSize: 14,
+fontWeight: FontWeight.bold,
+color: colors.textPrimary,
+letterSpacing: -0.2,
+),
+),
+if (required)
+const Text(
+' *',
+style: TextStyle(
+color: Colors.redAccent,
+fontWeight: FontWeight.bold,
+),
+),
+],
+),
+);
+}
+
