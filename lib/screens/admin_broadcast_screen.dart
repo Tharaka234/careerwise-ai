@@ -73,6 +73,68 @@ class _AdminBroadcastScreenState extends State<AdminBroadcastScreen> {
     super.dispose();
   }
 }
+// Step 5: Audience Filtering & Visual Styling Helpers
+bool get _isCategoryAudience => _audience.startsWith(_categoryPrefix);
+
+String? get _selectedCategory {
+  if (!_isCategoryAudience) {
+    return null;
+  }
+  return _audience.substring(_categoryPrefix.length);
+}
+
+String get _audienceName {
+  if (_audience == NotificationTopics.allUsers) {
+    return 'Everyone';
+  }
+  if (_audience == NotificationTopics.admins) {
+    return 'Admins only';
+  }
+  if (_isCategoryAudience) {
+    return _selectedCategory ?? 'Selected category';
+  }
+  return 'Selected audience';
+}
+
+IconData get _audienceIcon {
+  if (_audience == NotificationTopics.admins) {
+    return Icons.admin_panel_settings_outlined;
+  }
+  if (_isCategoryAudience) {
+    return Icons.work_outline_rounded;
+  }
+  return Icons.groups_2_outlined;
+}
+
+Color _getAudienceColor(_BroadcastColors colors) {
+  if (_audience == NotificationTopics.admins) {
+    return const Color(0xFF8B5CF6);
+  }
+  if (_isCategoryAudience) {
+    return colors.isDark ? const Color(0xFF34D399) : const Color(0xFF0F766E);
+  }
+  return colors.primary;
+}
+
+Color _getAudienceBackground(_BroadcastColors colors) {
+  if (_audience == NotificationTopics.admins) {
+    return colors.isDark ? const Color(0x338B5CF6) : const Color(0xFFF3E8FF);
+  }
+  if (_isCategoryAudience) {
+    return colors.isDark ? const Color(0x3310B981) : const Color(0xFFECFDF5);
+  }
+  return colors.isDark ? const Color(0x33059669) : const Color(0xFFE8F7F0);
+}
+
+String _audienceDescription() {
+  if (_audience == NotificationTopics.admins) {
+    return 'Only CareerWise administrators will receive this announcement.';
+  }
+  if (_isCategoryAudience) {
+    return 'Targeting candidates subscribed or interested in ${_selectedCategory ?? 'this category'}.';
+  }
+  return 'Broadcast will be delivered to every active user across the platform.';
+}
 
 
 
