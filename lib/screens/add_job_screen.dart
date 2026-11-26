@@ -564,3 +564,95 @@ fontSize: 12,
 );
 }
 
+// Step 10: Lush Emerald Gradient Hero Header Banner
+
+
+Widget _buildHeaderBanner(bool isEdit, _AddJobColors colors) {
+return Container(
+width: double.infinity,
+padding: const EdgeInsets.all(24),
+decoration: BoxDecoration(
+gradient: LinearGradient(
+begin: Alignment.topLeft,
+end: Alignment.bottomRight,
+colors: colors.isDark
+? const [
+Color(0xFF064E3B),
+Color(0xFF047857),
+Color(0xFF065F46),
+]
+: const [
+Color(0xFF065F46),
+Color(0xFF059669),
+Color(0xFF10B981),
+],
+),
+borderRadius: BorderRadius.circular(22),
+border: Border.all(
+color: Colors.white.withValues(
+alpha: colors.isDark ? 0.15 : 0.25,
+),
+width: 1.2,
+),
+boxShadow: [
+BoxShadow(
+color: colors.primary.withValues(
+alpha: colors.isDark ? 0.35 : 0.3,
+),
+blurRadius: 20,
+offset: const Offset(0, 8),
+),
+],
+),
+child: Row(
+children: [
+Container(
+width: 58,
+height: 58,
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.18),
+borderRadius: BorderRadius.circular(16),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.3),
+width: 1.2,
+),
+),
+child: const Icon(
+Icons.work_outline_rounded,
+color: Colors.white,
+size: 30,
+),
+),
+const SizedBox(width: 16),
+Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+isEdit ? 'Update Job Posting' : 'Create a New Job',
+style: const TextStyle(
+color: Colors.white,
+fontSize: 22,
+fontWeight: FontWeight.bold,
+letterSpacing: -0.4,
+),
+),
+const SizedBox(height: 6),
+Text(
+isEdit
+? 'Update the information for this job posting.'
+: 'Add a new opportunity for CareerWise users.',
+style: TextStyle(
+color: Colors.white.withValues(alpha: 0.9),
+fontSize: 13.5,
+height: 1.4,
+),
+),
+],
+),
+),
+],
+),
+);
+}
+
