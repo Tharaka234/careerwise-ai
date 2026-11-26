@@ -1,16 +1,32 @@
-// Step 1: Imports and Dependencies & Theme Palette Constants
+
+// Step 1: Imports and Dependencies & Dynamic Theme Palette Getters
+
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-const _green = Color(0xFF059669);
-const _dark = Color(0xFF123F35);
-const _bg = Color(0xFFF3F8F5);
-const _muted = Color(0xFF6B8177);
-const _border = Color(0xFFE1EBE5);
+import 'career_roadmap_screen.dart';
+import 'performance_comparison_screen.dart';
+import 'admin_profile_screen.dart';
 
-// Step 2: create InterviewHistoryScreen StatefulWidget skeleton
+// Same theme notifier used across the application
+bool get _isDark => AdminThemeManager.isDarkMode.value;
+Color get _green => _isDark ? const Color(0xFF34D399) : const Color(0xFF059669);
+Color get _dark => _isDark ? const Color(0xFFF0FDF4) : const Color(0xFF123F35);
+Color get _bg => _isDark ? const Color(0xFF0A140F) : const Color(0xFFF3F8F5);
+Color get _muted => _isDark ? const Color(0xFFA7C1B3) : const Color(0xFF6B8177);
+Color get _border => _isDark ? const Color(0xFF1E382A) : const Color(0xFFE1EBE5);
+Color get _cardBg => _isDark ? const Color(0xFF13231B) : Colors.white;
+Color get _softBg => _isDark ? const Color(0xFF18382A) : const Color(0xFFE8F7EE);
+// Theme-aware score panel and navigation colors
+Color get _backIcon => _isDark ? Colors.white : const Color(0xFF123F35);
+Color get _scoreTrack => Colors.white24;
+
+
+// Step 2: Main Screen Widget Skeleton (StatefulWidget)
+
+
 class InterviewHistoryScreen extends StatefulWidget {
   const InterviewHistoryScreen({super.key});
 
@@ -18,7 +34,10 @@ class InterviewHistoryScreen extends StatefulWidget {
   State<InterviewHistoryScreen> createState() =>
       _InterviewHistoryScreenState();
 }
-// Step 3: State Management, Search Controller & Filters
+
+// Step 3: State Management, Search Controller & Active Filters
+
+
 class _InterviewHistoryScreenState
     extends State<InterviewHistoryScreen> {
   // Search text editing controller
@@ -33,254 +52,271 @@ class _InterviewHistoryScreenState
     super.dispose();
   }
 
+  // Step 4: Theme-Reactive Scaffold & AppBar with Info Dialog
 
-  // Step 4: Screen Scaffold & Custom AppBar with Practice Info Dialog
+
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) => Scaffold(
         backgroundColor: _bg,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        toolbarHeight: 86,
-        automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            // Premium Back Button
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFFD8EDE3),
+        appBar: AppBar(
+          backgroundColor: _bg,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          toolbarHeight: 86,
+          automaticallyImplyLeading: false,
+          titleSpacing: 16,
+          title: Row(
+            children: [
+              // Premium Back Button
+              Container(
+                decoration: BoxDecoration(
+                  color: _cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: _border,
+                  ),
                 ),
+                child: IconButton(
+                  tooltip: 'Back',
+                  icon: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: _backIcon,
+                    size: 19,
+                  ),
+                  onPressed: () {
+                    Navigator.maybePop(context);
+                  },
+                ),
+              ),
+
+              const SizedBox(width: 14),
+
+              // Page Title and Subtitle
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Interview History',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _dark,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Your AI practice journey',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          // Information action button for interview scores
+          actions: [
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: _softBg,
+                borderRadius: BorderRadius.circular(14),
               ),
               child: IconButton(
-                tooltip: 'Back',
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Color(0xFF066B50),
-                  size: 19,
+                tooltip: 'About interview scores',
+                icon: Icon(
+                  Icons.info_outline_rounded,
+                  color: _green,
+                  size: 23,
                 ),
                 onPressed: () {
-                  Navigator.maybePop(context);
+                  showDialog<void>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text('AI Practice Scores'),
+                      content: const Text(
+                        'Scores are AI-generated practice estimates '
+                            'to help you improve your interview skills. '
+                            'They do not predict hiring decisions.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext);
+                          },
+                          child: const Text('Got it'),
+                        ),
+                      ],
+                    ),
+                  );
                 },
-              ),
-            ),
-
-            const SizedBox(width: 14),
-
-            // Page Title and Subtitle
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Interview History',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Color(0xFF123F35),
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Your AI practice journey',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Color(0xFF6B8177),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
               ),
             ),
           ],
         ),
 
-        // Information action button for interview scores
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD8F5E5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: IconButton(
-              tooltip: 'About interview scores',
-              icon: const Icon(
-                Icons.info_outline_rounded,
-                color: Color(0xFF059669),
-                size: 23,
-              ),
-              onPressed: () {
-                showDialog<void>(
-                  context: context,
-                  builder: (dialogContext) => AlertDialog(
-                    title: const Text('AI Practice Scores'),
-                    content: const Text(
-                      'Scores are AI-generated practice estimates '
-                      'to help you improve your interview skills. '
-                      'They do not predict hiring decisions.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(dialogContext);
-                        },
-                        child: const Text('Got it'),
+
+        // Step 5: Firestore Real-Time StreamBuilder & Metrics Calculation
+
+
+        body: user == null
+            ? const Center(child: Text('Please sign in first.'))
+            : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('mock_interviews')
+              .where('userId', isEqualTo: user.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return _message(
+                Icons.error_outline,
+                'Unable to load history',
+                '${snapshot.error}',
+              );
+            }
+
+            if (!snapshot.hasData) {
+              return Center(
+                child: CircularProgressIndicator(color: _green),
+              );
+            }
+
+            final all = snapshot.data!.docs.toList();
+
+            // Sort interviews by newest first
+            all.sort((a, b) {
+              final at = a.data()['createdAt'];
+              final bt = b.data()['createdAt'];
+              final av = at is Timestamp
+                  ? at.millisecondsSinceEpoch
+                  : 0;
+              final bv = bt is Timestamp
+                  ? bt.millisecondsSinceEpoch
+                  : 0;
+              return bv.compareTo(av);
+            });
+
+            // Calculate average and best practice scores
+            final scores = all
+                .map((doc) => _score(doc.data()['score']))
+                .toList();
+
+            final average = scores.isEmpty
+                ? 0
+                : (scores.reduce((a, b) => a + b) / scores.length)
+                .round();
+
+            final best = scores.isEmpty
+                ? 0
+                : scores.reduce((a, b) => a > b ? a : b);
+
+
+            // Step 6: Multi-Field Search Query & Threshold Filtering
+
+
+            final query = _search.text.toLowerCase().trim();
+
+            final filtered = all.where((doc) {
+              final data = doc.data();
+              final title =
+              '${data['jobTitle'] ?? ''}'.toLowerCase();
+              final company =
+              '${data['company'] ?? ''}'.toLowerCase();
+              final score = _score(data['score']);
+
+              final matchesSearch =
+                  title.contains(query) || company.contains(query);
+
+              final matchesFilter = switch (_filter) {
+                '80+' => score >= 80,
+                '60–79' => score >= 60 && score < 80,
+                'Below 60' => score < 60,
+                _ => true,
+              };
+
+              return matchesSearch && matchesFilter;
+            }).toList();
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 850),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
+                  children: [
+                    _header(),
+                    const SizedBox(height: 20),
+                    _stats(all.length, average, best),
+                    const SizedBox(height: 25),
+                    Text(
+                      'Your Practice Sessions',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: _dark,
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-
-      // Step 5: Firestore Real-Time StreamBuilder & Metrics Calculation
-      body: user == null
-          ? const Center(child: Text('Please sign in first.'))
-          : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('mock_interviews')
-                  .where('userId', isEqualTo: user.uid)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return _message(
-                    Icons.error_outline,
-                    'Unable to load history',
-                    '${snapshot.error}',
-                  );
-                }
-
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: _green),
-                  );
-                }
-
-                final all = snapshot.data!.docs.toList();
-
-                // Sort interviews by newest first
-                all.sort((a, b) {
-                  final at = a.data()['createdAt'];
-                  final bt = b.data()['createdAt'];
-                  final av = at is Timestamp
-                      ? at.millisecondsSinceEpoch
-                      : 0;
-                  final bv = bt is Timestamp
-                      ? bt.millisecondsSinceEpoch
-                      : 0;
-                  return bv.compareTo(av);
-                });
-
-                // Calculate average and best practice scores
-                final scores = all
-                    .map((doc) => _score(doc.data()['score']))
-                    .toList();
-
-                final average = scores.isEmpty
-                    ? 0
-                    : (scores.reduce((a, b) => a + b) / scores.length).round();
-
-                final best = scores.isEmpty
-                    ? 0
-                    : scores.reduce((a, b) => a > b ? a : b);
-
-                final query = _search.text.toLowerCase().trim();
-
-                // Multi-criteria filter: search query + score threshold
-                final filtered = all.where((doc) {
-                  final data = doc.data();
-                  final title =
-                      '${data['jobTitle'] ?? ''}'.toLowerCase();
-                  final company =
-                      '${data['company'] ?? ''}'.toLowerCase();
-                  final score = _score(data['score']);
-
-                  final matchesSearch =
-                      title.contains(query) || company.contains(query);
-
-                  final matchesFilter = switch (_filter) {
-                    '80+' => score >= 80,
-                    '60–79' => score >= 60 && score < 80,
-                    'Below 60' => score < 60,
-                    _ => true,
-                  };
-
-                  return matchesSearch && matchesFilter;
-                }).toList();
-
-                return Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 900),
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                      children: [
-                        _header(),
-                        const SizedBox(height: 20),
-                        _stats(all.length, average, best),
-                        const SizedBox(height: 25),
-                        const Text(
-                          'Your Practice Sessions',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: _dark,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Review your performance and keep improving.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: _muted,
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-
-                        // Search Input
-                        _buildSearchInput(),
-                        const SizedBox(height: 14),
-
-                        // Score Category Filter Chips
-                        _buildFilterChips(),
-                        const SizedBox(height: 18),
-
-                        // History List or Empty View
-                        if (filtered.isEmpty)
-                          _emptyHistory(all.isEmpty)
-                        else
-                          ...filtered.map(
-                            (doc) => _historyCard(
-                              context,
-                              doc.data(),
-                            ),
-                          ),
-                      ],
                     ),
-                  ),
-                );
-              },
-            ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Review your performance and keep improving.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _muted,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Search TextField
+                    _buildSearchInput(),
+                    const SizedBox(height: 14),
+
+                    // Category Filter Chips
+                    _buildFilterChips(),
+                    const SizedBox(height: 18),
+
+                    // History List or Empty State
+                    if (filtered.isEmpty)
+                      _emptyHistory(all.isEmpty)
+                    else
+                      ...filtered.map(
+                            (doc) => _historyCard(
+                          context,
+                          doc.id,
+                          doc.data(),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
-  // Step 6: Implement emerald gradient hero banner and responsive stats summary cards
+
+  // Step 7: Emerald Gradient Hero Banner & Ambient Decor Widget
+
+
   Widget _header() {
     return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -345,9 +381,7 @@ class _InterviewHistoryScreenState
                   size: 25,
                 ),
               ),
-
               const SizedBox(height: 25),
-
               const Text(
                 'Every interview\nmakes you better.',
                 style: TextStyle(
@@ -357,9 +391,7 @@ class _InterviewHistoryScreenState
                   height: 1.2,
                 ),
               ),
-
               const SizedBox(height: 14),
-
               const Text(
                 'Track your practice, review AI feedback, '
                     'and prepare confidently for your next opportunity.',
@@ -369,16 +401,14 @@ class _InterviewHistoryScreenState
                   height: 1.6,
                 ),
               ),
-
               const SizedBox(height: 20),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.2),
@@ -399,6 +429,9 @@ class _InterviewHistoryScreenState
       ),
     );
   }
+
+  // Step 8: Responsive Practice Performance Stats Grid Builder
+
 
   Widget _stats(int count, int average, int best) {
     return LayoutBuilder(
@@ -437,8 +470,7 @@ class _InterviewHistoryScreenState
           children: [
             for (int i = 0; i < cards.length; i++) ...[
               Expanded(child: cards[i]),
-              if (i != cards.length - 1)
-                const SizedBox(width: 10),
+              if (i != cards.length - 1) const SizedBox(width: 10),
             ],
           ],
         );
@@ -453,7 +485,7 @@ class _InterviewHistoryScreenState
         vertical: 18,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBg,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: _border),
       ),
@@ -463,7 +495,7 @@ class _InterviewHistoryScreenState
           const SizedBox(height: 9),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: _dark,
               fontSize: 25,
               fontWeight: FontWeight.w800,
@@ -473,7 +505,7 @@ class _InterviewHistoryScreenState
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: _muted,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -484,36 +516,39 @@ class _InterviewHistoryScreenState
     );
   }
 
-  // Step 7: Implement interactive search input and score category filter chips
+
+  // Step 9: Interactive Search Input & Category ChoiceChips
+
+
   Widget _buildSearchInput() {
     return TextField(
       controller: _search,
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: 'Search job title or company...',
-        prefixIcon: const Icon(
+        prefixIcon: Icon(
           Icons.search,
           color: _green,
         ),
         suffixIcon: _search.text.isNotEmpty
             ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  _search.clear();
-                  setState(() {});
-                },
-              )
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            _search.clear();
+            setState(() {});
+          },
+        )
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _cardBg,
         contentPadding: const EdgeInsets.all(16),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: _border),
+          borderSide: BorderSide(color: _border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(
+          borderSide: BorderSide(
             color: _green,
             width: 1.5,
           ),
@@ -529,41 +564,45 @@ class _InterviewHistoryScreenState
         children: ['All', '80+', '60–79', 'Below 60']
             .map(
               (filter) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(filter),
-                  selected: _filter == filter,
-                  onSelected: (_) {
-                    setState(() => _filter = filter);
-                  },
-                  selectedColor: const Color(0xFFD8F5E5),
-                  backgroundColor: Colors.white,
-                  labelStyle: TextStyle(
-                    color: _filter == filter ? _dark : _muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  side: const BorderSide(color: _border),
-                  showCheckmark: false,
-                ),
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(filter),
+              selected: _filter == filter,
+              onSelected: (_) {
+                setState(() => _filter = filter);
+              },
+              selectedColor: _softBg,
+              backgroundColor: _cardBg,
+              labelStyle: TextStyle(
+                color: _filter == filter ? _dark : _muted,
+                fontWeight: FontWeight.w600,
               ),
-            )
+              side: BorderSide(color: _border),
+              showCheckmark: false,
+            ),
+          ),
+        )
             .toList(),
       ),
     );
   }
 
-  // Step 8: Implement interview history session card with progress bar and navigation
+
+  // Step 10: Interview History Session Card with Progress Indicator
+
+
   Widget _historyCard(
-    BuildContext context,
-    Map<String, dynamic> data,
-  ) {
+      BuildContext context,
+      String interviewId,
+      Map<String, dynamic> data,
+      ) {
     final score = _score(data['score']);
     final date = _date(data['createdAt']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 13),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _border),
       ),
@@ -576,6 +615,7 @@ class _InterviewHistoryScreenState
             context,
             MaterialPageRoute(
               builder: (_) => InterviewHistoryDetailScreen(
+                interviewId: interviewId,
                 data: data,
               ),
             ),
@@ -590,10 +630,10 @@ class _InterviewHistoryScreenState
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F7EE),
+                        color: _softBg,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.work_outline,
                         color: _green,
                       ),
@@ -605,7 +645,7 @@ class _InterviewHistoryScreenState
                         children: [
                           Text(
                             '${data['jobTitle'] ?? 'Interview'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: _dark,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
@@ -614,7 +654,7 @@ class _InterviewHistoryScreenState
                           const SizedBox(height: 5),
                           Text(
                             '${data['company'] ?? 'Company'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: _muted,
                               fontSize: 13,
                             ),
@@ -628,13 +668,13 @@ class _InterviewHistoryScreenState
                       children: [
                         Text(
                           '$score',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: _green,
                             fontSize: 25,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const Text(
+                        Text(
                           '/ 100',
                           style: TextStyle(
                             color: _muted,
@@ -650,7 +690,7 @@ class _InterviewHistoryScreenState
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
                     value: score / 100,
-                    backgroundColor: const Color(0xFFE6F0EA),
+                    backgroundColor: _softBg,
                     color: _green,
                     minHeight: 7,
                   ),
@@ -658,7 +698,7 @@ class _InterviewHistoryScreenState
                 const SizedBox(height: 15),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
                       size: 15,
                       color: _muted,
@@ -667,13 +707,13 @@ class _InterviewHistoryScreenState
                     Expanded(
                       child: Text(
                         date,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: _muted,
                           fontSize: 12,
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       'View Feedback',
                       style: TextStyle(
                         color: _green,
@@ -682,7 +722,7 @@ class _InterviewHistoryScreenState
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_ios,
                       size: 13,
                       color: _green,
@@ -697,7 +737,10 @@ class _InterviewHistoryScreenState
     );
   }
 
-  // Step 9: Implement empty history state and reusable feedback message card
+
+  // Step 11: Empty History State & Reusable Feedback Message Widget
+
+
   Widget _emptyHistory(bool noInterviews) {
     return _message(
       noInterviews
@@ -706,20 +749,20 @@ class _InterviewHistoryScreenState
       noInterviews ? 'No interviews yet' : 'No matching interviews',
       noInterviews
           ? 'Complete an AI mock interview to see your '
-              'results here.'
+          'results here.'
           : 'Try another search or score filter.',
     );
   }
 
   Widget _message(
-    IconData icon,
-    String title,
-    String description,
-  ) {
+      IconData icon,
+      String title,
+      String description,
+      ) {
     return Container(
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -729,7 +772,7 @@ class _InterviewHistoryScreenState
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: _dark,
@@ -739,7 +782,7 @@ class _InterviewHistoryScreenState
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: _muted),
+            style: TextStyle(color: _muted),
           ),
         ],
       ),
@@ -748,12 +791,16 @@ class _InterviewHistoryScreenState
 }
 
 
-// Step 10: Full Interview History Detail Screen Layout
+// Step 12: Interview History Detail Screen Layout & Score Banner
+
+
 class InterviewHistoryDetailScreen extends StatelessWidget {
+  final String interviewId;
   final Map<String, dynamic> data;
 
   const InterviewHistoryDetailScreen({
     super.key,
+    required this.interviewId,
     required this.data,
   });
 
@@ -770,228 +817,356 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
 
     final score = _score(data['score']);
 
-    return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) => Scaffold(
         backgroundColor: _bg,
-        title: const Text(
-          'Interview Results',
-          style: TextStyle(
-            color: _dark,
-            fontWeight: FontWeight.w800,
+        appBar: AppBar(
+          backgroundColor: _bg,
+          foregroundColor: _backIcon,
+          iconTheme: IconThemeData(color: _backIcon),
+          title: Text(
+            'Interview Results',
+            style: TextStyle(
+              color: _dark,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 850),
-          child: ListView(
-            padding: const EdgeInsets.all(18),
-            children: [
-              Container(
-                padding: const EdgeInsets.all(26),
-                decoration: BoxDecoration(
-                  color: _dark,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.emoji_events_outlined,
-                      color: Color(0xFFA7F3D0),
-                      size: 48,
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 850),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 32),
+              children: [
+                Container(
+                  width: double.infinity,
+                  clipBehavior: Clip.antiAlias,
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF066B50),
+                        Color(0xFF059669),
+                        Color(0xFF10B981)
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'YOUR PRACTICE SCORE',
-                      style: TextStyle(
-                        color: Color(0xFFA7F3D0),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '$score / 100',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 40,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: score / 100,
-                        color: const Color(0xFF6EE7B7),
-                        backgroundColor: Colors.white24,
-                        minHeight: 8,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      '${data['jobTitle'] ?? 'Interview'}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${data['company'] ?? ''}',
-                      style: const TextStyle(
-                        color: Color(0xFFCCE5D9),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 18),
-
-
-              // Step 11: AI Performance Summary, Strengths & Improvement Cards
-              _sectionCard(
-                'AI Performance Summary',
-                Icons.psychology_outlined,
-                child: Text(
-                  '${feedback['summary'] ?? 'No summary available.'}',
-                  style: const TextStyle(
-                    height: 1.65,
-                    color: _dark,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF059669).withValues(alpha: 0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
                   ),
-                ),
-              ),
-
-              _feedbackCard(
-                'Your Strengths',
-                Icons.check_circle_outline,
-                feedback['strengths'],
-              ),
-              _feedbackCard(
-                'Areas to Improve',
-                Icons.trending_up,
-                feedback['improvements'],
-              ),
-              _feedbackCard(
-                'Preparation Tips',
-                Icons.lightbulb_outline,
-                feedback['tips'],
-              ),
-
-              const SizedBox(height: 14),
-
-
-              // Step 12: Question & Answer Review Cards with Navigation
-              const Text(
-                'Questions & Your Answers',
-                style: TextStyle(
-                  color: _dark,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Review your responses to prepare for your next interview.',
-                style: TextStyle(color: _muted, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-
-              ...questions.asMap().entries.map((entry) {
-                final raw = entry.value;
-                final item = raw is Map
-                    ? Map<String, dynamic>.from(raw)
-                    : <String, dynamic>{};
-
-                return _sectionCard(
-                  'Question ${entry.key + 1}',
-                  Icons.chat_bubble_outline,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      Text(
-                        '${item['question'] ?? ''}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: _dark,
-                          fontWeight: FontWeight.w700,
-                          height: 1.5,
+                      Positioned(
+                        top: -90,
+                        right: -70,
+                        child: Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: _bg,
-                          borderRadius: BorderRadius.circular(14),
+                      Positioned(
+                        bottom: -110,
+                        right: 100,
+                        child: Container(
+                          width: 170,
+                          height: 170,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.06),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'YOUR ANSWER',
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(11),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2)),
+                            ),
+                            child: const Icon(Icons.emoji_events_outlined,
+                                color: Colors.white, size: 25),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'YOUR PRACTICE SCORE',
+                            style: TextStyle(
+                              color: Color(0xFFE5FFF3),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$score / 100',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: score / 100,
+                              color: const Color(0xFF6EE7B7),
+                              backgroundColor: _scoreTrack,
+                              minHeight: 6,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${data['jobTitle'] ?? 'Interview'}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${data['company'] ?? ''}',
+                            style: const TextStyle(
+                              color: Color(0xFFE5FFF3),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2)),
+                            ),
+                            child: const Text(
+                              'AI Interview Practice',
                               style: TextStyle(
-                                color: _green,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 11,
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const SizedBox(height: 9),
-                            SelectableText(
-                              '${item['answer'] ?? ''}',
-                              style: const TextStyle(
-                                height: 1.6,
-                                color: _dark,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                );
-              }),
+                ),
+                const SizedBox(height: 18),
 
-              const SizedBox(height: 14),
 
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Back to History'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _green,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                // Step 13: AI Performance Summary, Strengths & Q&A Cards
+
+
+                _sectionCard(
+                  'AI Performance Summary',
+                  Icons.psychology_outlined,
+                  child: Text(
+                    '${feedback['summary'] ?? 'No summary available.'}',
+                    style: TextStyle(
+                      height: 1.65,
+                      color: _dark,
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
-            ],
+                _feedbackCard(
+                  'Your Strengths',
+                  Icons.check_circle_outline,
+                  feedback['strengths'],
+                ),
+                _feedbackCard(
+                  'Areas to Improve',
+                  Icons.trending_up,
+                  feedback['improvements'],
+                ),
+                _feedbackCard(
+                  'Preparation Tips',
+                  Icons.lightbulb_outline,
+                  feedback['tips'],
+                ),
+
+                const SizedBox(height: 14),
+                Text(
+                  'Questions & Your Answers',
+                  style: TextStyle(
+                    color: _dark,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Review your responses to prepare for your next interview.',
+                  style: TextStyle(color: _muted, fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+
+                ...questions.asMap().entries.map((entry) {
+                  final raw = entry.value;
+                  final item = raw is Map
+                      ? Map<String, dynamic>.from(raw)
+                      : <String, dynamic>{};
+
+                  return _sectionCard(
+                    'Question ${entry.key + 1}',
+                    Icons.chat_bubble_outline,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${item['question'] ?? ''}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: _dark,
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _softBg,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'YOUR ANSWER',
+                                style: TextStyle(
+                                  color: _green,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const SizedBox(height: 9),
+                              SelectableText(
+                                '${item['answer'] ?? ''}',
+                                style: TextStyle(
+                                  height: 1.6,
+                                  color: _dark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 14),
+
+
+                // Step 14: Career Roadmap & Comparison Actions with Helpers
+
+
+                if (data['originalInterviewId'] is String)
+                  ElevatedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PerformanceComparisonScreen(
+                          originalInterviewId:
+                          data['originalInterviewId'] as String,
+                          reassessmentInterviewId: interviewId,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(Icons.insights_rounded),
+                    label: const Text('View Performance Comparison'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                    ),
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CareerRoadmapScreen(
+                              interviewId: interviewId,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.auto_awesome_rounded),
+                      label: const Text(
+                        'Generate My Career Roadmap',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _green,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 14),
+
+                SizedBox(
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Back to History'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _green,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-
-  // Step 13: Reusable Feedback & Section Card Builders
+  // Reusable feedback card
   Widget _feedbackCard(
-    String title,
-    IconData icon,
-    dynamic items,
-  ) {
+      String title,
+      IconData icon,
+      dynamic items,
+      ) {
     final values = items is List ? items : <dynamic>[];
 
     return _sectionCard(
@@ -1000,48 +1175,49 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
       child: values.isEmpty
           ? const Text('No feedback available.')
           : Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: values.map((item) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: values.map((item) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        color: _green,
-                        size: 17,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          '$item',
-                          style: const TextStyle(
-                            color: _dark,
-                            height: 1.55,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: _green,
+                  size: 17,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '$item',
+                    style: TextStyle(
+                      color: _dark,
+                      height: 1.55,
+                      fontSize: 14,
+                    ),
                   ),
-                );
-              }).toList(),
+                ),
+              ],
             ),
+          );
+        }).toList(),
+      ),
     );
   }
 
+  // Reusable section container card
   Widget _sectionCard(
-    String title,
-    IconData icon, {
-    required Widget child,
-  }) {
+      String title,
+      IconData icon, {
+        required Widget child,
+      }) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _border),
       ),
@@ -1055,7 +1231,7 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _dark,
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -1071,7 +1247,8 @@ class InterviewHistoryDetailScreen extends StatelessWidget {
     );
   }
 }
-// Step 14: Data Formatting & Score Clamping Helper Functions
+
+// Data formatting and score clamping helper functions
 int _score(dynamic value) {
   final number = value is num
       ? value.toInt()
@@ -1090,5 +1267,3 @@ String _date(dynamic value) {
   return '${two(date.day)}/${two(date.month)}/${date.year}'
       '  •  ${two(date.hour)}:${two(date.minute)}';
 }
-
-
