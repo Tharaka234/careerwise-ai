@@ -187,6 +187,202 @@ recommendation.contains(_searchQuery);
 }).toList();
 }
 
+// Step 7: Emerald Gradient Header Banner & Header Button
+
+
+Widget _buildHeader({
+required _RecColors colors,
+required int totalCount,
+}) {
+return Container(
+decoration: BoxDecoration(
+gradient: LinearGradient(
+begin: Alignment.topLeft,
+end: Alignment.bottomRight,
+colors: colors.isDark
+? const [Color(0xFF03442C), Color(0xFF065F46), Color(0xFF047857)]
+: const [Color(0xFF047857), Color(0xFF059669), Color(0xFF10B981)],
+),
+borderRadius: const BorderRadius.only(
+bottomLeft: Radius.circular(32),
+bottomRight: Radius.circular(32),
+),
+boxShadow: [
+BoxShadow(
+color: colors.primary.withValues(alpha: colors.isDark ? 0.35 : 0.25),
+blurRadius: 20,
+offset: const Offset(0, 8),
+),
+],
+),
+child: Stack(
+children: [
+Positioned(
+right: -40,
+top: -50,
+child: Container(
+width: 170,
+height: 170,
+decoration: BoxDecoration(
+shape: BoxShape.circle,
+color: Colors.white.withValues(alpha: 0.08),
+),
+),
+),
+Positioned(
+left: -50,
+bottom: -60,
+child: Container(
+width: 160,
+height: 160,
+decoration: BoxDecoration(
+shape: BoxShape.circle,
+color: Colors.white.withValues(alpha: 0.06),
+),
+),
+),
+
+SafeArea(
+bottom: false,
+child: Padding(
+padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Row(
+children: [
+_headerIconButton(
+icon: Icons.arrow_back_ios_new_rounded,
+onTap: () => Navigator.maybePop(context),
+),
+const Spacer(),
+
+Container(
+padding: const EdgeInsets.symmetric(
+horizontal: 14,
+vertical: 7,
+),
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.18),
+borderRadius: BorderRadius.circular(30),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.26),
+),
+),
+child: Row(
+mainAxisSize: MainAxisSize.min,
+children: [
+Container(
+width: 8,
+height: 8,
+decoration: const BoxDecoration(
+color: Color(0xFFC084FC),
+shape: BoxShape.circle,
+),
+),
+const SizedBox(width: 7),
+Text(
+'$totalCount AI Assessments',
+style: const TextStyle(
+color: Colors.white,
+fontSize: 11.5,
+fontWeight: FontWeight.bold,
+letterSpacing: 0.3,
+),
+),
+],
+),
+),
+],
+),
+
+const SizedBox(height: 22),
+
+Row(
+children: [
+Container(
+width: 56,
+height: 56,
+decoration: BoxDecoration(
+color: Colors.white.withValues(alpha: 0.18),
+borderRadius: BorderRadius.circular(18),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.28),
+),
+),
+child: const Icon(
+Icons.psychology_outlined,
+color: Colors.white,
+size: 32,
+),
+),
+const SizedBox(width: 16),
+const Expanded(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.start,
+children: [
+Text(
+'AI Recommendations',
+style: TextStyle(
+color: Colors.white,
+fontSize: 23,
+fontWeight: FontWeight.w800,
+letterSpacing: -0.4,
+),
+),
+SizedBox(height: 3),
+Text(
+'Platform AI career advice and guidance assessments',
+style: TextStyle(
+color: Color(0xFFE2FBEA),
+fontSize: 13,
+fontWeight: FontWeight.w500,
+),
+),
+],
+),
+),
+],
+),
+],
+),
+),
+),
+],
+),
+);
+}
+
+Widget _headerIconButton({
+required IconData icon,
+required VoidCallback onTap,
+}) {
+return Material(
+color: Colors.white.withValues(alpha: 0.16),
+borderRadius: BorderRadius.circular(14),
+child: InkWell(
+onTap: onTap,
+borderRadius: BorderRadius.circular(14),
+child: Container(
+width: 42,
+height: 42,
+alignment: Alignment.center,
+decoration: BoxDecoration(
+borderRadius: BorderRadius.circular(14),
+border: Border.all(
+color: Colors.white.withValues(alpha: 0.22),
+),
+),
+child: Icon(
+icon,
+color: Colors.white,
+size: 19,
+),
+),
+),
+);
+}
+
 
 
 
