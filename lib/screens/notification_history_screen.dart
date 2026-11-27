@@ -542,6 +542,338 @@ class _NotificationHistoryScreenState
           : const Color(0xFFECFDF5),
     );
   }
+
+  // =========================================================
+  // DISMISSIBLE
+  // =========================================================
+
+  Widget _buildDismissibleCard(
+      NotificationHistoryItem item,
+      _NotificationColors colors,
+      ) {
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) {
+        _deleteNotifications([item]);
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFFF87171),
+              Color(0xFFDC2626),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.delete_outline_rounded,
+              color: Colors.white,
+              size: 25,
+            ),
+            SizedBox(height: 3),
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+      child: _buildNotificationCard(item, colors),
+    );
+  }
+
+  // =========================================================
+  // CARD
+  // =========================================================
+
+  Widget _buildNotificationCard(
+      NotificationHistoryItem item,
+      _NotificationColors colors,
+      ) {
+    final style = _getNotificationStyle(item, colors.isDark);
+
+    final isDeleted = item.type == NotificationTypes.jobDeleted;
+
+    final isJob = item.jobId != null &&
+        !isDeleted &&
+        (item.type == NotificationTypes.newJob ||
+            item.type == NotificationTypes.jobUpdated);
+    final isApplicationUpdate =
+        item.type == NotificationTypes.applicationStatus;
+    final canOpen = isJob || isApplicationUpdate;
+
+    return Material(
+      color: colors.cardBg,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: canOpen
+            ? () {
+          NotificationService.instance.openHistoryItem(item);
+        }
+            : null,
+        child: Container(
+          decoration: BoxDecoration(
+            color: colors.cardBg,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: colors.cardBorder,
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.isDark
+                    ? Colors.black26
+                    : const Color(0xFF0F172A).withValues(alpha: 0.04),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: style.color,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(22),
+                      bottomLeft: Radius.circular(22),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(15, 16, 10, 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: style.background,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            style.icon,
+                            color: style.color,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      style.label.toUpperCase(),
+                                      style: TextStyle(
+                                        color: style.color,
+                                        fontSize: 9.5,
+                                        letterSpacing: 0.8,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    _timeAgo(item.createdAt),
+                                    style: TextStyle(
+                                      color: colors.textSecondary,
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  if (_isRecent(item.createdAt)) ...[
+                                    const SizedBox(width: 7),
+                                    Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: BoxDecoration(
+                                        color: style.color,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 7),
+                              Text(
+                                item.title,
+                                style: TextStyle(
+                                  color: colors.textPrimary,
+                                  fontSize: 15.5,
+                                  height: 1.25,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.15,
+                                ),
+                              ),
+                              const SizedBox(height: 7),
+                              Text(
+                                item.body,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: 13,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              if (item.category != null) ...[
+                                const SizedBox(height: 13),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.isDark
+                                        ? const Color(0xFF0E2319)
+                                        : const Color(0xFFF0FDF4),
+                                    borderRadius: BorderRadius.circular(9),
+                                    border: Border.all(
+                                      color: colors.cardBorder,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.sell_outlined,
+                                        color: style.color,
+                                        size: 12,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          item.category!,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: colors.textSecondary,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (canOpen) ...[
+                                const SizedBox(height: 15),
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () {
+                                    NotificationService.instance
+                                        .openHistoryItem(item);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 3,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          isApplicationUpdate
+                                              ? 'View applications'
+                                              : item.type ==
+                                              NotificationTypes
+                                                  .jobUpdated
+                                              ? 'View changes'
+                                              : 'View opportunity',
+                                          style: TextStyle(
+                                            color: style.color,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Icon(
+                                          Icons.arrow_forward_rounded,
+                                          color: style.color,
+                                          size: 16,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
+                          color: colors.cardBg,
+                          splashRadius: 20,
+                          icon: Icon(
+                            Icons.more_horiz_rounded,
+                            color: colors.textSecondary,
+                            size: 21,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: colors.cardBorder,
+                              width: 1.2,
+                            ),
+                          ),
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              _deleteNotifications([item]);
+                            }
+                          },
+                          itemBuilder: (context) {
+                            return const [
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Color(0xFFEF4444),
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Remove notification',
+                                      style: TextStyle(
+                                        color: Color(0xFFDC2626),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ];
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ===========================================================
