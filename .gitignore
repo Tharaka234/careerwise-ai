@@ -117,4 +117,23 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+# Android Studio / IntelliJ
 
+# IDE configuration
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Environment variables and API keys
+.env
+.env.*
+env.json
+!env.example.json
+
+# Firebase private credentials
+serviceAccountKey.json
+firebase-adminsdk-*.json
+
+# Flutter dependency lock file
+!pubspec.lock
