@@ -874,6 +874,127 @@ class _NotificationHistoryScreenState
       ),
     );
   }
+
+  // =========================================================
+  // GROUP NOTIFICATIONS
+  // =========================================================
+
+  List<Widget> _buildGroupedNotifications(
+      List<NotificationHistoryItem> items,
+      _NotificationColors colors,
+      ) {
+    final today = <NotificationHistoryItem>[];
+    final yesterday = <NotificationHistoryItem>[];
+    final earlier = <NotificationHistoryItem>[];
+
+    final now = DateTime.now();
+
+    final todayDate = DateTime(now.year, now.month, now.day);
+    final yesterdayDate = todayDate.subtract(const Duration(days: 1));
+
+    for (final item in items) {
+      final time = item.createdAt;
+
+      if (time == null) {
+        today.add(item);
+        continue;
+      }
+
+      final itemDate = DateTime(time.year, time.month, time.day);
+
+      if (itemDate == todayDate) {
+        today.add(item);
+      } else if (itemDate == yesterdayDate) {
+        yesterday.add(item);
+      } else {
+        earlier.add(item);
+      }
+    }
+
+    final slivers = <Widget>[];
+
+    if (today.isNotEmpty) {
+      slivers.add(_buildGroupTitle('TODAY', today.length, colors));
+      slivers.add(_buildNotificationGroup(today, colors));
+    }
+
+    if (yesterday.isNotEmpty) {
+      slivers.add(_buildGroupTitle('YESTERDAY', yesterday.length, colors));
+      slivers.add(_buildNotificationGroup(yesterday, colors));
+    }
+
+    if (earlier.isNotEmpty) {
+      slivers.add(_buildGroupTitle('EARLIER', earlier.length, colors));
+      slivers.add(_buildNotificationGroup(earlier, colors));
+    }
+
+    return slivers;
+  }
+
+  Widget _buildGroupTitle(
+      String title,
+      int count,
+      _NotificationColors colors,
+      ) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 11),
+        child: Row(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.60),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '$count',
+              style: TextStyle(
+                color: colors.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationGroup(
+      List<NotificationHistoryItem> items,
+      _NotificationColors colors,
+      ) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+              (context, index) {
+            final item = items[index];
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildDismissibleCard(item, colors),
+            );
+          },
+          childCount: items.length,
+        ),
+      ),
+    );
+  }
 }
 
 // ===========================================================
