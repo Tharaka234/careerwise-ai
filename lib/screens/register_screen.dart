@@ -429,4 +429,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ],
     );
   }
+
+  // ============================================================
+  // MOBILE HEADER
+  // ============================================================
+
+  Widget _buildMobileHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        25,
+        50,
+        25,
+        35,
+      ),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF065F46),
+            Color(0xFF059669),
+            Color(0xFF10B981),
+          ],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(35),
+          bottomRight: Radius.circular(35),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 76,
+            height: 76,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(23),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.person_add_alt_1_rounded,
+              size: 40,
+              color: Color(0xFF059669),
+            ),
+          ),
+
+          const SizedBox(height: 17),
+
+          const Text(
+            'Join CareerWise',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+
+          const SizedBox(height: 7),
+
+          Text(
+            'Start building your career journey.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.88),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
