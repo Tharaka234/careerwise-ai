@@ -84,6 +84,36 @@ class _CareerRoadmapScreenState
       }
     }
   }
+  Future<void> _updateTask(
+      String taskId,
+      bool completed,
+      ) async {
+    if (_updatingTasks.contains(taskId)) return;
+
+    setState(() => _updatingTasks.add(taskId));
+
+    try {
+      await CareerRoadmapService.updateTask(
+        interviewId: widget.interviewId,
+        taskId: taskId,
+        completed: completed,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to update task: $e'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _updatingTasks.remove(taskId));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -768,14 +798,16 @@ class _CareerRoadmapScreenState
     );
   }
   Widget _taskTile(Map<String, dynamic> task) {
+    final taskId = task['id']?.toString() ?? '';
     final completed = task['completed'] == true;
+    final updating = _updatingTasks.contains(taskId);
 
     return AnimatedContainer(
       duration: Duration(milliseconds: 250),
       margin: EdgeInsets.only(bottom: 9),
       padding: EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 14,
+        horizontal: 8,
+        vertical: 10,
       ),
       decoration: BoxDecoration(
         color: completed ? _softGreen : _surface,
@@ -789,45 +821,71 @@ class _CareerRoadmapScreenState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            completed
-                ? Icons.check_circle_rounded
-                : Icons.radio_button_unchecked_rounded,
-            color: completed ? primary : muted,
-            size: 22,
-          ),
-
-          SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${task['title'] ?? ''}',
-                  style: TextStyle(
-                    color: dark,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    decoration: completed
-                        ? TextDecoration.lineThrough
-                        : null,
-                  ),
-                ),
-
-                SizedBox(height: 6),
-
-                Text(
-                  '${task['description'] ?? ''}',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: 12,
-                    height: 1.5,
-                  ),
-                ),
-              ],
+          Checkbox(
+            value: completed,
+            activeColor: primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+            ),
+            onChanged: updating || taskId.isEmpty
+                ? null
+                : (value) => _updateTask(
+              taskId,
+              value ?? false,
             ),
           ),
+
+          SizedBox(width: 4),
+
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(top: 9),
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${task['title'] ?? ''}',
+                    style: TextStyle(
+                      color: dark,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      decoration: completed
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
+
+                  SizedBox(height: 6),
+
+                  Text(
+                    '${task['description'] ?? ''}',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          if (updating)
+            Padding(
+              padding: EdgeInsets.only(
+                top: 14,
+                right: 6,
+              ),
+              child: SizedBox(
+                width: 15,
+                height: 15,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: primary,
+                ),
+              ),
+            ),
         ],
       ),
     );
