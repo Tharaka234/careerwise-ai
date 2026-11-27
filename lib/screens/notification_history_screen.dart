@@ -1698,6 +1698,80 @@ class _NotificationHistoryScreenState
       ),
     );
   }
+
+  // =========================================================
+  // BUILD
+  // =========================================================
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) {
+        final colors = _NotificationColors(isDark: isDark);
+
+        return Scaffold(
+          backgroundColor: colors.pageBg,
+          body: StreamBuilder<List<NotificationHistoryItem>>(
+            stream: _stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                debugPrint(
+                    '[NotificationHistoryScreen][history] ${snapshot.error}');
+                return _buildErrorState(snapshot.error, colors);
+              }
+
+              if (!snapshot.hasData) {
+                return _buildLoadingState(colors);
+              }
+
+              final allVisibleItems =
+              snapshot.data!.where(_visibleToUser).toList();
+
+              allVisibleItems.sort(
+                    (a, b) {
+                  final aDate =
+                      a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+                  final bDate =
+                      b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+                  return bDate.compareTo(aDate);
+                },
+              );
+
+              final filteredItems =
+              allVisibleItems.where(_matchesFilter).toList();
+
+              _currentVisibleItems = filteredItems;
+
+              return CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _buildHeroHeader(allVisibleItems, colors),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildFilterSection(allVisibleItems, colors),
+                  ),
+                  if (filteredItems.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmptyState(colors),
+                    )
+                  else
+                    ..._buildGroupedNotifications(filteredItems, colors),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 30),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 }
 
 // ===========================================================
