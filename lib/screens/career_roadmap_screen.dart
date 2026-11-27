@@ -287,6 +287,17 @@ class _CareerRoadmapScreenState
     );
   }
   Widget _roadmapView(Map<String, dynamic> data) {
+    final completed =
+        (data['completedTasks'] as num?)?.toInt() ?? 0;
+
+    final total =
+        (data['totalTasks'] as num?)?.toInt() ?? 12;
+
+    final progress =
+    ((data['progress'] as num?)?.toDouble() ?? 0.0)
+        .clamp(0.0, 100.0)
+        .toDouble();
+
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 850),
@@ -295,6 +306,8 @@ class _CareerRoadmapScreenState
           children: [
             _heroCard(data),
             SizedBox(height: 18),
+            _progressCard(progress, completed, total),
+            SizedBox(height: 28),
           ],
         ),
       ),
@@ -441,6 +454,115 @@ class _CareerRoadmapScreenState
           ),
         ],
       ),
+    );
+  }
+  Widget _progressCard(
+      double progress,
+      int completed,
+      int total,
+      ) {
+    return Container(
+      padding: EdgeInsets.all(21),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            height: 100,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(
+                begin: 0,
+                end: progress / 100,
+              ),
+              duration: Duration(milliseconds: 850),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) => Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox.expand(
+                    child: CircularProgressIndicator(
+                      value: value,
+                      strokeWidth: 9,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: _softGreen,
+                      color: primary,
+                    ),
+                  ),
+                  Text(
+                    '${(value * 100).round()}%',
+                    style: TextStyle(
+                      color: dark,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(width: 21),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your Progress',
+                  style: TextStyle(
+                    color: dark,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 7),
+                Text(
+                  '$completed of $total tasks completed',
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: 13,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _softGreen,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    progress >= 100
+                        ? 'All done! 🎉'
+                        : 'Keep growing 🌱',
+                    style: TextStyle(
+                      color: primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: _cardBg,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: border),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(
+            alpha: _isDark ? 0.22 : 0.035,
+          ),
+          blurRadius: 15,
+          offset: Offset(0, 5),
+        ),
+      ],
     );
   }
 }
