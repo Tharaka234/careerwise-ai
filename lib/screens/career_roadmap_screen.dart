@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'admin_profile_screen.dart';
 import '../services/career_roadmap_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CareerRoadmapScreen extends StatefulWidget {
   final String interviewId;
@@ -107,12 +108,41 @@ class _CareerRoadmapScreenState
         ),
         body: _generating
             ? _loadingView()
-            : Center(
-          child: Text(
-            _error ?? 'Career Roadmap Ready',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: dark),
+            : _error != null
+            ? _errorView()
+            : StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: CareerRoadmapService.watchRoadmap(
+            widget.interviewId,
           ),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return _messageView(
+                Icons.error_outline_rounded,
+                'Unable to load roadmap',
+                '${snapshot.error}',
+              );
+            }
+
+            if (!snapshot.hasData) {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: primary,
+                ),
+              );
+            }
+
+            if (!snapshot.data!.exists) {
+              return _messageView(
+                Icons.route_outlined,
+                'No roadmap available',
+                'Generate your personalized roadmap.',
+              );
+            }
+
+            return _roadmapView(
+              snapshot.data!.data()!,
+            );
+          },
         ),
       ),
     );
@@ -152,6 +182,135 @@ class _CareerRoadmapScreenState
             SizedBox(height: 12),
             Text(
               'AI is analyzing your interview feedback and creating a personalized learning plan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: muted,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _errorView() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              color: Colors.redAccent,
+              size: 54,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Roadmap could not be loaded',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: dark,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              _error ?? 'Something went wrong.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: muted,
+                height: 1.5,
+              ),
+            ),
+            SizedBox(height: 22),
+            ElevatedButton.icon(
+              onPressed: _loadOrGenerate,
+              icon: Icon(Icons.refresh_rounded),
+              label: Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _messageView(
+      IconData icon,
+      String title,
+      String message,
+      ) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: primary,
+              size: 50,
+            ),
+            SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: dark,
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: muted,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _roadmapView(Map<String, dynamic> data) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.check_circle_rounded,
+              color: primary,
+              size: 54,
+            ),
+            SizedBox(height: 16),
+            Text(
+              '${data['title'] ?? 'Your Career Roadmap'}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: dark,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              '${data['overview'] ?? ''}',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: muted,
