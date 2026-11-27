@@ -287,6 +287,10 @@ class _CareerRoadmapScreenState
     );
   }
   Widget _roadmapView(Map<String, dynamic> data) {
+    final skills = data['targetSkills'] is List
+        ? data['targetSkills'] as List
+        : <dynamic>[];
+
     final completed =
         (data['completedTasks'] as num?)?.toInt() ?? 0;
 
@@ -306,7 +310,17 @@ class _CareerRoadmapScreenState
           children: [
             _heroCard(data),
             SizedBox(height: 18),
+
             _progressCard(progress, completed, total),
+            SizedBox(height: 28),
+
+            _sectionTitle(
+              'Skills to Master',
+              Icons.psychology_alt_outlined,
+            ),
+            SizedBox(height: 12),
+
+            _skillsCard(skills),
             SizedBox(height: 28),
           ],
         ),
@@ -547,6 +561,69 @@ class _CareerRoadmapScreenState
           ),
         ],
       ),
+    );
+  }
+  Widget _skillsCard(List skills) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(17),
+      decoration: _cardDecoration(),
+      child: skills.isEmpty
+          ? Text(
+        'Your target skills will appear here.',
+        style: TextStyle(color: muted),
+      )
+          : Wrap(
+        spacing: 9,
+        runSpacing: 9,
+        children: skills.map((skill) => Chip(
+          avatar: Icon(
+            Icons.bolt_rounded,
+            color: primary,
+            size: 17,
+          ),
+          label: Text(skill.toString()),
+          backgroundColor: _softGreen,
+          side: BorderSide(color: border),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          labelStyle: TextStyle(
+            color: dark,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        )).toList(),
+      ),
+    );
+  }
+  Widget _sectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _softGreen,
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(
+            icon,
+            color: primary,
+            size: 21,
+          ),
+        ),
+        SizedBox(width: 11),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: dark,
+              fontSize: 19,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
     );
   }
   BoxDecoration _cardDecoration() {
