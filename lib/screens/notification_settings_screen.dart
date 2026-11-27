@@ -285,6 +285,204 @@ class _NotificationSettingsScreenState
     }
   }
 
+  // =========================================================
+  // HEADER BUTTON
+  // =========================================================
+
+  Widget _headerButton(
+      IconData icon,
+      VoidCallback onTap,
+      ) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.18),
+        ),
+      ),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: Colors.white,
+          size: 18,
+        ),
+        onPressed: onTap,
+      ),
+    );
+  }
+
+  // =========================================================
+  // SECTION LABEL
+  // =========================================================
+
+  Widget _sectionLabel(
+      String title,
+      String subtitle,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: _colors.isDark
+                  ? const Color(0xFF94A3B8)
+                  : const Color(0xFF64748B),
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.15,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: textSecondary,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // SWITCH SETTING
+  // =========================================================
+
+  Widget _switchSetting({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBackground,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 49,
+          height: 49,
+          decoration: BoxDecoration(
+            color: _colors.isDark
+                ? iconColor.withValues(alpha: 0.16)
+                : iconBackground,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Icon(
+            icon,
+            color: iconColor,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 11.5,
+                  height: 1.45,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: Colors.white,
+          activeTrackColor: primary,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: _colors.isDark
+              ? const Color(0xFF334155)
+              : const Color(0xFFCBD5E1),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // STANDARD CARD
+  // =========================================================
+
+  Widget _settingCard({
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(17),
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(21),
+        border: Border.all(
+          color: border,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A)
+                .withValues(alpha: _colors.isDark ? 0.25 : 0.035),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  // =========================================================
+  // PRIVACY NOTE
+  // =========================================================
+
+  Widget _privacyNote() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(
+          Icons.lock_outline_rounded,
+          color: Color(0xFF94A3B8),
+          size: 13,
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            prefs.isAdmin
+                ? 'Admin notification preferences are securely managed.'
+                : 'You can change your notification preferences anytime.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 10.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // TEMPORARY: replaced by the real build() in the final screen commit.
   @override
   Widget build(BuildContext context) {
