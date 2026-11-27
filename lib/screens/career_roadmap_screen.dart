@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_profile_screen.dart';
+import '../services/career_roadmap_service.dart';
 
 class CareerRoadmapScreen extends StatefulWidget {
   final String interviewId;
@@ -54,6 +55,36 @@ class _CareerRoadmapScreenState
   final Set<String> _updatingTasks = <String>{};
 
   @override
+  void initState() {
+    super.initState();
+    _loadOrGenerate();
+  }
+  Future<void> _loadOrGenerate() async {
+    if (_generating) return;
+
+    setState(() {
+      _generating = true;
+      _error = null;
+    });
+
+    try {
+      await CareerRoadmapService.generateRoadmap(
+        interviewId: widget.interviewId,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _generating = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: AdminThemeManager.isDarkMode,
@@ -74,11 +105,60 @@ class _CareerRoadmapScreenState
             ),
           ),
         ),
-        body: Center(
+        body: _generating
+            ? _loadingView()
+            : Center(
           child: Text(
-            'Career Development Roadmap',
+            _error ?? 'Career Roadmap Ready',
+            textAlign: TextAlign.center,
             style: TextStyle(color: dark),
           ),
+        ),
+      ),
+    );
+  }
+  Widget _loadingView() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: _softGreen,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Icon(
+                Icons.auto_awesome_rounded,
+                color: primary,
+                size: 38,
+              ),
+            ),
+            SizedBox(height: 26),
+            CircularProgressIndicator(color: primary),
+            SizedBox(height: 24),
+            Text(
+              'Preparing Your Career Roadmap',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: dark,
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'AI is analyzing your interview feedback and creating a personalized learning plan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: muted,
+                height: 1.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
