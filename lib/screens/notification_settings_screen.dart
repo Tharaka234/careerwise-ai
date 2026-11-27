@@ -937,6 +937,202 @@ class _NotificationSettingsScreenState
     );
   }
 
+  // =========================================================
+  // JOB ALERTS
+  // =========================================================
+
+  Widget _jobAlertsCard() {
+    final selectedCount = prefs.categories.length;
+
+    return _settingCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(17, 17, 17, 15),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 49,
+                  height: 49,
+                  decoration: BoxDecoration(
+                    color: _colors.iconBgMuted,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Icon(
+                    Icons.work_outline_rounded,
+                    color: primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Job alerts',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Choose the job categories you\'re interested in.',
+                        style: TextStyle(
+                          color: textSecondary,
+                          fontSize: 12.5,
+                          height: 1.45,
+                        ),
+                      ),
+                      if (selectedCount > 0) ...[
+                        const SizedBox(height: 7),
+                        Text(
+                          '$selectedCount categor${selectedCount == 1 ? 'y' : 'ies'} selected',
+                          style: TextStyle(
+                            color: primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(
+            height: 1,
+            color: _colors.divider,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(17),
+            child: Wrap(
+              spacing: 9,
+              runSpacing: 9,
+              children: JobCategories.all.map(
+                    (category) {
+                  final selected = prefs.categories.contains(category);
+
+                  return _categoryChip(category, selected);
+                },
+              ).toList(),
+            ),
+          ),
+          if (prefs.categories.isEmpty)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(17, 0, 17, 17),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _colors.chipBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Color(0xFF94A3B8),
+                    size: 17,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Select at least one category to receive personalized job alerts.',
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _categoryChip(
+      String category,
+      bool selected,
+      ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          _toggleCategory(category, !selected);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 9,
+          ),
+          decoration: BoxDecoration(
+            color: selected
+                ? (_colors.isDark
+                ? const Color(0x3310B981)
+                : const Color(0xFFEEF4FF))
+                : _colors.chipBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? primary : _colors.chipBorder,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? primary
+                      : (_colors.isDark
+                      ? const Color(0xFF1E3A2B)
+                      : Colors.white),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: selected
+                        ? primary
+                        : (_colors.isDark
+                        ? const Color(0xFF334155)
+                        : const Color(0xFFCBD5E1)),
+                  ),
+                ),
+                child: selected
+                    ? const Icon(
+                  Icons.check_rounded,
+                  size: 13,
+                  color: Colors.white,
+                )
+                    : null,
+              ),
+              const SizedBox(width: 7),
+              Text(
+                category,
+                style: TextStyle(
+                  color: selected ? primary : textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // TEMPORARY: replaced by the real build() in the final screen commit.
   @override
   Widget build(BuildContext context) {
