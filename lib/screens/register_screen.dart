@@ -254,4 +254,179 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SizedBox.shrink(),
     );
   }
+
+  // ============================================================
+  // DESKTOP BRAND SECTION
+  // ============================================================
+
+  Widget _buildBrandSection() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF065F46),
+            Color(0xFF059669),
+            Color(0xFF10B981),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -100,
+            right: -80,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.07),
+              ),
+            ),
+          ),
+
+          Positioned(
+            bottom: -120,
+            left: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.06),
+              ),
+            ),
+          ),
+
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(55),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 105,
+                    height: 105,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.person_add_alt_1_rounded,
+                      size: 55,
+                      color: Color(0xFF059669),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  const Text(
+                    'Join CareerWise',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  const Text(
+                    'Build Your Future.\nOne Step at a Time.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      height: 1.3,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  Text(
+                    'Create your CareerWise account and unlock\n'
+                        'personalized career opportunities and guidance.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 14,
+                      height: 1.6,
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  _buildFeature(
+                    Icons.psychology_outlined,
+                    'AI-Powered Career Guidance',
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  _buildFeature(
+                    Icons.auto_graph_rounded,
+                    'Personalized Career Recommendations',
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  _buildFeature(
+                    Icons.workspace_premium_outlined,
+                    'Discover Your Potential',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeature(
+      IconData icon,
+      String text,
+      ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
 }
