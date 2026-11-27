@@ -995,6 +995,153 @@ class _NotificationHistoryScreenState
       ),
     );
   }
+
+  // =========================================================
+  // FILTER SECTION
+  // =========================================================
+
+  Widget _buildFilterSection(
+      List<NotificationHistoryItem> items,
+      _NotificationColors colors,
+      ) {
+    final isAdmin = NotificationService.instance.isAdmin;
+
+    // Admin: Show only All Applications.
+    // Normal User: Keep existing filters.
+    final filters = isAdmin
+        ? [filterAllApplications]
+        : [
+      filterAll,
+      filterJobs,
+      filterUpdates,
+      filterAnnouncements,
+    ];
+
+    // Ensure the selected filter is valid for the current role.
+    if (isAdmin && selectedFilter != filterAllApplications) {
+      selectedFilter = filterAllApplications;
+    } else if (!isAdmin && selectedFilter == filterAllApplications) {
+      selectedFilter = filterAll;
+    }
+
+    return Container(
+      padding: const EdgeInsets.only(top: 22, bottom: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Row(
+          children: filters.map((filter) {
+            final selected = selectedFilter == filter;
+            final count = _filterCount(items, filter);
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = filter;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected ? colors.primary : colors.chipBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: selected ? colors.primary : colors.chipBorder,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: selected
+                              ? colors.primary.withValues(alpha: 0.25)
+                              : Colors.black.withValues(alpha: 0.03),
+                          blurRadius: selected ? 14 : 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isAdmin
+                              ? Icons.assignment_ind_outlined
+                              : _filterIcon(filter),
+                          size: 17,
+                          color:
+                          selected ? Colors.white : colors.textSecondary,
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          filter,
+                          style: TextStyle(
+                            color:
+                            selected ? Colors.white : colors.textPrimary,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (count > 0) ...[
+                          const SizedBox(width: 7),
+                          Container(
+                            constraints: const BoxConstraints(
+                              minWidth: 22,
+                              minHeight: 22,
+                            ),
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? Colors.white.withValues(alpha: 0.22)
+                                  : colors.countBg,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '$count',
+                              style: TextStyle(
+                                color:
+                                selected ? Colors.white : colors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  IconData _filterIcon(String filter) {
+    switch (filter) {
+      case filterJobs:
+        return Icons.work_outline_rounded;
+
+      case filterUpdates:
+        return Icons.auto_awesome_outlined;
+
+      case filterAnnouncements:
+        return Icons.campaign_outlined;
+
+      default:
+        return Icons.grid_view_rounded;
+    }
+  }
 }
 
 // ===========================================================
