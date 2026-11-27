@@ -414,6 +414,134 @@ class _NotificationHistoryScreenState
         ),
       );
   }
+
+  // =========================================================
+  // TIME
+  // =========================================================
+
+  String _timeAgo(DateTime? time) {
+    if (time == null) {
+      return 'Just now';
+    }
+
+    final difference = DateTime.now().difference(time);
+
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    }
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    }
+
+    if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    }
+
+    if (difference.inDays == 1) {
+      return 'Yesterday';
+    }
+
+    if (difference.inDays < 7) {
+      return '${difference.inDays}d';
+    }
+
+    return '${time.day}/${time.month}/${time.year}';
+  }
+
+  // =========================================================
+  // RECENT INDICATOR
+  // =========================================================
+
+  bool _isRecent(DateTime? time) {
+    if (time == null) return true;
+
+    final difference = DateTime.now().difference(time);
+
+    return difference.inHours < 12;
+  }
+
+  // =========================================================
+  // NOTIFICATION STYLE
+  // =========================================================
+
+  _NotificationStyle _getNotificationStyle(
+      NotificationHistoryItem item,
+      bool isDark,
+      ) {
+    if (item.type == NotificationTypes.newJob) {
+      return _NotificationStyle(
+        label: 'New opportunity',
+        icon: Icons.work_outline_rounded,
+        color: const Color(0xFF059669),
+        background: isDark
+            ? const Color(0xFF064E3B).withValues(alpha: 0.40)
+            : const Color(0xFFD1FAE5),
+      );
+    }
+
+    if (item.type == NotificationTypes.jobUpdated) {
+      return _NotificationStyle(
+        label: 'Job updated',
+        icon: Icons.auto_awesome_outlined,
+        color: const Color(0xFFD97706),
+        background: isDark
+            ? const Color(0xFF78350F).withValues(alpha: 0.35)
+            : const Color(0xFFFEF3C7),
+      );
+    }
+
+    if (item.type == NotificationTypes.jobDeleted) {
+      return _NotificationStyle(
+        label: 'Job removed',
+        icon: Icons.work_off_outlined,
+        color: const Color(0xFFEF4444),
+        background: isDark
+            ? const Color(0xFF7F1D1D).withValues(alpha: 0.35)
+            : const Color(0xFFFEE2E2),
+      );
+    }
+
+    if (item.type == NotificationTypes.applicationStatus) {
+      return _NotificationStyle(
+        label: 'Application update',
+        icon: Icons.assignment_turned_in_outlined,
+        color: const Color(0xFF2563EB),
+        background:
+        isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF),
+      );
+    }
+
+    if (item.type == NotificationTypes.cancelRequest) {
+      return _NotificationStyle(
+        label: 'Cancellation request',
+        icon: Icons.event_busy_outlined,
+        color: const Color(0xFFD97706),
+        background: isDark
+            ? const Color(0xFF78350F).withValues(alpha: 0.35)
+            : const Color(0xFFFEF3C7),
+      );
+    }
+
+    if (item.type == NotificationTypes.newApplication) {
+      return _NotificationStyle(
+        label: 'New Application',
+        icon: Icons.person_add_alt_1_outlined,
+        color: const Color(0xFF2563EB),
+        background:
+        isDark ? const Color(0xFF1E3A5F) : const Color(0xFFEFF6FF),
+      );
+    }
+
+    return _NotificationStyle(
+      label: 'Announcement',
+      icon: Icons.campaign_outlined,
+      color: const Color(0xFF10B981),
+      background: isDark
+          ? const Color(0xFF064E3B).withValues(alpha: 0.40)
+          : const Color(0xFFECFDF5),
+    );
+  }
 }
 
 // ===========================================================
@@ -451,4 +579,22 @@ class _NotificationColors {
         countBg = isDark
             ? const Color(0xFF064E3B).withValues(alpha: 0.40)
             : const Color(0xFFD1FAE5);
+}
+
+// ===========================================================
+// NOTIFICATION STYLE MODEL
+// ===========================================================
+
+class _NotificationStyle {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Color background;
+
+  const _NotificationStyle({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.background,
+  });
 }
