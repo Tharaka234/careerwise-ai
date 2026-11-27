@@ -288,37 +288,158 @@ class _CareerRoadmapScreenState
   }
   Widget _roadmapView(Map<String, dynamic> data) {
     return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 850),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(16, 12, 16, 36),
           children: [
-            Icon(
-              Icons.check_circle_rounded,
-              color: primary,
-              size: 54,
-            ),
-            SizedBox(height: 16),
-            Text(
-              '${data['title'] ?? 'Your Career Roadmap'}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: dark,
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              '${data['overview'] ?? ''}',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: muted,
-                height: 1.5,
-              ),
-            ),
+            _heroCard(data),
+            SizedBox(height: 18),
           ],
         ),
+      ),
+    );
+  }
+  Widget _heroCard(Map<String, dynamic> data) {
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF066B50),
+            Color(0xFF059669),
+            Color(0xFF10B981),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF059669)
+                .withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -90,
+            right: -70,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -110,
+            right: 80,
+            child: Container(
+              width: 170,
+              height: 170,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 25,
+                ),
+              ),
+              const SizedBox(height: 25),
+              Text(
+                '${data['title'] ?? 'Your Career Growth Plan'}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                '${data['overview'] ?? ''}',
+                style: const TextStyle(
+                  color: Color(0xFFE5FFF3),
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 9,
+                runSpacing: 9,
+                children: [
+                  _heroTag(
+                    Icons.calendar_today_outlined,
+                    '4-week journey',
+                  ),
+                  _heroTag(
+                    Icons.track_changes_rounded,
+                    'Goal focused',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _heroTag(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 9,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 14,
+          ),
+          const SizedBox(width: 7),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
