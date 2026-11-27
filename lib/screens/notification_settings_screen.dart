@@ -689,6 +689,254 @@ class _NotificationSettingsScreenState
     );
   }
 
+  // =========================================================
+  // PERMISSION CARD
+  // =========================================================
+
+  Widget _permissionCard() {
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: _colors.isDark
+              ? const [
+            Color(0xFF2A1B0E),
+            Color(0xFF1F150B),
+          ]
+              : const [
+            Color(0xFFFFF7ED),
+            Color(0xFFFFFBEB),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: _colors.isDark
+              ? const Color(0x55EA580C)
+              : const Color(0xFFFED7AA),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 49,
+            height: 49,
+            decoration: BoxDecoration(
+              color: _colors.isDark
+                  ? const Color(0x33EA580C)
+                  : const Color(0xFFFFEDD5),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: const Icon(
+              Icons.notifications_off_outlined,
+              color: Color(0xFFEA580C),
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Notifications are off',
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Allow notifications so you don\'t miss important career updates.',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 11.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: _enablePermission,
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFEA580C),
+            ),
+            child: const Text(
+              'Enable',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // ANNOUNCEMENTS
+  // =========================================================
+
+  Widget _announcementCard() {
+    return _settingCard(
+      child: _switchSetting(
+        icon: Icons.campaign_outlined,
+        iconColor: const Color(0xFF7C3AED),
+        iconBackground: const Color(0xFFF4EEFF),
+        title: 'Platform announcements',
+        subtitle:
+        'New features, events, maintenance notices and important CareerWise news.',
+        value: prefs.announcements,
+        onChanged: _toggleAnnouncements,
+      ),
+    );
+  }
+
+  // =========================================================
+  // ALWAYS ON
+  // =========================================================
+
+  Widget _alwaysOnCard() {
+    return _settingCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          _alwaysOnItem(
+            icon: Icons.description_outlined,
+            iconColor: const Color(0xFF0F766E),
+            background: const Color(0xFFECFDF5),
+            title: 'Application updates',
+            subtitle: 'Important changes to your job applications.',
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 79),
+            child: Divider(
+              height: 1,
+              color: _colors.divider,
+            ),
+          ),
+          _alwaysOnItem(
+            icon: Icons.update_rounded,
+            iconColor: const Color(0xFFF59E0B),
+            background: const Color(0xFFFFF7E6),
+            title: 'Job updates',
+            subtitle: 'Important changes to jobs you interact with.',
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 79),
+            child: Divider(
+              height: 1,
+              color: _colors.divider,
+            ),
+          ),
+          _alwaysOnItem(
+            icon: Icons.chat_bubble_outline_rounded,
+            iconColor: const Color(0xFF7C3AED),
+            background: const Color(0xFFF4EEFF),
+            title: 'Important messages',
+            subtitle: 'Essential account and CareerWise messages.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _alwaysOnItem({
+    required IconData icon,
+    required Color iconColor,
+    required Color background,
+    required String title,
+    required String subtitle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(17),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: _colors.isDark
+                  ? iconColor.withValues(alpha: 0.16)
+                  : background,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 23,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 11.5,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 9,
+              vertical: 5,
+            ),
+            decoration: BoxDecoration(
+              color: _colors.isDark
+                  ? const Color(0x3316A34A)
+                  : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: _colors.isDark
+                      ? const Color(0xFF4ADE80)
+                      : const Color(0xFF16A34A),
+                  size: 13,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'ON',
+                  style: TextStyle(
+                    color: _colors.isDark
+                        ? const Color(0xFF4ADE80)
+                        : const Color(0xFF15803D),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // TEMPORARY: replaced by the real build() in the final screen commit.
   @override
   Widget build(BuildContext context) {
