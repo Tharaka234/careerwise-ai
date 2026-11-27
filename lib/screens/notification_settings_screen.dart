@@ -123,6 +123,168 @@ class _NotificationSettingsScreenState
       );
   }
 
+  // =========================================================
+  // ANNOUNCEMENTS
+  // =========================================================
+
+  Future<void> _toggleAnnouncements(bool value) async {
+    final previous = prefs;
+
+    setState(() {
+      prefs = NotificationPrefs(
+        announcements: value,
+        categories: prefs.categories,
+        isAdmin: prefs.isAdmin,
+      );
+    });
+
+    try {
+      await NotificationService.instance.setAnnouncementsEnabled(value);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        prefs = previous;
+      });
+
+      _snack(
+        'Could not update announcement settings.',
+        error: true,
+      );
+    }
+  }
+
+  // =========================================================
+  // JOB CATEGORY
+  // =========================================================
+
+  Future<void> _toggleCategory(
+      String category,
+      bool selected,
+      ) async {
+    final previous = prefs;
+
+    final updated = Set<String>.from(prefs.categories);
+
+    if (selected) {
+      updated.add(category);
+    } else {
+      updated.remove(category);
+    }
+
+    setState(() {
+      prefs = NotificationPrefs(
+        announcements: prefs.announcements,
+        categories: updated,
+        isAdmin: prefs.isAdmin,
+      );
+    });
+
+    try {
+      await NotificationService.instance.setCategorySubscribed(
+        category,
+        selected,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        prefs = previous;
+      });
+
+      _snack(
+        'Could not update job alerts.',
+        error: true,
+      );
+    }
+  }
+
+  // =========================================================
+  // NOTIFICATION PERMISSION
+  // =========================================================
+
+  Future<void> _enablePermission() async {
+    await NotificationService.instance.requestPermission();
+
+    final allowed =
+    await NotificationService.instance.areNotificationsAllowed();
+
+    if (!mounted) return;
+
+    setState(() {
+      permissionAllowed = allowed;
+    });
+
+    if (allowed) {
+      _snack('Notifications enabled successfully.');
+    } else {
+      _snack(
+        'Please enable CareerWise notifications in your device settings.',
+        error: true,
+      );
+    }
+  }
+
+  // =========================================================
+  // ADMIN TEST PUSH
+  // =========================================================
+
+  Future<void> _sendTest() async {
+    setState(() {
+      isSendingTest = true;
+    });
+
+    try {
+      final message = await NotificationService.instance.sendTestPush();
+
+      if (!mounted) return;
+
+      _snack(message);
+    } catch (e) {
+      if (!mounted) return;
+
+      _snack(
+        'Failed to send test push: $e',
+        error: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSendingTest = false;
+        });
+      }
+    }
+  }
+
+  // =========================================================
+  // COPY FCM TOKEN
+  // =========================================================
+
+  Future<void> _copyFcmToken() async {
+    try {
+      final token = await NotificationService.instance.getDeviceToken();
+
+      if (token == null) {
+        _snack(
+          'No FCM token is available on this device.',
+          error: true,
+        );
+        return;
+      }
+
+      await Clipboard.setData(
+        ClipboardData(text: token),
+      );
+
+      _snack('FCM device token copied.');
+    } catch (e) {
+      _snack(
+        'Could not copy FCM token.',
+        error: true,
+      );
+    }
+  }
+
   // TEMPORARY: replaced by the real build() in the final screen commit.
   @override
   Widget build(BuildContext context) {
