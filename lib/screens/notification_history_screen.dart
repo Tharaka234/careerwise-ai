@@ -1618,15 +1618,15 @@ class _NotificationHistoryScreenState
     final lower = details.toLowerCase();
     final String guidance;
     if (lower.contains('failed-precondition') || lower.contains('index')) {
-      guidance = 'Firestore index එකක් අවශ්‍ය විය හැක. Debug Console එකේ index creation link එක බලන්න.';
+      guidance = 'A Firestore index may be required. Check the Debug Console for the index creation link.';
     } else if (lower.contains('permission-denied')) {
-      guidance = 'Firestore security rules සහ notification history query එක check කරන්න.';
+      guidance = 'Check your Firestore security rules and the notification history query.';
     } else if (lower.contains('unavailable') ||
         lower.contains('network') ||
         lower.contains('timeout')) {
-      guidance = 'Wi-Fi / Internet / Firebase connection එක check කරන්න.';
+      guidance = 'Check your Wi-Fi, internet and Firebase connection.';
     } else {
-      guidance = 'පහත error details සහ Debug Console logs බලන්න.';
+      guidance = 'See the error details below and the Debug Console logs.';
     }
 
     return Container(
