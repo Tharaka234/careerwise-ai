@@ -650,6 +650,132 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               const SizedBox(height: 28),
 
+              // Security
+              const Text(
+                'Account Security',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              const Text(
+                'Create a secure password for your account.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+
+              const SizedBox(height: 19),
+
+              // Password
+              buildInput(
+                label: 'Password',
+                hint: 'Create a password',
+                icon: Icons.lock_outline_rounded,
+                controller: passwordController,
+                obscureText: obscurePassword,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      obscurePassword = !obscurePassword;
+                    });
+                  },
+                  icon: Icon(
+                    obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: const Color(0xFF64748B),
+                    size: 20,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Use at least 6 characters.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              // Confirm Password
+              buildInput(
+                label: 'Confirm Password',
+                hint: 'Re-enter your password',
+                icon: Icons.lock_reset_outlined,
+                controller: confirmPasswordController,
+                obscureText: obscureConfirmPassword,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      obscureConfirmPassword =
+                      !obscureConfirmPassword;
+                    });
+                  },
+                  icon: Icon(
+                    obscureConfirmPassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: const Color(0xFF64748B),
+                    size: 20,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Create Account
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shadowColor: const Color(0xFF059669).withValues(alpha: 0.35),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: isLoading ? null : register,
+                  child: isLoading
+                      ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                      : const Text(
+                    'Create Account',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
