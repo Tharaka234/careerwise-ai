@@ -505,4 +505,212 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // REGISTER FORM
+  // ============================================================
+
+  Widget _buildRegisterForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Back button
+        TextButton.icon(
+          onPressed: isLoading
+              ? null
+              : () {
+            Navigator.pop(context);
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF059669),
+            padding: EdgeInsets.zero,
+          ),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            size: 19,
+          ),
+          label: const Text(
+            'Back to Login',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+
+        const SizedBox(height: 15),
+
+        const Text(
+          'Create your account',
+          style: TextStyle(
+            fontSize: 29,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.7,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        const Text(
+          'Fill in your details to get started with CareerWise.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF64748B),
+            height: 1.5,
+          ),
+        ),
+
+        const SizedBox(height: 28),
+
+        // FORM CARD
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.055),
+                blurRadius: 25,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Personal Information
+              const Text(
+                'Personal Information',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              const Text(
+                'Tell us a little about yourself.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+
+              const SizedBox(height: 19),
+
+              // First + Last Name
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: buildInput(
+                      label: 'First Name',
+                      hint: 'First name',
+                      icon: Icons.person_outline_rounded,
+                      controller: firstNameController,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: buildInput(
+                      label: 'Last Name',
+                      hint: 'Last name',
+                      icon: Icons.person_outline_rounded,
+                      controller: lastNameController,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              // Email
+              buildInput(
+                label: 'Email Address',
+                hint: 'Enter your email',
+                icon: Icons.email_outlined,
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+              ),
+
+              const SizedBox(height: 18),
+
+              // Phone
+              buildInput(
+                label: 'Phone Number',
+                hint: 'Enter your phone number',
+                icon: Icons.phone_outlined,
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+              ),
+
+              const SizedBox(height: 28),
+
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 22),
+
+        // Login
+        Center(
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            children: [
+              const Text(
+                'Already have an account?',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              TextButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                      const LoginScreen(),
+                    ),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                  ),
+                ),
+                child: const Text(
+                  'Sign In',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF059669),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 5),
+
+        Center(
+          child: Text(
+            'CareerWise • AI-Assisted Career Decision Support',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
