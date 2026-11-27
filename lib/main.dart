@@ -1,122 +1,481 @@
-import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'firebase_options.dart';
+import 'services/notification_service.dart';
+
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
+
+// ==========================================
+// MAIN
+// ==========================================
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  debugPrint('====================================');
+  debugPrint('CAREERWISE FIREBASE INITIALIZED');
+  debugPrint(
+    'PROJECT ID: ${Firebase.app().options.projectId}',
+  );
+  debugPrint('====================================');
+
+  // Run Wi-Fi / Firestore test without
+  // blocking the application startup.
+  unawaited(testWifiFirestoreConnection());
+
+  // Register Firebase background notifications.
+  if (NotificationService.isSupported) {
+    FirebaseMessaging.onBackgroundMessage(
+      firebaseMessagingBackgroundHandler,
+    );
+  }
+
+  // Initialize notification service.
+  try {
+    await NotificationService.instance.init();
+    debugPrint('Notification service initialized');
+  } catch (e) {
+    debugPrint('Notification initialization error: $e');
+  }
+
+  runApp(const CareerWiseApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// ==========================================
+// WIFI / FIRESTORE CONNECTION TEST
+// ==========================================
 
-  // This widget is the root of your application.
+Future<void> testWifiFirestoreConnection() async {
+  debugPrint('');
+  debugPrint('========== WIFI FIRESTORE TEST START ==========');
+
+  debugPrint(
+    'PROJECT ID: ${Firebase.app().options.projectId}',
+  );
+
+  debugPrint(
+    'AUTH USER: ${FirebaseAuth.instance.currentUser != null}',
+  );
+
+  try {
+    final result = await FirebaseFirestore.instance
+        .collection('jobs')
+        .limit(1)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint('WIFI FIRESTORE SUCCESS');
+    debugPrint('JOBS DOCUMENT COUNT: ${result.docs.length}');
+    debugPrint('DATA FROM CACHE: ${result.metadata.isFromCache}');
+  } on TimeoutException catch (e) {
+    debugPrint('WIFI FIRESTORE FAILED');
+    debugPrint('ERROR TYPE: TIMEOUT');
+    debugPrint('ERROR: $e');
+  } on FirebaseException catch (e) {
+    debugPrint('WIFI FIRESTORE FAILED');
+    debugPrint('ERROR CODE: ${e.code}');
+    debugPrint('ERROR MESSAGE: ${e.message}');
+
+    if (e.code == 'unavailable') {
+      debugPrint(
+        'POSSIBLE NETWORK ISSUE: Firestore server unavailable',
+      );
+    } else if (e.code == 'permission-denied') {
+      debugPrint(
+        'POSSIBLE RULES ISSUE: Check Firestore permissions',
+      );
+    } else if (e.code == 'failed-precondition') {
+      debugPrint(
+        'POSSIBLE INDEX ISSUE: Check Firestore indexes',
+      );
+    }
+  } catch (e) {
+    debugPrint('WIFI FIRESTORE FAILED');
+    debugPrint('ERROR: $e');
+  }
+
+  debugPrint('========== WIFI FIRESTORE TEST END ==========');
+  debugPrint('');
+}
+
+// ==========================================
+// FIRESTORE DIAGNOSTIC TEST
+// ==========================================
+
+Future<void> testCareerWiseData(String uid) async {
+  debugPrint('');
+  debugPrint('========== CAREERWISE FIRESTORE TEST ==========');
+
+  debugPrint(
+    'PROJECT ID: ${Firebase.app().options.projectId}',
+  );
+
+  // ------------------------------------------
+  // TEST 1: JOBS
+  // ------------------------------------------
+
+  try {
+    final jobs = await FirebaseFirestore.instance
+        .collection('jobs')
+        .limit(5)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint('JOBS FOUND: ${jobs.docs.length}');
+
+    for (final doc in jobs.docs) {
+      debugPrint('JOB DOCUMENT: ${doc.id}');
+    }
+  } on FirebaseException catch (e) {
+    debugPrint('JOBS FIREBASE ERROR: ${e.code}');
+    debugPrint('JOBS ERROR MESSAGE: ${e.message}');
+  } on TimeoutException catch (e) {
+    debugPrint('JOBS TIMEOUT: $e');
+  } catch (e) {
+    debugPrint('JOBS ERROR: $e');
+  }
+
+  // ------------------------------------------
+  // TEST 2: APPLICATIONS
+  // ------------------------------------------
+
+  try {
+    final applications = await FirebaseFirestore.instance
+        .collection('applications')
+        .where('userId', isEqualTo: uid)
+        .limit(5)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint(
+      'APPLICATIONS FOUND: ${applications.docs.length}',
+    );
+
+    for (final doc in applications.docs) {
+      debugPrint('APPLICATION DOCUMENT: ${doc.id}');
+    }
+  } on FirebaseException catch (e) {
+    debugPrint('APPLICATIONS FIREBASE ERROR: ${e.code}');
+    debugPrint('APPLICATIONS ERROR MESSAGE: ${e.message}');
+  } on TimeoutException catch (e) {
+    debugPrint('APPLICATIONS TIMEOUT: $e');
+  } catch (e) {
+    debugPrint('APPLICATIONS ERROR: $e');
+  }
+
+  // ------------------------------------------
+  // TEST 3: PRIVATE NOTIFICATIONS
+  // ------------------------------------------
+
+  try {
+    final notifications = await FirebaseFirestore.instance
+        .collection('notification_history')
+        .where('audience', isEqualTo: 'user')
+        .where('recipientUid', isEqualTo: uid)
+        .limit(5)
+        .get(
+      const GetOptions(source: Source.server),
+    )
+        .timeout(const Duration(seconds: 15));
+
+    debugPrint(
+      'PRIVATE NOTIFICATIONS FOUND: '
+          '${notifications.docs.length}',
+    );
+
+    for (final doc in notifications.docs) {
+      debugPrint('NOTIFICATION DOCUMENT: ${doc.id}');
+    }
+  } on FirebaseException catch (e) {
+    debugPrint('NOTIFICATIONS FIREBASE ERROR: ${e.code}');
+    debugPrint('NOTIFICATIONS ERROR MESSAGE: ${e.message}');
+  } on TimeoutException catch (e) {
+    debugPrint('NOTIFICATIONS TIMEOUT: $e');
+  } catch (e) {
+    debugPrint('NOTIFICATIONS ERROR: $e');
+  }
+
+  debugPrint('========== TEST COMPLETED ==========');
+  debugPrint('');
+}
+
+// ==========================================
+// CAREERWISE APP
+// ==========================================
+
+class CareerWiseApp extends StatelessWidget {
+  const CareerWiseApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'CareerWise',
+
+      // Notification tap navigation.
+      navigatorKey: appNavigatorKey,
+
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+        ),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+
+      home: const AuthGate(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+// ==========================================
+// AUTH GATE
+// ==========================================
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AuthGate> createState() => _AuthGateState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _AuthGateState extends State<AuthGate> {
+  String? _checkedUid;
+  String? _adminFutureUid;
+  Future<bool>? _adminFuture;
 
-  void _incrementCounter() {
+  // ------------------------------------------
+  // ADMIN CHECK
+  // ------------------------------------------
+
+  Future<bool> checkAdmin(String uid) async {
+    debugPrint('========== ADMIN CHECK ==========');
+
+    try {
+      final adminDoc = await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(uid)
+          .get(
+        const GetOptions(source: Source.server),
+      )
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint(
+        'Admin document exists: ${adminDoc.exists}',
+      );
+
+      if (!adminDoc.exists) {
+        debugPrint('Normal user: no admin document');
+        return false;
+      }
+
+      final role = adminDoc.data()?['role'];
+
+      debugPrint('Admin role: $role');
+
+      return role
+          ?.toString()
+          .trim()
+          .toLowerCase() ==
+          'admin';
+    } on FirebaseException catch (e) {
+      debugPrint('ADMIN FIREBASE ERROR: ${e.code}');
+      debugPrint('ADMIN ERROR MESSAGE: ${e.message}');
+      rethrow;
+    } on TimeoutException catch (e) {
+      debugPrint('ADMIN CHECK TIMEOUT: $e');
+      rethrow;
+    } catch (e) {
+      debugPrint('ADMIN CHECK ERROR: $e');
+      rethrow;
+    }
+  }
+
+  // ------------------------------------------
+  // CACHE ADMIN CHECK FUTURE
+  // ------------------------------------------
+
+  Future<bool> _getAdminFuture(String uid) {
+    if (_adminFutureUid != uid || _adminFuture == null) {
+      _adminFutureUid = uid;
+      _adminFuture = checkAdmin(uid);
+    }
+
+    return _adminFuture!;
+  }
+
+  // ------------------------------------------
+  // RETRY ADMIN CHECK
+  // ------------------------------------------
+
+  void _retryAdminCheck() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _adminFuture = null;
     });
   }
 
+  // ------------------------------------------
+  // FIRESTORE TEST ONCE PER USER
+  // ------------------------------------------
+
+  void _runFirestoreTestOnce(String uid) {
+    if (_checkedUid == uid) {
+      return;
+    }
+
+    _checkedUid = uid;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (FirebaseAuth.instance.currentUser?.uid != uid) {
+        return;
+      }
+
+      unawaited(testCareerWiseData(uid));
+    });
+  }
+
+  // ------------------------------------------
+  // AUTH STATE
+  // ------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // AUTH LOADING
+        if (snapshot.connectionState ==
+            ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+          );
+        }
+
+        // AUTH ERROR
+        if (snapshot.hasError) {
+          debugPrint(
+            'AUTH ERROR: ${snapshot.error}',
+          );
+
+          return const Scaffold(
+            body: Center(
+              child: Text(
+                'Authentication error. Please try again.',
+              ),
+            ),
+          );
+        }
+
+        // USER LOGGED IN
+        if (snapshot.hasData) {
+          final user = snapshot.data!;
+
+          _runFirestoreTestOnce(user.uid);
+
+          return FutureBuilder<bool>(
+            key: ValueKey(user.uid),
+            future: _getAdminFuture(user.uid),
+            builder: (context, adminSnapshot) {
+              // ADMIN CHECK LOADING
+              if (adminSnapshot.connectionState !=
+                  ConnectionState.done) {
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              // ADMIN CHECK ERROR
+              if (adminSnapshot.hasError) {
+                debugPrint(
+                  'ADMIN CHECK FAILED: ${adminSnapshot.error}',
+                );
+
+                return Scaffold(
+                  body: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.wifi_off,
+                            size: 48,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Unable to verify your account role.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Check your internet connection '
+                                'and try again.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: _retryAdminCheck,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              // ADMIN DASHBOARD
+              if (adminSnapshot.data == true) {
+                debugPrint(
+                  'NAVIGATION: Admin Dashboard',
+                );
+
+                return const AdminDashboardScreen();
+              }
+
+              // NORMAL USER HOME
+              debugPrint('NAVIGATION: Home Screen');
+
+              return const HomeScreen();
+            },
+          );
+        }
+
+        // USER LOGGED OUT
+        _checkedUid = null;
+        _adminFutureUid = null;
+        _adminFuture = null;
+
+        return const LoginScreen();
+      },
     );
   }
 }
