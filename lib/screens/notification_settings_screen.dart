@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:careerwise_sample/services/notification_service.dart';
-import 'package:careerwise_sample/services/notification_types.dart';
+import 'package:careerwise-ai/services/notification_service.dart';
+import 'package:careerwise-ai/services/notification_types.dart';
 import 'admin_profile_screen.dart';
 
 class _NotificationSettingsColors {

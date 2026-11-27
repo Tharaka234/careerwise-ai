@@ -5,9 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flutter/material.dart';
 
-import 'package:careerwise_sample/screens/notification_settings_screen.dart';
-import 'package:careerwise_sample/services/notification_service.dart';
-import 'package:careerwise_sample/services/notification_types.dart';
+import 'package:careerwise-ai/screens/notification_settings_screen.dart';
+import 'package:careerwise-ai/services/notification_service.dart';
+import 'package:careerwise-ai/services/notification_types.dart';
 import 'admin_profile_screen.dart';
 
 class NotificationHistoryScreen extends StatefulWidget {

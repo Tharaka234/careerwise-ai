@@ -249,9 +249,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF0FDF4),
-      body: SizedBox.shrink(),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0FDF4),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isWide = constraints.maxWidth >= 850;
+
+          if (isWide) {
+            return Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: _buildBrandSection(),
+                ),
+                Expanded(
+                  flex: 5,
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 45,
+                        vertical: 35,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: 500,
+                        ),
+                        child: _buildRegisterForm(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildMobileHeader(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    20,
+                    28,
+                    20,
+                    25,
+                  ),
+                  child: _buildRegisterForm(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
