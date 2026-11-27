@@ -1396,6 +1396,308 @@ class _NotificationHistoryScreenState
       ),
     );
   }
+
+  // =========================================================
+  // EMPTY STATE
+  // =========================================================
+
+  Widget _buildEmptyState(_NotificationColors colors) {
+    String title;
+    String description;
+    IconData icon;
+
+    switch (selectedFilter) {
+      case filterJobs:
+        title = 'No job alerts yet';
+        description =
+        'New career opportunities will appear here when they become available.';
+        icon = Icons.work_outline_rounded;
+        break;
+
+      case filterUpdates:
+        title = 'No updates yet';
+        description =
+        'Changes to jobs and other important updates will appear here.';
+        icon = Icons.auto_awesome_outlined;
+        break;
+
+      case filterAnnouncements:
+        title = 'No announcements';
+        description =
+        'CareerWise announcements and important news will appear here.';
+        icon = Icons.campaign_outlined;
+        break;
+
+      default:
+        title = 'You\'re all caught up!';
+        description =
+        'There are no notifications right now. We\'ll let you know when something important happens.';
+        icon = Icons.notifications_none_rounded;
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(30, 30, 30, 60),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 104,
+              height: 104,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: colors.isDark
+                      ? [
+                    const Color(0xFF064E3B),
+                    const Color(0xFF042F23),
+                  ]
+                      : [
+                    const Color(0xFFD1FAE5),
+                    const Color(0xFFA7F3D0),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Icon(
+                icon,
+                color: colors.primary,
+                size: 47,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 9),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 13.5,
+                  height: 1.55,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationSettingsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.tune_rounded,
+                size: 17,
+              ),
+              label: const Text('Notification settings'),
+              style: TextButton.styleFrom(
+                foregroundColor: colors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // LOADING
+  // =========================================================
+
+  Widget _buildLoadingState(_NotificationColors colors) {
+    return Container(
+      color: colors.pageBg,
+      child: Column(
+        children: [
+          _buildLoadingHeader(),
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 34,
+                    height: 34,
+                    child: CircularProgressIndicator(
+                      color: colors.primary,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    'Loading notifications...',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingHeader() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF044E36),
+            Color(0xFF059669),
+            Color(0xFF10B981),
+          ],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _glassHeaderButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onTap: () {
+                  Navigator.maybePop(context);
+                },
+              ),
+              const SizedBox(height: 28),
+              const Text(
+                'Notifications',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                'Stay updated with your career journey',
+                style: TextStyle(
+                  color: Color(0xFFD1FAE5),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // ERROR
+  // =========================================================
+
+  Widget _buildErrorState(Object? error, _NotificationColors colors) {
+    final details = error?.toString() ?? 'Unknown Firestore error';
+    final lower = details.toLowerCase();
+    final String guidance;
+    if (lower.contains('failed-precondition') || lower.contains('index')) {
+      guidance = 'Firestore index එකක් අවශ්‍ය විය හැක. Debug Console එකේ index creation link එක බලන්න.';
+    } else if (lower.contains('permission-denied')) {
+      guidance = 'Firestore security rules සහ notification history query එක check කරන්න.';
+    } else if (lower.contains('unavailable') ||
+        lower.contains('network') ||
+        lower.contains('timeout')) {
+      guidance = 'Wi-Fi / Internet / Firebase connection එක check කරන්න.';
+    } else {
+      guidance = 'පහත error details සහ Debug Console logs බලන්න.';
+    }
+
+    return Container(
+      color: colors.pageBg,
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.maybePop(context),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: colors.textPrimary),
+                  ),
+                  const SizedBox(width: 5),
+                  Text('Notifications',
+                      style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(26),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.cloud_off_outlined,
+                          color: Color(0xFFEF4444), size: 70),
+                      const SizedBox(height: 20),
+                      Text('Couldn\'t load notifications',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 12),
+                      Text(guidance,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: colors.textSecondary, fontSize: 13.5)),
+                      const SizedBox(height: 16),
+                      SelectableText(details,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: colors.textSecondary, fontSize: 11)),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: _retryNotifications,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ===========================================================
