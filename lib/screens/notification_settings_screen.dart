@@ -1414,10 +1414,88 @@ class _NotificationSettingsScreenState
     );
   }
 
-  // TEMPORARY: replaced by the real build() in the final screen commit.
+  // =========================================================
+  // BUILD
+  // =========================================================
+
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: SizedBox.shrink());
+    return ValueListenableBuilder<bool>(
+      valueListenable: AdminThemeManager.isDarkMode,
+      builder: (context, isDark, _) {
+        _colors = _NotificationSettingsColors.of(isDark);
+
+        return Scaffold(
+          backgroundColor: background,
+          body: isLoading
+              ? _loadingScreen()
+              : loadError != null
+              ? _errorScreen()
+              : _settingsScreen(),
+        );
+      },
+    );
+  }
+
+  // =========================================================
+  // MAIN SETTINGS SCREEN
+  // =========================================================
+
+  Widget _settingsScreen() {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _buildHeader(),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 22, 18, 35),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                if (!permissionAllowed) ...[
+                  _permissionCard(),
+                  const SizedBox(height: 16),
+                ],
+                _sectionLabel(
+                  'GENERAL',
+                  'Control the notifications you want to receive',
+                ),
+                const SizedBox(height: 11),
+                _announcementCard(),
+                if (!prefs.isAdmin) ...[
+                  const SizedBox(height: 25),
+                  _sectionLabel(
+                    'CAREER ALERTS',
+                    'Choose which opportunities matter to you',
+                  ),
+                  const SizedBox(height: 11),
+                  _jobAlertsCard(),
+                ],
+                const SizedBox(height: 25),
+                _sectionLabel(
+                  'IMPORTANT UPDATES',
+                  'Essential CareerWise notifications',
+                ),
+                const SizedBox(height: 11),
+                _alwaysOnCard(),
+                if (prefs.isAdmin) ...[
+                  const SizedBox(height: 25),
+                  _sectionLabel(
+                    'ADMIN TOOLS',
+                    'Test push notification delivery',
+                  ),
+                  const SizedBox(height: 11),
+                  _adminTestCard(),
+                ],
+                const SizedBox(height: 24),
+                _privacyNote(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
