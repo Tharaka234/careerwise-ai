@@ -287,6 +287,10 @@ class _CareerRoadmapScreenState
     );
   }
   Widget _roadmapView(Map<String, dynamic> data) {
+    final weeks = data['weeks'] is List
+        ? data['weeks'] as List
+        : <dynamic>[];
+
     final skills = data['targetSkills'] is List
         ? data['targetSkills'] as List
         : <dynamic>[];
@@ -322,6 +326,27 @@ class _CareerRoadmapScreenState
 
             _skillsCard(skills),
             SizedBox(height: 28),
+
+            _sectionTitle(
+              'Your Learning Journey',
+              Icons.route_rounded,
+            ),
+            SizedBox(height: 7),
+
+            Text(
+              'Small steps today. Big career growth tomorrow.',
+              style: TextStyle(
+                color: muted,
+                fontSize: 13,
+              ),
+            ),
+            SizedBox(height: 16),
+
+            for (final rawWeek in weeks)
+              if (rawWeek is Map)
+                _weekCard(
+                  Map<String, dynamic>.from(rawWeek),
+                ),
           ],
         ),
       ),
@@ -594,6 +619,216 @@ class _CareerRoadmapScreenState
             fontWeight: FontWeight.w700,
           ),
         )).toList(),
+      ),
+    );
+  }
+  Widget _weekCard(Map<String, dynamic> week) {
+    final number = (week['week'] as num?)?.toInt() ?? 1;
+
+    final rawTasks = week['tasks'] is List
+        ? week['tasks'] as List
+        : <dynamic>[];
+
+    final tasks = rawTasks
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    final done = tasks
+        .where((task) => task['completed'] == true)
+        .length;
+
+    final ratio = tasks.isEmpty
+        ? 0.0
+        : done / tasks.length;
+
+    final allDone =
+        tasks.isNotEmpty && done == tasks.length;
+
+    return Container(
+      key: ValueKey('roadmap-week-$number'),
+      margin: EdgeInsets.only(bottom: 14),
+      decoration: _cardDecoration(),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: PageStorageKey('roadmap-expansion-$number'),
+        initiallyExpanded: number == 1,
+        shape: Border(),
+        collapsedShape: Border(),
+        tilePadding: EdgeInsets.fromLTRB(16, 13, 16, 13),
+        childrenPadding: EdgeInsets.fromLTRB(16, 0, 16, 18),
+
+        leading: Container(
+          width: 47,
+          height: 47,
+          decoration: BoxDecoration(
+            color: _softGreen,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Center(
+            child: allDone
+                ? Icon(
+              Icons.check_circle_rounded,
+              color: primary,
+              size: 26,
+            )
+                : Text(
+              '$number',
+              style: TextStyle(
+                color: primary,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
+
+        title: Text(
+          'WEEK $number',
+          style: TextStyle(
+            color: primary,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
+          ),
+        ),
+
+        subtitle: Padding(
+          padding: EdgeInsets.only(top: 5),
+          child: Text(
+            '${week['title'] ?? ''}',
+            style: TextStyle(
+              color: dark,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$done/${tasks.length}',
+              style: TextStyle(
+                color: primary,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            SizedBox(height: 3),
+            Icon(
+              Icons.expand_more_rounded,
+              color: muted,
+              size: 20,
+            ),
+          ],
+        ),
+
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(
+                begin: 0,
+                end: ratio,
+              ),
+              duration: Duration(milliseconds: 550),
+              builder: (context, value, _) =>
+                  LinearProgressIndicator(
+                    value: value,
+                    minHeight: 6,
+                    backgroundColor: _softGreen,
+                    color: primary,
+                  ),
+            ),
+          ),
+
+          SizedBox(height: 15),
+
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${week['description'] ?? ''}',
+              style: TextStyle(
+                color: muted,
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 15),
+
+          for (final task in tasks)
+            _taskTile(task),
+        ],
+      ),
+    );
+  }
+  Widget _taskTile(Map<String, dynamic> task) {
+    final completed = task['completed'] == true;
+
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 250),
+      margin: EdgeInsets.only(bottom: 9),
+      padding: EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 14,
+      ),
+      decoration: BoxDecoration(
+        color: completed ? _softGreen : _surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: completed
+              ? primary.withValues(alpha: 0.35)
+              : border,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            completed
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
+            color: completed ? primary : muted,
+            size: 22,
+          ),
+
+          SizedBox(width: 12),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${task['title'] ?? ''}',
+                  style: TextStyle(
+                    color: dark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    decoration: completed
+                        ? TextDecoration.lineThrough
+                        : null,
+                  ),
+                ),
+
+                SizedBox(height: 6),
+
+                Text(
+                  '${task['description'] ?? ''}',
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
