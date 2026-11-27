@@ -1241,6 +1241,179 @@ class _NotificationSettingsScreenState
     );
   }
 
+  // =========================================================
+  // LOADING SCREEN
+  // =========================================================
+
+  Widget _loadingScreen() {
+    return Column(
+      children: [
+        _simpleHeader(),
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  color: primary,
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Loading your preferences...',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // ERROR SCREEN
+  // =========================================================
+
+  Widget _errorScreen() {
+    return Column(
+      children: [
+        _simpleHeader(),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 86,
+                    height: 86,
+                    decoration: BoxDecoration(
+                      color: _colors.isDark
+                          ? const Color(0x33EF4444)
+                          : const Color(0xFFFFEEEE),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: const Icon(
+                      Icons.error_outline_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  Text(
+                    'Couldn\'t load settings',
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    loadError ??
+                        'An unexpected error occurred while loading your notification preferences.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        isLoading = true;
+                        loadError = null;
+                      });
+
+                      _load();
+                    },
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      size: 18,
+                    ),
+                    label: const Text('Try again'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 13,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _simpleHeader() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primaryDark,
+            primary,
+            indigo,
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 27),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _headerButton(
+                Icons.arrow_back_ios_new_rounded,
+                    () {
+                  Navigator.maybePop(context);
+                },
+              ),
+              const SizedBox(height: 27),
+              const Text(
+                'Notification Settings',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                'Personalize the updates you receive',
+                style: TextStyle(
+                  color: Color(0xFFDCE7FF),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // TEMPORARY: replaced by the real build() in the final screen commit.
   @override
   Widget build(BuildContext context) {
